@@ -1,0 +1,24 @@
+{
+  "errors": [],
+  "loaded": {
+    "culture_teach_s0": "280 trials, 651844 spikes",
+    "culture_fep_s0": "170 trials, 356895 spikes",
+    "culture_reservoir_s0": "170 trials, 329959 spikes"
+  },
+  "newRun": {
+    "code": 0,
+    "lines": [
+      "$ python -m neurorover.record_run --condition culture_reservoir --seed 7 --budget 10 --eval 10",
+      "... running 3s, 0 trial rows on disk",
+      "runs\\culture_reservoir_s7: AUC=0.760000, spikes=45412, stims=517, wall=3.1s"
+    ],
+    "listed": true
+  },
+  "playback": {
+    "seg": 1,
+    "tSim": 301.66999999999996,
+    "fps": 52.18399690761505,
+    "roverX": 0.09227880601402506,
+    "cloth": "free"
+  }
+}
