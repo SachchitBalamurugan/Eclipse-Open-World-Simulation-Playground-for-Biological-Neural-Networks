@@ -1,0 +1,65 @@
+{
+ "schema_version": "bnn-transfer/1.0",
+ "purpose": "Find which electrodes of THIS culture can drive activity and which carry evoked activity, move electrode roles onto them, and fit the spike->action decoder for this culture. Required before any closed-loop use; the simulated weights do not transfer.",
+ "steps": [
+  "1 baseline: record spontaneous activity, no stimulation",
+  "2 probe sweep: single biphasic pulses on every usable electrode (random order, interleaved), measure evoked network spikes; escalate amplitude up the ladder for non-responsive electrodes without exceeding safety.json limits",
+  "3 remap: keep each sensory role on its electrode if stimulation there evokes a network response, else move it to the nearest responsive free electrode; keep each motor role if its electrode receives evoked spikes from sensory probes (or is spontaneously active), else move it to the nearest receiving free electrode",
+  "4 guided trials: the robot is moved by the teacher (no culture control) while the encoder stimulates the culture with the real observations; record spike counts",
+  "5 decoder refit: ridge regression counts -> teacher direction, shrunk toward the sim decoder; accept only if it beats the sim decoder on held-out guided trials",
+  "6 save calibration report + calibrated decoder with the session recording"
+ ],
+ "baseline": {
+  "duration_s": 300,
+  "active_rate_hz": 0.1
+ },
+ "probe": {
+  "repetitions": 30,
+  "isi_ms": 200,
+  "order": "random permutation of electrodes per repetition",
+  "amplitude": "encoder.waveform.amplitude",
+  "amplitude_ladder": [
+   1.0,
+   1.5,
+   2.0
+  ],
+  "response_window_ms": [
+   2,
+   50
+  ],
+  "responsive_z": 3.0,
+  "min_evoked_spikes": 0.5
+ },
+ "remap": {
+  "min_recipient_spikes_per_probe": 0.05,
+  "prefer": "original electrode, then nearest by distance"
+ },
+ "decoder_refit": {
+  "guided_episodes": 10,
+  "steps_per_episode": 60,
+  "guide_gain": 0.5,
+  "ridge_lambda": 10.0,
+  "min_holdout_r2": 0.05,
+  "features": "all usable electrodes except sensory (stimulated) electrodes",
+  "target": "teacher direction dq*/max|dq*| per step",
+  "prior": "decoder.json weights / gain"
+ },
+ "mock_compressed": {
+  "note": "shortened durations used by `run --backend mock` so a dry run takes seconds",
+  "baseline": {
+   "duration_s": 5
+  },
+  "probe": {
+   "repetitions": 8,
+   "isi_ms": 100
+  },
+  "decoder_refit": {
+   "guided_episodes": 1,
+   "steps_per_episode": 40,
+   "guide_gain": 0.5,
+   "ridge_lambda": 10.0,
+   "min_holdout_r2": 0.05
+  }
+ },
+ "recalibrate": "every session; also when success drops > 20 % from the session's post-calibration level"
+}

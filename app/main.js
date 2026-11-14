@@ -378,12 +378,187 @@ handle('fleet-get', fleetGet);
 handle('fleet-post', fleetPost);
 handle('fleet-popout', fleetPopout);
 
+// ---------- BNN Robot Studio: thin wrapper over `python -m bnn_platform studio ...` (docs/STUDIO_CONTRACT.md) ----------
+// User strings only ever reach Python as separate argv entries (no shell), after validation.
+const ROBOT_RE = /^[a-z0-9_]{1,40}$/;
+const PY_ENV = () => Object.assign({}, process.env, { PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' });
+let studioChild = null;
+function lastJson(text) {
+  const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i--) { if (lines[i][0] !== '{') continue; try { return JSON.parse(lines[i]); } catch (e) {} }
+  return null;
+}
+function errTail(stderr) {
+  const l = String(stderr || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  return l.slice(-3).join(' | ').slice(0, 600);
+}
+// one-shot studio command: resolve with its JSON, reject with the CLI's own error message
+function studioCli(args, timeout, mod) {
+  const pre = mod === 'transfer' ? ['-u', '-m', 'bnn_platform.transfer'] : ['-u', '-m', 'bnn_platform', 'studio'];
+  return new Promise((resolve, reject) => {
+    execFile(pythonExe(), [...pre, ...args],
+      { cwd: REPO, timeout: timeout || 60000, windowsHide: true, maxBuffer: 256 * 1024 * 1024, env: PY_ENV() }, (err, stdout, stderr) => {
+        const j = lastJson(stdout);
+        if (j && j.ok === false) return reject(new Error(j.error || 'studio command failed'));
+        if (err) return reject(new Error((j && j.error) || errTail(stderr) || String(err.message || err)));
+        if (!j) return reject(new Error('no JSON from `' + pre.slice(2).join(' ') + ' ' + args[0] + '`' + (stderr ? ': ' + errTail(stderr) : '')));
+        resolve(j);
+      });
+  });
+}
+async function studioPickFile() {
+  const { dialog } = require('electron');
+  const r = await dialog.showOpenDialog(win, { title: 'Import robot', properties: ['openFile'],
+    filters: [{ name: 'Robot description (MJCF, URDF, zip)', extensions: ['xml', 'urdf', 'zip'] }] });
+  return r.canceled || !r.filePaths.length ? null : r.filePaths[0];
+}
+async function studioImport(file, opts) {
+  opts = opts || {};
+  if (typeof file !== 'string' || !path.isAbsolute(file) || file.length > 1024) throw new Error('import needs an absolute file path');
+  if (!/\.(xml|urdf|zip)$/i.test(file)) throw new Error('unsupported file type: use .xml (MJCF), .urdf or .zip');
+  let st; try { st = await fsp.stat(file); } catch (e) { throw new Error('file not found: ' + file); }
+  if (!st.isFile()) throw new Error('not a file: ' + file);
+  if (st.size > 512 * 1024 * 1024) throw new Error('file too large (>512 MB)');
+  const args = ['import', '--file', file];
+  if (opts.name != null && opts.name !== '') { if (!ROBOT_RE.test(opts.name)) throw new Error('robot name must match [a-z0-9_]{1,40}'); args.push('--name', opts.name); }
+  if (opts.ee != null && opts.ee !== '') { if (!/^[A-Za-z0-9_.:-]{1,80}$/.test(opts.ee)) throw new Error('bad end-effector name'); args.push('--ee', opts.ee); }
+  return studioCli(args, 180000);
+}
+async function studioScene(name) {
+  if (!ROBOT_RE.test(String(name))) throw new Error('bad robot name');
+  return studioCli(['scene', '--robot', name], 120000);
+}
+function intIn(v, lo, hi, what) { const n = Number(v); if (!Number.isInteger(n) || n < lo || n > hi) throw new Error(what + ' must be an integer in [' + lo + ', ' + hi + ']'); return n; }
+function studioTrain(cfg) {
+  cfg = cfg || {};
+  if (studioChild) throw new Error('a training run is already active - stop it first');
+  const robot = String(cfg.robot || '');
+  if (!ROBOT_RE.test(robot)) throw new Error('bad robot name');
+  const task = cfg.task || 'reach'; if (!['reach'].includes(task)) throw new Error('unknown task');
+  const platform = cfg.platform || 'local'; if (!['local', 'fleet'].includes(platform)) throw new Error('platform must be local or fleet');
+  const rule = cfg.rule || 'teach'; if (!['teach', 'frozen'].includes(rule)) throw new Error('rule must be teach or frozen');
+  const episodes = intIn(cfg.episodes ?? 20, 1, 1000, 'episodes');
+  const neurons = intIn(cfg.neurons ?? 1024, 64, 4096, 'neurons');
+  const electrodes = intIn(cfg.electrodes ?? 64, 4, 1024, 'electrodes');
+  const seed = intIn(cfg.seed ?? 0, 0, 1000000, 'seed');
+  const vms = intIn(cfg.vms ?? 4, 1, 32, 'vms');
+  const lr = Number(cfg.lr ?? 0.02); if (!(Number.isFinite(lr) && lr > 0 && lr <= 1)) throw new Error('learning rate must be in (0, 1]');
+  const args = ['-u', '-m', 'bnn_platform', 'studio', 'train', '--robot', robot, '--task', task, '--platform', platform,
+    '--episodes', String(episodes), '--lr', String(lr), '--neurons', String(neurons), '--electrodes', String(electrodes),
+    '--rule', rule, '--seed', String(seed)];
+  if (platform === 'fleet') { args.push('--vms', String(vms)); if (cfg.dryRun) args.push('--dry-run'); }
+  return spawnStream(args, 'training');
+}
+// spawn a JSON-Lines producing python command; forward each stdout line as a studio-event (partial lines buffered)
+function spawnStream(args, what) {
+  const child = spawn(pythonExe(), args, { cwd: REPO, windowsHide: true, env: PY_ENV() });
+  studioChild = child; children.add(child);
+  const ev = (o) => send('studio-event', o);
+  ev({ type: 'log', level: 'sys', message: '$ python ' + args.slice(1).join(' ') });
+  let sawEnd = false, buf = '', ebuf = '';
+  const onLine = (line) => {
+    const s = line.trim(); if (!s) return;
+    let o = null; try { o = JSON.parse(s); } catch (e) {}
+    if (o && typeof o === 'object' && typeof o.type === 'string') { if (o.type === 'done' || o.type === 'error') sawEnd = true; ev(o); }
+    else ev({ type: 'log', level: 'out', message: s });
+  };
+  child.stdout.setEncoding('utf8');
+  child.stdout.on('data', (d) => { buf += d; const parts = buf.split(/\r?\n/); buf = parts.pop(); parts.forEach(onLine); });
+  child.stderr.setEncoding('utf8');
+  child.stderr.on('data', (d) => {
+    ebuf += d; const parts = ebuf.split(/\r?\n|\r/); ebuf = parts.pop();
+    for (const line of parts) if (line.trim()) ev({ type: 'log', level: 'err', message: line });
+  });
+  const finish = (code, err) => {
+    if (studioChild !== child) return;
+    studioChild = null; children.delete(child);
+    if (buf.trim()) onLine(buf);
+    if (ebuf.trim()) ev({ type: 'log', level: 'err', message: ebuf });
+    if (err) ev({ type: 'error', message: String(err.message || err) });
+    else if (!sawEnd) ev({ type: 'error', message: child.killedByUser ? 'stopped by user' : what + ' process exited with code ' + code });
+    ev({ type: 'exit', code, stopped: !!child.killedByUser });
+  };
+  child.on('error', (e) => finish(-1, e));
+  child.on('close', (code) => finish(code, null));
+  return { pid: child.pid, args: args.slice(1) };
+}
+function killTree(child) {
+  if (!child || child.exitCode != null) return;
+  if (process.platform === 'win32') execFile('taskkill', ['/pid', String(child.pid), '/t', '/f'], { windowsHide: true }, () => {});
+  else { try { child.kill('SIGTERM'); } catch (e) {} }
+}
+function studioStop() {
+  if (!studioChild) return { stopped: false };
+  studioChild.killedByUser = true; killTree(studioChild);
+  return { stopped: true };
+}
+handle('studio-list', () => studioCli(['list'], 90000));
+handle('studio-pick-file', studioPickFile);
+handle('studio-import', studioImport);
+handle('studio-scene', studioScene);
+handle('studio-train', studioTrain);
+handle('studio-stop', studioStop);
+handle('studio-runs', () => studioCli(['runs'], 60000));
+handle('studio-fleet-status', () => studioCli(['fleet-status'], 60000));
+const RUNID_RE = /^[A-Za-z0-9_.-]{1,160}$/;
+function checkRunId(id) { if (typeof id !== 'string' || !RUNID_RE.test(id) || id.includes('..')) throw new Error('bad run id'); return id; }
+handle('studio-replay', (id) => { if (studioChild) throw new Error('a run is already active - stop it first'); return spawnStream(['-u', '-m', 'bnn_platform', 'studio', 'replay', '--run', checkRunId(id)], 'replay'); });
+handle('studio-download', async (id) => {
+  checkRunId(id);
+  const r = await studioCli(['pack', '--run', id], 180000);
+  if (!r.zip) throw new Error('pack returned no zip');
+  const src = path.resolve(REPO, r.zip);
+  const { dialog } = require('electron');
+  const s = await dialog.showSaveDialog(win, { title: 'Save run', defaultPath: path.basename(src), filters: [{ name: 'Zip archive', extensions: ['zip'] }] });
+  if (s.canceled || !s.filePath) return { saved: null, zip: r.zip };
+  await fsp.copyFile(src, s.filePath);
+  return { saved: s.filePath, zip: r.zip };
+});
+
+// ---------- sim-to-real export (python -m bnn_platform.transfer, see contract) ----------
+const USER_RUNS = path.join(REPO, 'user_runs');
+const TARGET_RE = /^[a-z0-9_]{1,40}$/;
+function insideRepoPath(p, base, what) {
+  if (typeof p !== 'string' || !p || p.length > 1024 || p.includes('\u0000')) throw new Error('bad ' + what);
+  const abs = path.resolve(REPO, p);
+  const rel = path.relative(base, abs);
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) throw new Error(what + ' must be inside ' + path.relative(REPO, base));
+  return abs;
+}
+async function transferExport(runDir, target) {
+  let abs;
+  if (runDir === 'surgical/results/culture_teach.pkl') abs = path.join(REPO, 'surgical', 'results', 'culture_teach.pkl');
+  else abs = insideRepoPath(runDir, USER_RUNS, 'run directory');
+  if (!fs.existsSync(abs)) throw new Error('run not found: ' + runDir);
+  target = target || 'generic';
+  if (!TARGET_RE.test(target)) throw new Error('bad target id');
+  return studioCli(['export', '--run', abs, '--target', target], 180000, 'transfer');
+}
+function transferRun(bundle, episodes) {
+  if (studioChild) throw new Error('a run is already active - stop it first');
+  const abs = insideRepoPath(bundle, USER_RUNS, 'bundle');
+  let st = null; try { st = fs.statSync(abs); } catch (e) {}
+  if (!st || !st.isDirectory()) throw new Error('bundle directory not found: ' + bundle);
+  const ep = intIn(episodes ?? 3, 1, 50, 'episodes');
+  return spawnStream(['-u', '-m', 'bnn_platform.transfer', 'run', '--bundle', abs, '--backend', 'mock', '--episodes', String(ep)], 'closed-loop dry run');
+}
+function transferReveal(p) {
+  const abs = insideRepoPath(p, REPO, 'path');
+  if (!fs.existsSync(abs)) throw new Error('not found: ' + p);
+  require('electron').shell.showItemInFolder(abs);
+  return true;
+}
+handle('transfer-targets', () => studioCli(['targets'], 60000, 'transfer'));
+handle('transfer-export', transferExport);
+handle('transfer-run', transferRun);
+handle('transfer-reveal', transferReveal);
+
 function createWindow() {
   const sizeArg = process.argv.find((a) => a.startsWith('--size='));
   const wh = sizeArg ? sizeArg.slice(7).split('x').map(Number) : [1500, 900];
   win = new BrowserWindow({
     width: wh[0] || 1500, height: wh[1] || 900, minWidth: 1100, minHeight: 640, useContentSize: true,
-    backgroundColor: '#000000', title: 'NeuroRover Sim - simulated culture model', autoHideMenuBar: true,
+    backgroundColor: '#0f0f0f', title: 'BNN Robot Studio - simulated culture model', autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
   const debug = SHOT || SELFTEST;
@@ -392,12 +567,12 @@ function createWindow() {
   win.webContents.on('console-message', (_e, level, message, line, source) => {
     if (debug) fs.appendFileSync(clog, '[' + level + '] ' + message + ' (' + path.basename(String(source)) + ':' + line + ')\n');
   });
-  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: SELFTEST ? '1' : '0', tab: argVal('tab') || 'simulate', camera: argVal('camera') || 'overview', replay: process.argv.includes('--replay') ? '1' : '0' } });
-  if (SHOT) win.webContents.once('did-finish-load', () => setTimeout(async () => { await capture(); app.quit(); }, 9000));
-  if (SELFTEST) setTimeout(() => app.quit(), 200000);
+  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: SELFTEST ? '1' : '0', tab: argVal('tab') || 'studio', camera: argVal('camera') || 'overview', replay: process.argv.includes('--replay') ? '1' : '0', studiodemo: ROBOT_RE.test(argVal('studio-demo')) ? argVal('studio-demo') : '', studiosec: /^[a-z]{1,20}$/.test(argVal('studio-section')) ? argVal('studio-section') : '', studiodeploy: process.argv.includes('--studio-deploy') ? '1' : '0' } });
+  if (SHOT) win.webContents.once('did-finish-load', () => setTimeout(async () => { await capture(); app.quit(); }, Math.max(3000, Math.min(120000, Number(argVal('delay')) || 9000))));
+  if (SELFTEST) setTimeout(() => app.quit(), 420000);
   win.on('closed', () => app.quit());
 }
 
 app.whenReady().then(() => { ensureFleetServer().catch(() => {}); createWindow(); watchReplays(); });
 app.on('before-quit', () => { stopFleetServer(); watchers.forEach((w) => { try { w.close(); } catch (e) {} }); });
-app.on('window-all-closed', () => { for (const c of children) { try { c.kill(); } catch (e) {} } stopFleetServer(); app.quit(); });
+app.on('window-all-closed', () => { if (studioChild) killTree(studioChild); for (const c of children) { try { c.kill(); } catch (e) {} } stopFleetServer(); app.quit(); });

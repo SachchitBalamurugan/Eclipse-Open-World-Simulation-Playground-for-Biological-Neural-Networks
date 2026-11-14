@@ -7,6 +7,9 @@
                                            wrap sweep/run_jobs.sh (one Freestyle VM per job)
   fleet sweep --robot X --lrs 0.02 0.05 [--episodes N] [--dry-run]
                                            write a jobs file (sweep/jobs_surgical.txt format) and launch
+  studio list|import|scene|train|fleet-status|runs
+                                           BNN Robot Studio backend, JSON on stdout
+                                           (docs/STUDIO_CONTRACT.md; `studio -h` for details)
 """
 from __future__ import annotations
 
@@ -110,6 +113,8 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("extra", nargs=argparse.REMAINDER, help="extra args passed through after --")
         p.set_defaults(fn=fn)
 
+    sub.add_parser("studio", help="BNN Robot Studio backend (JSON; see docs/STUDIO_CONTRACT.md)")
+
     p = sub.add_parser("fleet", help="run jobs in parallel on Freestyle VMs (sweep/run_jobs.sh)")
     p.add_argument("action", choices=["launch", "status", "collect", "teardown", "sweep"])
     p.add_argument("--jobs", default=None, help="jobs file: <slug>|<shell command> per line")
@@ -122,6 +127,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv and argv[0] == "studio":
+        from .studio.cli import main as studio_main
+        return studio_main(argv[1:])
     a = build_parser().parse_args(argv)
     if getattr(a, "extra", None) and a.extra[0] == "--":
         a.extra = a.extra[1:]

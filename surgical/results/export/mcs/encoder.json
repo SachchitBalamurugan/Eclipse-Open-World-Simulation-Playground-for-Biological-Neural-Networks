@@ -1,0 +1,208 @@
+{
+ "schema_version": "bnn-transfer/1.0",
+ "description": "Observation -> number of stimulation pulses per sensory electrode, delivered once per control step at the start of the trial (rate/count code, as trained in simulation).",
+ "transforms": {
+  "threshold_count": "electrode is active only when sign(value) matches 'sign' (value 0 counts as +); pulses = number of thresholds with |value| >= threshold (0..max_pulses)",
+  "round_scale": "pulses = clip(round(scale * value), 0, max_pulses)"
+ },
+ "channels": [
+  {
+   "electrode": 71,
+   "role_name": "ctx:0",
+   "source": "joint_pos_norm01",
+   "index": 0,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_slider_01_joint_00"
+  },
+  {
+   "electrode": 82,
+   "role_name": "ctx:1",
+   "source": "joint_pos_norm01",
+   "index": 1,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_junction_01_joint_00"
+  },
+  {
+   "electrode": 12,
+   "role_name": "ctx:2",
+   "source": "joint_pos_norm01",
+   "index": 2,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_elbowBig_01_joint_00"
+  },
+  {
+   "electrode": 22,
+   "role_name": "ctx:3",
+   "source": "joint_pos_norm01",
+   "index": 3,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_elbowSmall_01_joint_00"
+  },
+  {
+   "electrode": 32,
+   "role_name": "ctx:4",
+   "source": "joint_pos_norm01",
+   "index": 4,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_elbowLong_01_joint_00"
+  },
+  {
+   "electrode": 42,
+   "role_name": "ctx:5",
+   "source": "joint_pos_norm01",
+   "index": 5,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_elbowMiddle_01_joint_00"
+  },
+  {
+   "electrode": 52,
+   "role_name": "ctx:6",
+   "source": "joint_pos_norm01",
+   "index": 6,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_elbowShort_01_joint_00"
+  },
+  {
+   "electrode": 62,
+   "role_name": "ctx:7",
+   "source": "joint_pos_norm01",
+   "index": 7,
+   "transform": "round_scale",
+   "scale": 2,
+   "max_pulses": 2,
+   "joint_name": "joint_mechanism_01_joint_00"
+  },
+  {
+   "electrode": 13,
+   "role_name": "err+x",
+   "source": "ee_error_base_m",
+   "index": 0,
+   "sign": 1,
+   "transform": "threshold_count",
+   "thresholds": [
+    0.002,
+    0.008,
+    0.025,
+    0.06
+   ],
+   "threshold_unit": "m",
+   "max_pulses": 4
+  },
+  {
+   "electrode": 31,
+   "role_name": "err+y",
+   "source": "ee_error_base_m",
+   "index": 1,
+   "sign": 1,
+   "transform": "threshold_count",
+   "thresholds": [
+    0.002,
+    0.008,
+    0.025,
+    0.06
+   ],
+   "threshold_unit": "m",
+   "max_pulses": 4
+  },
+  {
+   "electrode": 51,
+   "role_name": "err+z",
+   "source": "ee_error_base_m",
+   "index": 2,
+   "sign": 1,
+   "transform": "threshold_count",
+   "thresholds": [
+    0.002,
+    0.008,
+    0.025,
+    0.06
+   ],
+   "threshold_unit": "m",
+   "max_pulses": 4
+  },
+  {
+   "electrode": 21,
+   "role_name": "err-x",
+   "source": "ee_error_base_m",
+   "index": 0,
+   "sign": -1,
+   "transform": "threshold_count",
+   "thresholds": [
+    0.002,
+    0.008,
+    0.025,
+    0.06
+   ],
+   "threshold_unit": "m",
+   "max_pulses": 4
+  },
+  {
+   "electrode": 41,
+   "role_name": "err-y",
+   "source": "ee_error_base_m",
+   "index": 1,
+   "sign": -1,
+   "transform": "threshold_count",
+   "thresholds": [
+    0.002,
+    0.008,
+    0.025,
+    0.06
+   ],
+   "threshold_unit": "m",
+   "max_pulses": 4
+  },
+  {
+   "electrode": 61,
+   "role_name": "err-z",
+   "source": "ee_error_base_m",
+   "index": 2,
+   "sign": -1,
+   "transform": "threshold_count",
+   "thresholds": [
+    0.002,
+    0.008,
+    0.025,
+    0.06
+   ],
+   "threshold_unit": "m",
+   "max_pulses": 4
+  }
+ ],
+ "pulse_timing": {
+  "spacing_ms": 10,
+  "first_pulse_ms": 0,
+  "stim_window_ms": 40,
+  "instantaneous_rate_hz": 100.0,
+  "max_pulses_per_step": 4,
+  "frequency_equivalent": "n pulses at 10 ms spacing per 60 ms step = 16.7*n Hz mean (inference only) -- e.g. 4 pulses = 67 Hz mean, 100 Hz instantaneous"
+ },
+ "waveform": {
+  "shape": "biphasic, charge-balanced",
+  "mode": "voltage",
+  "unit": "mV",
+  "amplitude": 500.0,
+  "teach_amplitude": 500.0,
+  "polarity": "anodic-first",
+  "phase_width_us": 400,
+  "interphase_us": 0,
+  "charge_per_phase_nC": null,
+  "status": "must be validated against vendor/lab limits",
+  "note": "Voltage-controlled positive-first biphasic, 400 us/phase, 500 mV: inside the range reported effective by Wagenaar et al. 2004 (J Neurosci Methods) for TiN 60MEA. VERIFY with your STG and electrode type."
+ },
+ "simulation_equivalent": "Culture.stim(channel, 1.0): stim_gain*1.0 pA-equivalent current injected into the ~16 model neurons at the electrode for 1 ms. There is no physical unit correspondence; amplitude must be set by the calibration probe sweep."
+}

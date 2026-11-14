@@ -1,0 +1,193 @@
+phase,t_ms,electrode_id,role_name,condition,amplitude,note
+encode,0,0,err+x,level >= 1,amplitude,every control step
+encode,0,1,err-x,level >= 1,amplitude,every control step
+encode,0,10,ctx:4,level >= 1,amplitude,every control step
+encode,0,11,ctx:5,level >= 1,amplitude,every control step
+encode,0,12,ctx:6,level >= 1,amplitude,every control step
+encode,0,13,ctx:7,level >= 1,amplitude,every control step
+encode,0,2,err+y,level >= 1,amplitude,every control step
+encode,0,3,err-y,level >= 1,amplitude,every control step
+encode,0,4,err+z,level >= 1,amplitude,every control step
+encode,0,5,err-z,level >= 1,amplitude,every control step
+encode,0,6,ctx:0,level >= 1,amplitude,every control step
+encode,0,7,ctx:1,level >= 1,amplitude,every control step
+encode,0,8,ctx:2,level >= 1,amplitude,every control step
+encode,0,9,ctx:3,level >= 1,amplitude,every control step
+encode,10,0,err+x,level >= 2,amplitude,every control step
+encode,10,1,err-x,level >= 2,amplitude,every control step
+encode,10,10,ctx:4,level >= 2,amplitude,every control step
+encode,10,11,ctx:5,level >= 2,amplitude,every control step
+encode,10,12,ctx:6,level >= 2,amplitude,every control step
+encode,10,13,ctx:7,level >= 2,amplitude,every control step
+encode,10,2,err+y,level >= 2,amplitude,every control step
+encode,10,3,err-y,level >= 2,amplitude,every control step
+encode,10,4,err+z,level >= 2,amplitude,every control step
+encode,10,5,err-z,level >= 2,amplitude,every control step
+encode,10,6,ctx:0,level >= 2,amplitude,every control step
+encode,10,7,ctx:1,level >= 2,amplitude,every control step
+encode,10,8,ctx:2,level >= 2,amplitude,every control step
+encode,10,9,ctx:3,level >= 2,amplitude,every control step
+encode,20,0,err+x,level >= 3,amplitude,every control step
+encode,20,1,err-x,level >= 3,amplitude,every control step
+encode,20,2,err+y,level >= 3,amplitude,every control step
+encode,20,3,err-y,level >= 3,amplitude,every control step
+encode,20,4,err+z,level >= 3,amplitude,every control step
+encode,20,5,err-z,level >= 3,amplitude,every control step
+encode,30,0,err+x,level >= 4,amplitude,every control step
+encode,30,1,err-x,level >= 4,amplitude,every control step
+encode,30,2,err+y,level >= 4,amplitude,every control step
+encode,30,3,err-y,level >= 4,amplitude,every control step
+encode,30,4,err+z,level >= 4,amplitude,every control step
+encode,30,5,err-z,level >= 4,amplitude,every control step
+teach_anti,67,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,67,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_sensory,70,0,err+x,level > 0,teach_amplitude,sensory replay
+teach_sensory,70,1,err-x,level > 0,teach_amplitude,sensory replay
+teach_sensory,70,2,err+y,level > 0,teach_amplitude,sensory replay
+teach_sensory,70,3,err-y,level > 0,teach_amplitude,sensory replay
+teach_sensory,70,4,err+z,level > 0,teach_amplitude,sensory replay
+teach_sensory,70,5,err-z,level > 0,teach_amplitude,sensory replay
+teach_pro,73,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,73,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_anti,87,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,87,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_sensory,90,0,err+x,level > 1,teach_amplitude,sensory replay
+teach_sensory,90,1,err-x,level > 1,teach_amplitude,sensory replay
+teach_sensory,90,2,err+y,level > 1,teach_amplitude,sensory replay
+teach_sensory,90,3,err-y,level > 1,teach_amplitude,sensory replay
+teach_sensory,90,4,err+z,level > 1,teach_amplitude,sensory replay
+teach_sensory,90,5,err-z,level > 1,teach_amplitude,sensory replay
+teach_pro,93,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,93,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_anti,107,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,107,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_sensory,110,0,err+x,level > 2,teach_amplitude,sensory replay
+teach_sensory,110,1,err-x,level > 2,teach_amplitude,sensory replay
+teach_sensory,110,2,err+y,level > 2,teach_amplitude,sensory replay
+teach_sensory,110,3,err-y,level > 2,teach_amplitude,sensory replay
+teach_sensory,110,4,err+z,level > 2,teach_amplitude,sensory replay
+teach_sensory,110,5,err-z,level > 2,teach_amplitude,sensory replay
+teach_pro,113,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,113,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_anti,127,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTD pairing (post before pre)
+teach_anti,127,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTD pairing (post before pre)
+teach_sensory,130,0,err+x,level > 3,teach_amplitude,sensory replay
+teach_sensory,130,1,err-x,level > 3,teach_amplitude,sensory replay
+teach_sensory,130,2,err+y,level > 3,teach_amplitude,sensory replay
+teach_sensory,130,3,err-y,level > 3,teach_amplitude,sensory replay
+teach_sensory,130,4,err+z,level > 3,teach_amplitude,sensory replay
+teach_sensory,130,5,err-z,level > 3,teach_amplitude,sensory replay
+teach_pro,133,32,motor+:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,33,motor-:0,|dq*_0| >= 0.15 max|dq*| and dq*_0 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,34,motor+:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,35,motor-:1,|dq*_1| >= 0.15 max|dq*| and dq*_1 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,36,motor+:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,37,motor-:2,|dq*_2| >= 0.15 max|dq*| and dq*_2 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,38,motor+:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,39,motor-:3,|dq*_3| >= 0.15 max|dq*| and dq*_3 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,40,motor+:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,41,motor-:4,|dq*_4| >= 0.15 max|dq*| and dq*_4 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,42,motor+:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,43,motor-:5,|dq*_5| >= 0.15 max|dq*| and dq*_5 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,44,motor+:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,45,motor-:6,|dq*_6| >= 0.15 max|dq*| and dq*_6 < 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,46,motor+:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 > 0,teach_amplitude,LTP pairing (pre before post)
+teach_pro,133,47,motor-:7,|dq*_7| >= 0.15 max|dq*| and dq*_7 < 0,teach_amplitude,LTP pairing (pre before post)

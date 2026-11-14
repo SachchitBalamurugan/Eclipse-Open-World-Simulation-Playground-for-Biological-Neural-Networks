@@ -1,0 +1,108 @@
+{
+ "schema_version": "bnn-transfer/1.0",
+ "status": "must be validated against vendor/lab limits",
+ "stimulation": {
+  "max_amplitude": 900.0,
+  "amplitude_unit": "mV",
+  "max_charge_per_phase_nC": null,
+  "max_total_charge_nC": null,
+  "charge_balanced_biphasic_only": true,
+  "max_burst_hz": 200,
+  "max_mean_rate_hz_per_electrode": 100.0,
+  "rate_window_ms": 1000,
+  "max_stim_electrodes": null,
+  "stim_electrodes_in_bundle": 30,
+  "session": {
+   "max_session_min": 60,
+   "min_rest_between_sessions_min": 60,
+   "max_sessions_per_day": 2
+  },
+  "on_violation": "drop the pulse and log it (never scale up, never retry immediately)",
+  "status": "must be validated against vendor/lab limits"
+ },
+ "robot": {
+  "max_step_normalised": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "joint_velocity_limits": [
+   0.12,
+   0.6,
+   0.6,
+   0.6,
+   0.6,
+   0.6,
+   0.6,
+   0.6
+  ],
+  "joint_velocity_unit": [
+   "m/s",
+   "rad/s",
+   "rad/s",
+   "rad/s",
+   "rad/s",
+   "rad/s",
+   "rad/s",
+   "rad/s"
+  ],
+  "velocity_note": "the sim moves at most step_scale per control step of 50 ms; a real robot must use min(these, manufacturer limits)",
+  "joint_soft_limits": {
+   "lo": [
+    -0.32122,
+    -0.48171,
+    -0.50266,
+    -0.50266,
+    0.03142,
+    0.02793,
+    -1.18333,
+    -0.16755
+   ],
+   "hi": [
+    -0.00656,
+    1.52891,
+    0.50266,
+    0.50266,
+    1.53938,
+    1.36833,
+    0.65973,
+    0.16755
+   ]
+  },
+  "workspace": {
+   "frame": "world (sim)",
+   "min": [
+    0.8387,
+    -0.2368,
+    0.7
+   ],
+   "max": [
+    1.6145,
+    0.5674,
+    1.2
+   ],
+   "note": "box around the held-out target set + margin; on a real robot re-define in the robot base frame around the physical task space"
+  },
+  "watchdog_timeout_ms": 220,
+  "robot_side_watchdog_ms": 500,
+  "max_consecutive_faults": 3,
+  "on_missing_data": "hold_position",
+  "e_stop": {
+   "triggers": [
+    "no spike data within watchdog_timeout_ms",
+    "MEA backend error",
+    "non-finite decoded action",
+    "EE outside workspace",
+    "operator e-stop",
+    "max_consecutive_faults reached -> stop session"
+   ],
+   "action": "hold current joint positions (servo to measured q), stop stimulation",
+   "hardware": "a physical, independent e-stop on the robot is mandatory; software holds are not a substitute"
+  }
+ }
+}

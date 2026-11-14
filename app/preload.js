@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const call = async (chan, ...args) => {
   const r = await ipcRenderer.invoke(chan, ...args);
   if (!r.ok) throw new Error(r.error);
@@ -22,4 +22,21 @@ contextBridge.exposeInMainWorld('lab', {
   onReplaysChanged: (fn) => ipcRenderer.on('replays-changed', () => fn()),
   onRunLog: (fn) => ipcRenderer.on('run-log', (_e, p) => fn(p)),
   onRunDone: (fn) => ipcRenderer.on('run-done', (_e, p) => fn(p)),
+  // BNN Robot Studio (docs/STUDIO_CONTRACT.md)
+  studioList: () => call('studio-list'),
+  studioPickFile: () => call('studio-pick-file'),
+  studioImport: (file, opts) => call('studio-import', file, opts),
+  studioScene: (name) => call('studio-scene', name),
+  studioTrain: (cfg) => call('studio-train', cfg),
+  studioStop: () => call('studio-stop'),
+  studioRuns: () => call('studio-runs'),
+  studioFleetStatus: () => call('studio-fleet-status'),
+  transferTargets: () => call('transfer-targets'),
+  transferExport: (runDir, target) => call('transfer-export', runDir, target),
+  transferRun: (bundle, episodes) => call('transfer-run', bundle, episodes),
+  transferReveal: (p) => call('transfer-reveal', p),
+  studioReplay: (id) => call('studio-replay', id),
+  studioDownload: (id) => call('studio-download', id),
+  onStudioEvent: (fn) => ipcRenderer.on('studio-event', (_e, p) => fn(p)),
+  pathForFile: (file) => { try { return webUtils.getPathForFile(file) || ''; } catch (e) { return ''; } },
 });

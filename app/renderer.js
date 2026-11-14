@@ -8,6 +8,8 @@ import { PARTS, PHYS } from './parts.js';
 import { initFleet } from './fleet.js';
 import { addSimReady, mjPos, mjQuat } from './simready.js';
 import { initSurgical } from './surgical.js';
+import { initStudio } from './studio.js';
+import { gsap } from 'gsap';
 
 const $ = (id) => document.getElementById(id);
 const lab = window.lab;
@@ -15,7 +17,7 @@ const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const QS = new URLSearchParams(location.search);
 const SELFTEST = QS.get('selftest') === '1';
 const START_CAM = ['dish', 'robot', 'overview'].includes(QS.get('camera')) ? QS.get('camera') : 'overview';
-const START_TAB = QS.get('tab') || 'simulate';
+const START_TAB = QS.get('tab') || 'studio';
 const DEFAULT_RUNS = ['culture_teach_s0', 'culture_reservoir_s0'];
 
 // ---------- seeded rng ----------
@@ -756,10 +758,15 @@ const simreadyReady = addSimReady(field, lab).then((r) => { logP('SimReady props
   .catch((e) => { console.warn('SimReady props failed: ' + e.message); return null; });
 
 // ---------- tabs ----------
-let fleetUI = null, surgUI = null;
+let fleetUI = null, surgUI = null, studioUI = null, curTab = null;
 function setTab(name) {
+  if (!document.getElementById('view-' + name)) name = 'studio';
   document.querySelectorAll('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
   document.querySelectorAll('.view').forEach((v) => v.hidden = v.id !== 'view-' + name);
+  if (curTab !== name && !REDUCED && curTab) gsap.fromTo('#view-' + name, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.22, ease: 'power1.out', clearProps: 'opacity,visibility' });
+  curTab = name;
+  if (name === 'studio' && !studioUI) studioUI = initStudio($('view-studio'), lab, { selftest: SELFTEST });
+  if (studioUI) studioUI.setActive(name === 'studio');
   if (name === 'fleet' && !fleetUI) fleetUI = initFleet($('view-fleet'), lab, { conditions: () => [...new Set(['culture_teach', ...runs.map((r) => r.condition)])] });
   if (fleetUI) fleetUI.setActive(name === 'fleet');
   if (name === 'surgical' && !surgUI) surgUI = initSurgical($('view-surgical'), lab, { selftest: SELFTEST });
@@ -800,7 +807,14 @@ function renderHardware() {
     if (QS.get('replay') === '1') { setRoverReplay(true); if (START_TAB === 'surgical' && surgUI) surgUI.startReplay(); }
     if (START_CAM === 'robot') setTimeout(demoTip, 6500);
     const first = DEFAULT_RUNS.find((n) => runs.some((r) => r.name === n)) || (runs[0] && runs[0].name);
+    const demo = QS.get('studiodemo');
+    if (QS.get('studiosec') && studioUI) studioUI.ready().then(() => setTimeout(() => studioUI.focus(QS.get('studiosec')), 2500));
+    if (demo && studioUI) { // screenshot helper: --studio-demo=ROBOT trains that robot locally for a few episodes
+      studioUI.ready().then(async () => { await studioUI.select(demo); await studioUI.whenScene(); const tr = studioUI.train({ platform: 'local', episodes: Number(QS.get('demoeps')) || 4 });
+        if (QS.get('studiodeploy') === '1') { await tr; await new Promise((res) => { const t = setInterval(() => { if (!studioUI.status().running) { clearInterval(t); res(); } }, 300); }); await studioUI.exportAndDryRun('generic'); } });
+    }
     if (!SELFTEST) { if (first) await selectRun(first, true); return; }
+    setTab('simulate');
     for (const r of runs) report.loaded[r.name] = (await selectRun(r.name, false)) && run.trials.length + ' trials, ' + run.spikes.t.length + ' spikes';
     const lines = []; lab.onRunLog((p) => lines.push(p.line));
     const done = new Promise((res) => pending.set('culture_reservoir_s7', res));
@@ -820,7 +834,39 @@ function renderHardware() {
     setTab('surgical'); await new Promise((r) => setTimeout(r, 6000));
     report.surgical = surgUI ? surgUI.status() : null;
     if (surgUI) { surgUI.startReplay(); await new Promise((r) => setTimeout(r, 2500)); report.surgicalReplay = surgUI.status(); }
-    setTab('simulate');
+    // ---- Studio tab: loads, lists robots (or shows the CLI error), renders a scene, rejects bad IPC input ----
+    setTab('studio');
+    report.studio = { tabVisible: !$('view-studio').hidden, steps: document.querySelectorAll('#view-studio .st-steps li').length };
+    await studioUI.ready(); await studioUI.whenScene(90000); await new Promise((r) => setTimeout(r, 1500));
+    Object.assign(report.studio, studioUI.status());
+    const rejects = async (fn) => { try { await fn(); return false; } catch (e) { return e.message; } };
+    report.studio.validation = {
+      badRobot: await rejects(() => lab.studioTrain({ robot: '../evil' })),
+      badEpisodes: await rejects(() => lab.studioTrain({ robot: 'x', episodes: 1e9 })),
+      badScene: await rejects(() => lab.studioScene('a b')),
+      badImport: await rejects(() => lab.studioImport('relative.xml')),
+      badExport: await rejects(() => lab.transferExport('../../Windows', 'generic')),
+      badBundle: await rejects(() => lab.transferRun('C:/Windows')),
+    };
+    const st0 = studioUI.status();
+    if (st0.selected && !st0.listError) {
+      // fleet dry run: never creates VMs, exercises the train -> JSON Lines -> event pipeline
+      const ended = new Promise((res) => { lab.onStudioEvent((o) => { if (o.type === 'exit') res(o); }); setTimeout(() => res({ timeout: true }), 60000); });
+      try { await studioUI.train({ platform: 'fleet', dryRun: true, episodes: 2 }); report.studio.fleetDryRun = await ended; } catch (e) { report.studio.fleetDryRun = { error: e.message }; }
+      report.studio.afterDryRun = studioUI.status();
+      // short real local training on the smallest trainable robot: frames + episodes must stream into the UI
+      const small = ['arm3'].find((n) => st0.robotNames.includes(n));
+      if (small) {
+        await studioUI.select(small); await studioUI.whenScene();
+        const ended2 = new Promise((res) => { lab.onStudioEvent((o) => { if (o.type === 'exit') res(o); }); setTimeout(() => res({ timeout: true }), 90000); });
+        try { await studioUI.train({ platform: 'local', episodes: 3 }); report.studio.localTrain = await ended2; } catch (e) { report.studio.localTrain = { error: e.message }; }
+        await new Promise((r) => setTimeout(r, 1500));
+        report.studio.afterLocalTrain = studioUI.status();
+        // sim-to-real: export the run just trained and replay the bundle closed-loop against the mock MEA
+        try { report.studio.deploy = await studioUI.exportAndDryRun('generic'); } catch (e) { report.studio.deploy = { error: e.message }; }
+        report.studio.afterDeploy = studioUI.status();
+      }
+    }
   } catch (e) { report.errors.push(String(e && e.stack || e)); }
   if (SELFTEST) lab.selftestReport(report);
 })();

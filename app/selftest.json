@@ -1,6 +1,7 @@
 {
   "errors": [],
   "loaded": {
+    "culture_reservoir_s7": "20 trials, 45412 spikes",
     "culture_teach_s0": "280 trials, 651844 spikes",
     "culture_fep_s0": "170 trials, 356895 spikes",
     "culture_reservoir_s0": "170 trials, 329959 spikes"
@@ -9,23 +10,23 @@
     "code": 0,
     "lines": [
       "$ python -m neurorover.record_run --condition culture_reservoir --seed 7 --budget 10 --eval 10",
-      "runs\\culture_reservoir_s7: AUC=0.760000, spikes=45412, stims=517, wall=1.5s"
+      "runs\\culture_reservoir_s7: AUC=0.760000, spikes=45412, stims=517, wall=2.1s"
     ],
     "listed": true
   },
   "playback": {
     "seg": 1,
-    "tSim": 301.64000000000004,
-    "fps": 59.988002399520255,
-    "roverX": -0.05262950021021553,
+    "tSim": 283.34999999999997,
+    "fps": 59.98800239952004,
+    "roverX": -0.05907018382040617,
     "cloth": "spread"
   },
   "fleet": {
     "polls": 3,
-    "vms": 10,
+    "vms": 5,
     "mock": false,
     "serverUp": true,
-    "tiles": 10,
+    "tiles": 5,
     "empty": false
   },
   "hardwareRows": 21,
@@ -33,17 +34,17 @@
     "barrier_fence_metal_a02": 121,
     "food_produce_corn_b01": 3,
     "pallet_a01": 1,
-    "drum_plastic_blue_a01": 2,
     "crate_plywood_b01": 3,
+    "drum_plastic_blue_a01": 2,
     "construction_wheelbarrow_metal_a01": 1,
     "drum_steel_a01": 3
   },
   "roverReplay": {
-    "src": "ppo_bc_s0/trajectory_early.json",
+    "src": "ppo_bc_s0/trajectory_deploy_bc.json",
     "demo": false,
-    "steps": 600,
-    "k": 49.668,
-    "x": -2.3629
+    "steps": 359,
+    "k": 19.329999999999988,
+    "x": -2.4746
   },
   "surgical": {
     "bodies": 47,
@@ -64,13 +65,162 @@
     "loaded": 47,
     "err": null,
     "tip": [
-      1.1809,
-      0.0634,
-      1.0312
+      1.1851,
+      0.0666,
+      1.0225
     ],
     "replay": "surgical/results/trajectory.json",
-    "step": 50,
+    "step": 49,
     "playing": true,
-    "tipErrMm": 2.7723557870432174
+    "tipErrMm": 2.399242961664748
+  },
+  "studio": {
+    "tabVisible": true,
+    "steps": 6,
+    "active": true,
+    "robots": 4,
+    "robotNames": [
+      "surgical_reach",
+      "rover",
+      "arm3",
+      "surgical_cart"
+    ],
+    "listError": null,
+    "selected": "surgical_reach",
+    "sceneBodies": 49,
+    "sceneGeoms": 50,
+    "sceneError": null,
+    "step": 2,
+    "running": false,
+    "events": 0,
+    "frames": 0,
+    "episodes": 0,
+    "done": false,
+    "jobs": 0,
+    "runs": 14,
+    "targets": 4,
+    "targetsError": null,
+    "bundle": null,
+    "mode": null,
+    "runsError": null,
+    "lastError": null,
+    "fps": 60,
+    "validation": {
+      "badRobot": "bad robot name",
+      "badEpisodes": "episodes must be an integer in [1, 1000]",
+      "badScene": "bad robot name",
+      "badImport": "import needs an absolute file path",
+      "badExport": "run directory must be inside user_runs",
+      "badBundle": "bundle must be inside user_runs"
+    },
+    "fleetDryRun": {
+      "type": "exit",
+      "code": 0,
+      "stopped": false
+    },
+    "afterDryRun": {
+      "active": true,
+      "robots": 4,
+      "robotNames": [
+        "surgical_reach",
+        "rover",
+        "arm3",
+        "surgical_cart"
+      ],
+      "listError": null,
+      "selected": "surgical_reach",
+      "sceneBodies": 49,
+      "sceneGeoms": 50,
+      "sceneError": null,
+      "step": 5,
+      "running": false,
+      "events": 4,
+      "frames": 0,
+      "episodes": 0,
+      "done": true,
+      "jobs": 4,
+      "runs": 14,
+      "targets": 4,
+      "targetsError": null,
+      "bundle": null,
+      "mode": "train",
+      "runsError": null,
+      "lastError": null,
+      "fps": 60
+    },
+    "localTrain": {
+      "type": "exit",
+      "code": 0,
+      "stopped": false
+    },
+    "afterLocalTrain": {
+      "active": true,
+      "robots": 4,
+      "robotNames": [
+        "surgical_reach",
+        "rover",
+        "arm3",
+        "surgical_cart"
+      ],
+      "listError": null,
+      "selected": "arm3",
+      "sceneBodies": 7,
+      "sceneGeoms": 10,
+      "sceneError": null,
+      "step": 5,
+      "running": false,
+      "events": 82,
+      "frames": 67,
+      "episodes": 3,
+      "done": true,
+      "jobs": 0,
+      "runs": 24,
+      "targets": 4,
+      "targetsError": null,
+      "bundle": null,
+      "mode": "train",
+      "runsError": null,
+      "lastError": null,
+      "fps": 60
+    },
+    "deploy": {
+      "exported": true,
+      "files": 11,
+      "exit": {
+        "type": "exit",
+        "code": 0,
+        "stopped": false
+      }
+    },
+    "afterDeploy": {
+      "active": true,
+      "robots": 4,
+      "robotNames": [
+        "surgical_reach",
+        "rover",
+        "arm3",
+        "surgical_cart"
+      ],
+      "listError": null,
+      "selected": "arm3",
+      "sceneBodies": 7,
+      "sceneGeoms": 10,
+      "sceneError": null,
+      "step": 6,
+      "running": false,
+      "events": 260,
+      "frames": 234,
+      "episodes": 3,
+      "done": true,
+      "jobs": 0,
+      "runs": 24,
+      "targets": 4,
+      "targetsError": null,
+      "bundle": "user_runs/arm3_teach_s0_20261114-1439/export/generic",
+      "mode": "deploy",
+      "runsError": null,
+      "lastError": null,
+      "fps": 58
+    }
   }
 }

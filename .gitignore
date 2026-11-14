@@ -32,3 +32,8 @@ sweep/jobs_files.txt
 sweep/jobs_state.txt
 sweep/collected/
 sweep/jobscripts/
+
+# Studio local data (generated per machine)
+user_runs/
+user_robots/
+surgical/results/export/*/sessions/

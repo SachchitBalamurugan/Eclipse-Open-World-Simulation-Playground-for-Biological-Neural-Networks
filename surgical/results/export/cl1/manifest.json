@@ -1,0 +1,313 @@
+{
+ "schema_version": "bnn-transfer/1.0",
+ "biology_of_source": "simulated",
+ "created": "2026-11-14T14:37:48",
+ "source_run": {
+  "run_id": "surgical_reach_teach_legacy",
+  "kind": "surgical_legacy",
+  "path": "surgical/results"
+ },
+ "robot": {
+  "name": "surgical_reach",
+  "ee": "tip",
+  "sim": {
+   "kind": "surgical_env",
+   "env": "surgical.reach_env:SurgicalReachEnv",
+   "model": "surgical/model/cart.xml",
+   "base_body": "handBase_01",
+   "ee": "tip",
+   "dynamics": "MuJoCo position servos, 25 x 2 ms physics substeps per action"
+  },
+  "n_joints": 8
+ },
+ "task": {
+  "name": "reach",
+  "success_radius_mm": 10.0,
+  "steps_per_episode": 80,
+  "definition": "move the end effector to a target point; success = within success radius for consecutive steps"
+ },
+ "observation_space": {
+  "ee_error_base_m": {
+   "size": 3,
+   "unit": "m",
+   "order": [
+    "x",
+    "y",
+    "z"
+   ],
+   "frame": "robot base body (handBase_01)",
+   "definition": "target - EE position, rotated into the base frame",
+   "encoding": "electrodes err+x..err-z, threshold_count (encoder.json)"
+  },
+  "joint_pos_norm01": {
+   "size": 8,
+   "unit": "fraction of joint range",
+   "definition": "(q - lo) / (hi - lo)",
+   "joints": [
+    "joint_slider_01_joint_00",
+    "joint_junction_01_joint_00",
+    "joint_elbowBig_01_joint_00",
+    "joint_elbowSmall_01_joint_00",
+    "joint_elbowLong_01_joint_00",
+    "joint_elbowMiddle_01_joint_00",
+    "joint_elbowShort_01_joint_00",
+    "joint_mechanism_01_joint_00"
+   ],
+   "encoding": "electrodes ctx:k, round_scale (encoder.json)"
+  }
+ },
+ "action_space": {
+  "type": "joint position delta",
+  "range": [
+   -1,
+   1
+  ],
+  "definition": "a_f = 0.5 a_f + 0.5 a; q_ref += a_f * step_scale (per control step); q_ref clipped to range; position servo tracks q_ref",
+  "joints": [
+   {
+    "index": 0,
+    "name": "joint_slider_01_joint_00",
+    "type": "slide",
+    "unit": "m",
+    "range": [
+     -0.327776,
+     0.0
+    ],
+    "step_scale": 0.006
+   },
+   {
+    "index": 1,
+    "name": "joint_junction_01_joint_00",
+    "type": "hinge",
+    "unit": "rad",
+    "range": [
+     -0.523599,
+     1.5708
+    ],
+    "step_scale": 0.03
+   },
+   {
+    "index": 2,
+    "name": "joint_elbowBig_01_joint_00",
+    "type": "hinge",
+    "unit": "rad",
+    "range": [
+     -0.523599,
+     0.523599
+    ],
+    "step_scale": 0.03
+   },
+   {
+    "index": 3,
+    "name": "joint_elbowSmall_01_joint_00",
+    "type": "hinge",
+    "unit": "rad",
+    "range": [
+     -0.523599,
+     0.523599
+    ],
+    "step_scale": 0.03
+   },
+   {
+    "index": 4,
+    "name": "joint_elbowLong_01_joint_00",
+    "type": "hinge",
+    "unit": "rad",
+    "range": [
+     0.0,
+     1.5708
+    ],
+    "step_scale": 0.03
+   },
+   {
+    "index": 5,
+    "name": "joint_elbowMiddle_01_joint_00",
+    "type": "hinge",
+    "unit": "rad",
+    "range": [
+     0.0,
+     1.39626
+    ],
+    "step_scale": 0.03
+   },
+   {
+    "index": 6,
+    "name": "joint_elbowShort_01_joint_00",
+    "type": "hinge",
+    "unit": "rad",
+    "range": [
+     -1.22173,
+     0.698132
+    ],
+    "step_scale": 0.03
+   },
+   {
+    "index": 7,
+    "name": "joint_mechanism_01_joint_00",
+    "type": "hinge",
+    "unit": "rad",
+    "range": [
+     -0.174533,
+     0.174533
+    ],
+    "step_scale": 0.03
+   }
+  ]
+ },
+ "electrodes": {
+  "target": "cl1",
+  "count_total": 64,
+  "count_logical": 64,
+  "layout": "64 channels (cl.ChannelSet indices 0-63); common MEA layout is column-major (channel = column*8 + row), i.e. the transpose of the sim grid -- distances are preserved",
+  "pitch_um": 200.0,
+  "electrode_diameter_um": 30.0,
+  "roles": {
+   "sensory": 14,
+   "motor": 16,
+   "reward": 0,
+   "feedback": 0
+  },
+  "remapped_for_target": [
+   {
+    "role": "sensory",
+    "name": "err+x",
+    "from_sim_channel": 0,
+    "to_sim_channel": 16,
+    "reason": "ground",
+    "from_electrode": 0,
+    "to_electrode": 16
+   },
+   {
+    "role": "sensory",
+    "name": "err+z",
+    "from_sim_channel": 4,
+    "to_sim_channel": 20,
+    "reason": "reference",
+    "from_electrode": 4,
+    "to_electrode": 20
+   },
+   {
+    "role": "sensory",
+    "name": "ctx:1",
+    "from_sim_channel": 7,
+    "to_sim_channel": 15,
+    "reason": "ground",
+    "from_electrode": 7,
+    "to_electrode": 15
+   }
+  ],
+  "map_file": "electrode_map.csv"
+ },
+ "timing": {
+  "culture_resolution_ms": 1,
+  "stim_window_ms": 40,
+  "pulse_spacing_ms": 10,
+  "response_window_ms": 50,
+  "trial_ms": 60,
+  "teach_ms": 85,
+  "robot_control_dt_s": 0.05,
+  "loop_rate_hz": {
+   "inference_only": 16.67,
+   "with_teaching": 6.9
+  },
+  "max_end_to_end_latency_ms": 20,
+  "notes": "One control step = one culture trial. In simulation the robot is paused while the culture computes; on hardware use step-and-hold (robot holds q_ref during the trial and executes one control_dt step per decoded action). Spike-to-action latency adds to the loop period; keep it below max_end_to_end_latency_ms."
+ },
+ "target": {
+  "id": "cl1",
+  "name": "Cortical Labs CL1 / Cortical Cloud (cl API)",
+  "vendor": "Cortical Labs",
+  "status": "sdk-sim-tested",
+  "n_electrodes": 64,
+  "pitch_um": 200.0,
+  "electrode_diameter_um": 30.0,
+  "layout": "64 channels (cl.ChannelSet indices 0-63); common MEA layout is column-major (channel = column*8 + row), i.e. the transpose of the sim grid -- distances are preserved",
+  "max_stim_electrodes": null,
+  "limits": {
+   "max_amplitude": 3.0,
+   "amplitude_unit": "uA",
+   "max_total_charge_nC": 3.0,
+   "max_charge_per_phase_nC": 1.0,
+   "phase_width_step_us": 20,
+   "max_burst_hz": 200,
+   "min_lead_time_us": 80,
+   "source": "cl-sdk 1.0.0 StimDesign/BurstDesign constraints"
+  },
+  "sdk": "cl (Cortical Labs SDK; `pip install cl-sdk` provides the simulator, hardware via CL1/Cloud)",
+  "unavailable": {
+   "0": "ground",
+   "7": "ground",
+   "56": "ground",
+   "63": "ground",
+   "4": "reference"
+  }
+ },
+ "provenance": {
+  "culture_model": "neurorover.culture.core.Culture: Izhikevich RS/FS (80/20), 1024 neurons, 16 per electrode, 1 ms steps, distance-dependent recurrent synapses + plastic sensory->motor projection",
+  "culture_pickle": {
+   "path": "surgical/results/culture_teach.pkl",
+   "sha256": "7c78664977f86e48b362210fd0a1f1289989b5194b9f0797982fb6fcd0b07105"
+  },
+  "rule": "teach",
+  "lr": 0.08,
+  "seed": 0,
+  "episodes": 30,
+  "training_summary": {
+   "success_rate": 0.0,
+   "median_final_err_mm": 223.51537642423148,
+   "episodes": 30,
+   "eval_targets": 50
+  },
+  "config": {
+   "source": "surgical/results/culture_teach.pkl",
+   "trainer": "surgical/train_culture.py"
+  },
+  "exporter": "bnn_platform.transfer (bnn-transfer/1.0)"
+ },
+ "sim_reference": {
+  "episode": "held-out target 0 (seed 999)",
+  "teach": false,
+  "spontaneous_ms": 5000,
+  "robot_safety_limits": false,
+  "note": "sim-faithful: identical actions to the original sim controller (verified); the runtime's robot soft limits are off for this recording only",
+  "n_spikes": 110344,
+  "n_stims": 1250,
+  "duration_ms": 9800,
+  "success": false,
+  "final_err_mm": 201.94,
+  "median_err_mm": 81.4,
+  "steps": 80,
+  "held_steps": 0
+ },
+ "transferable": [
+  "electrode roles and layout",
+  "observation->stimulation encoding",
+  "timing",
+  "paired-stimulation training schedule",
+  "safety limits",
+  "decoder STRUCTURE (weights only as an initial guess)",
+  "simulated reference activity for comparison"
+ ],
+ "not_transferable": [
+  "synaptic weights / connectivity of the simulated culture",
+  "the trained performance itself -- a living culture starts untrained",
+  "stimulation amplitudes in physical units (sim has none; set by calibration)"
+ ],
+ "warnings": [
+  "simulated weights are not transferable; run calibration on the living culture first",
+  "stimulation parameters are conservative defaults: must be validated against vendor/lab limits"
+ ],
+ "files": [
+  "manifest.json",
+  "electrode_map.csv",
+  "encoder.json",
+  "decoder.json",
+  "training_protocol.json",
+  "stim_schedule.csv",
+  "calibration_protocol.json",
+  "safety.json",
+  "README.md",
+  "sim_reference.npz",
+  "sim_reference_README.md"
+ ]
+}

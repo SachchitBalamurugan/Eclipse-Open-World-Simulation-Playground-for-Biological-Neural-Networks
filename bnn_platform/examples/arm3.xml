@@ -1,0 +1,47 @@
+<!-- arm3: a simple 4-DoF arm (base yaw, shoulder, elbow, wrist pitch) standing on a floor.
+     No actuators on purpose: `studio import` adds position actuators to every hinge/slide joint. -->
+<mujoco model="arm3">
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81"/>
+  <default>
+    <joint damping="0.5" armature="0.01"/>
+    <geom contype="1" conaffinity="1" density="800"/>
+  </default>
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" width="256" height="256" rgb1="0.18 0.2 0.24" rgb2="0.24 0.26 0.3"/>
+    <material name="floor" texture="grid" texrepeat="8 8" rgba="0.22 0.24 0.28 1"/>
+  </asset>
+  <worldbody>
+    <light pos="0 0 3" dir="0 0 -1"/>
+    <geom name="floor" type="plane" size="2 2 0.05" material="floor"/>
+    <body name="base" pos="0 0 0">
+      <geom name="pedestal" type="cylinder" size="0.09 0.05" pos="0 0 0.05" rgba="0.25 0.27 0.32 1"/>
+      <body name="turret" pos="0 0 0.1">
+        <joint name="yaw" type="hinge" axis="0 0 1" range="-2.6 2.6"/>
+        <geom name="turret_g" type="cylinder" size="0.07 0.04" pos="0 0 0.04" rgba="0.95 0.55 0.15 1"/>
+        <body name="upper_arm" pos="0 0 0.1">
+          <joint name="shoulder" type="hinge" axis="0 1 0" range="-1.2 1.4"/>
+          <geom name="shoulder_g" type="sphere" size="0.055" rgba="0.3 0.32 0.38 1"/>
+          <geom name="upper_g" type="capsule" fromto="0 0 0 0 0 0.32" size="0.04" rgba="0.92 0.93 0.95 1"/>
+          <body name="forearm" pos="0 0 0.32">
+            <joint name="elbow" type="hinge" axis="0 1 0" range="-2.2 2.2"/>
+            <geom name="elbow_g" type="sphere" size="0.048" rgba="0.3 0.32 0.38 1"/>
+            <geom name="fore_g" type="capsule" fromto="0 0 0 0 0 0.26" size="0.034" rgba="0.92 0.93 0.95 1"/>
+            <body name="hand" pos="0 0 0.26">
+              <joint name="wrist" type="hinge" axis="0 1 0" range="-1.8 1.8"/>
+              <geom name="wrist_g" type="sphere" size="0.038" rgba="0.3 0.32 0.38 1"/>
+              <geom name="hand_g" type="box" size="0.025 0.035 0.05" pos="0 0 0.06" rgba="0.95 0.55 0.15 1"/>
+              <body name="tip" pos="0 0 0.12">
+                <geom name="tip_g" type="sphere" size="0.018" rgba="0.2 0.8 1 1" contype="0" conaffinity="0"/>
+                <site name="tip_site" size="0.01" rgba="1 0.2 0.2 1"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <keyframe>
+    <key name="home" qpos="0 0.5 0.9 0.4"/>
+  </keyframe>
+</mujoco>

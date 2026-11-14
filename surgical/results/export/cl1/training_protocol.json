@@ -1,0 +1,89 @@
+{
+ "schema_version": "bnn-transfer/1.0",
+ "rule": "teach",
+ "rule_trained_in_sim": "teach",
+ "summary": "After every control step, replay the error-encoding pattern and pair it with stimulation of the motor pool that WOULD have moved each joint the right way (pro-pool 3 ms after the sensory volley: pre->post, potentiation under STDP) and of the opposite pool 3 ms before it (post->pre, depression). Sensory->motor STDP is the only plasticity the simulation models.",
+ "biological_basis": "spike-timing-dependent plasticity in dissociated cortical cultures is induced by paired/tetanic electrical stimulation (e.g. Jimbo et al. 1999; Bi & Poo 1998 for the STDP window). Whether this exact 3 ms pairing potentiates the targeted pathway in a given culture is an empirical question -- measure it (see controls).",
+ "teacher": {
+  "definition": "dq* = J(q)^T (target - EE) / step_scale, J = EE position Jacobian of the controlled joints (Jacobian-transpose direction, in action units)",
+  "real_robot": "computed from the robot's URDF and measured joint state; no culture involved"
+ },
+ "teach": {
+  "enabled": true,
+  "after": "every control step (when teaching)",
+  "block_ms": 85,
+  "volleys": 4,
+  "volley_start_ms": 10,
+  "volley_period_ms": 20,
+  "pre_post_ms": 3,
+  "select_frac": 0.15,
+  "sensory": "error electrodes whose step level > volley index",
+  "pro_pool": "joint k: motor+ if dq*_k > 0 else motor-, for |dq*_k| >= select_frac * max|dq*|",
+  "anti_pool": "the other pool of each selected joint",
+  "amplitude": "encoder.waveform.teach_amplitude"
+ },
+ "feedback": {
+  "enabled": false,
+  "note": "not used by the simulated 'teach' rule. Optional DishBrain-style alternative if paired stimulation does not shape the culture: predictable stimulation after success, unpredictable (random electrodes/timing) after failure (Kagan et al. 2022). Electrodes: any unused, stimulation-responsive electrodes.",
+  "electrodes": [],
+  "predictable": {
+   "rate_hz": 100,
+   "duration_ms": 100
+  },
+  "unpredictable": {
+   "rate_hz": 5,
+   "duration_ms": 4000
+  }
+ },
+ "session_plan": {
+  "prerequisites": [
+   "culture mature enough for network activity (typically >= 14-21 DIV for rodent cortical cultures; per your lab's protocol)",
+   "calibration_protocol.json completed in the same session",
+   "robot in a safe workspace (or use the simulated robot)"
+  ],
+  "blocks": [
+   {
+    "name": "pre-test",
+    "episodes": 10,
+    "teach": false
+   },
+   {
+    "name": "training",
+    "episodes": 30,
+    "teach": true,
+    "interleave": "every 10 training episodes run 5 test episodes with teach off"
+   },
+   {
+    "name": "post-test",
+    "episodes": 10,
+    "teach": false
+   },
+   {
+    "name": "rest",
+    "minutes": 30
+   }
+  ],
+  "targets": "held-out targets for tests, distinct from training targets"
+ },
+ "controls": [
+  "sham: identical session with teach stimulation replaced by the same pulses at shuffled times (breaks the pre->post order)",
+  "decoder-only: decoder refit on stimulation patterns alone (no culture) -- the culture must beat it",
+  "no-culture / dead-culture well with identical electrodes",
+  "spontaneous drift: pre/post baseline recordings without stimulation"
+ ],
+ "success_metrics": [
+  "test-episode success rate and final error vs pre-test and sham",
+  "change in evoked sensory->motor responses (compare calibration probe maps before vs after; and with decoder.json sim_reference_io)"
+ ],
+ "sim_training": {
+  "episodes": 30,
+  "lr": 0.08,
+  "rule": "teach",
+  "summary": {
+   "success_rate": 0.0,
+   "median_final_err_mm": 223.51537642423148,
+   "episodes": 30,
+   "eval_targets": 50
+  }
+ }
+}
