@@ -1,0 +1,168 @@
+R s0: real25:0.598 real50:0.681 (19.2s)
+R s1: real25:0.606 real50:0.699 (19.7s)
+R s2: real25:0.521 real50:0.533 (19.6s)
+I s0: imag:0.736 imag+real25:0.769 imag+real50:0.742 (45.0s)
+I s1: imag:0.761 imag+real25:0.799 imag+real50:0.802 (46.3s)
+R s3: real25:0.505 real50:0.515 (20.3s)
+I s2: imag:0.639 imag+real25:0.636 imag+real50:0.686 (49.2s)
+R s4: real25:0.549 real50:0.594 (21.4s)
+I s3: imag:0.514 imag+real25:0.516 imag+real50:0.573 (54.9s)
+I s4: imag:0.638 imag+real25:0.628 imag+real50:0.649 (48.6s)
+R s5: real25:0.467 real50:0.472 (22.2s)
+R s6: real25:0.521 real50:0.611 (22.3s)
+I s5: imag:0.548 imag+real25:0.589 imag+real50:0.553 (53.9s)
+R s7: real25:0.698 real50:0.732 (28.3s)
+I s6: imag:0.621 imag+real25:0.636 imag+real50:0.670 (66.5s)
+I s7: imag:0.785 imag+real25:0.767 imag+real50:0.806 (69.1s)
+# Imagination experiment: world-model pre-training for the simulated culture
+
+Everything here is a SIMULATED culture (Izhikevich network), not wetware. The world model is fitted on the
+train split only; all AUCs are on the real fixed 300-row eval set (150 freeze / 150 no-freeze) from the
+validation split. Nothing was tuned on the eval set; this is the first and only configuration run.
+
+## 1. World model (per-station 2-harmonic climatology + pooled VAR(1) on tmin/tmax anomalies, Gaussian residuals)
+
+Fitted on 99024 station-days reconstructed from the lag3/lag4/lag7 features of 31 stations (train split). A = [[0.6456, 0.1097], [-0.0068, 0.7049]].
+
+RMSE on the validation split (deg C, tmin / tmax):
+
+| horizon | pairs | world model | persistence | climatology |
+|---|---|---|---|---|
+| 1-step | 32884 | 2.27 / 2.62 | 2.51 / 2.80 | 3.35 / 3.89 |
+| 3-step | 32408 | 3.06 / 3.60 | 3.75 / 4.38 | 3.35 / 3.87 |
+
+Freeze base rate: real train 0.059, real validation 0.043, imagined (20000 nights, train station/date distribution) 0.056.
+
+## 2. AUC on the real eval set (mean +/- s.e.m. over 8 seeds: [0, 1, 2, 3, 4, 5, 6, 7])
+
+| regime | culture_teach | logistic (levels) |
+|---|---|---|
+| 25 real | 0.558 +/- 0.026 | 0.849 +/- 0.011 |
+| 150 imagined + 25 real | 0.668 +/- 0.035 | 0.870 +/- 0.003 |
+| 50 real | 0.605 +/- 0.033 | 0.866 +/- 0.011 |
+| 150 imagined + 50 real | 0.685 +/- 0.034 | 0.876 +/- 0.002 |
+| 150 imagined only | 0.655 +/- 0.035 | 0.861 +/- 0.004 |
+
+Paired differences across seeds (mean [95% bootstrap CI, 10000 resamples over seeds]):
+
+| contrast | culture_teach dAUC | logistic dAUC |
+|---|---|---|
+| (150 imagined + 25 real) - (25 real) | +0.109 [+0.071, +0.147] | +0.021 [+0.003, +0.041] |
+| (150 imagined + 50 real) - (50 real) | +0.081 [+0.062, +0.104] | +0.009 [-0.007, +0.032] |
+| (150 imagined only) - (25 real) | +0.097 [+0.066, +0.124] | +0.012 [-0.007, +0.033] |
+| (150 imagined only) - (50 real) | +0.051 [+0.028, +0.072] | -0.005 [-0.020, +0.014] |
+
+## 3. Season reward in FrostWorld (3 real validation seasons x 60 nights; reward -1 per deploy, -10 per unprotected freeze)
+
+Seasons: USW00093209 from 2016-12-01, USW00093227 from 2017-12-01, USW00053119 from 2018-12-01 (the three coldest stations by train freeze rate; freeze nights per season [23, 14, 7]).
+The culture acts on the sign of its decode score (DEPLOY if deploy-pool spikes > hold-pool spikes); no cost-aware threshold was fitted.
+
+| policy | mean season reward | deploys / season | damaged nights / season |
+|---|---|---|---|
+| always_hold | -146.7 | 0.0 | 14.7 |
+| always_deploy | -60.0 | 60.0 | 0.0 |
+| tmin_lag3 < 2 C (thr fit on train) | -71.7 | 28.3 | 4.3 |
+| culture_teach, 25 real | -95.417 +/- 10.337 | 31.7 | 6.4 |
+| culture_teach, 150 imagined + 25 real | -95.375 +/- 13.396 | 33.7 | 6.2 |
+| culture_teach, 50 real | -97.917 +/- 12.644 | 32.9 | 6.5 |
+| culture_teach, 150 imagined + 50 real | -94.625 +/- 13.368 | 33.8 | 6.1 |
+| culture_teach, 150 imagined only | -96.125 +/- 12.533 | 32.8 | 6.3 |
+
+Paired season-reward differences (culture_teach):
+
+- (150 imagined + 25 real) - (25 real): +0.042 [-13.750, +12.583]
+- (150 imagined + 50 real) - (50 real): +3.292 [-7.667, +15.417]
+
+## 4. Did imagination help?
+
+- culture_teach, 150 imagined + 25 real vs 25 real: dAUC +0.109 [+0.071, +0.147] -> HELPED (CI excludes 0).
+- culture_teach, 150 imagined + 50 real vs 50 real: dAUC +0.081 [+0.062, +0.104] -> HELPED (CI excludes 0).
+
+## 5. Caveats
+
+- 8 seeds; bootstrap CIs over 8 paired values are rough and somewhat too narrow.
+- The imagination arm sees 150 more teaching trials in total, so any gain confounds 'imagined data' with 'more trials';
+  the fair reading is 'imagined trials are free, real labelled nights are not'.
+- The world model is linear-Gaussian and fitted on series reconstructed from lag features (Oct-Apr station-days only);
+  it has no cloud/wind/humidity, so imagined freezes are just cold-tail draws of a VAR(1).
+- Imagined rows reuse the empirical train (station, date) distribution; only the weather is generated.
+- Season rewards: 3 seasons at cold stations where always-DEPLOY is near-optimal under the -1/-10 costs; the culture's
+  action threshold is uncalibrated, so season reward mostly reflects its deploy bias, not its ranking skill.
+- 'Real' seasons are consecutive available validation rows (near-daily, occasional gaps).
+
+# Imagination experiment: world-model pre-training for the simulated culture
+
+Everything here is a SIMULATED culture (Izhikevich network), not wetware. The world model is fitted on the
+train split only; all AUCs are on the real fixed 300-row eval set (150 freeze / 150 no-freeze) from the
+validation split. Nothing was tuned on the eval set; this is the first and only configuration run.
+
+## 1. World model (per-station 2-harmonic climatology + pooled VAR(1) on tmin/tmax anomalies, Gaussian residuals)
+
+Fitted on 99024 station-days reconstructed from the lag3/lag4/lag7 features of 31 stations (train split). A = [[0.6456, 0.1097], [-0.0068, 0.7049]].
+
+RMSE on the validation split (deg C, tmin / tmax):
+
+| horizon | pairs | world model | persistence | climatology |
+|---|---|---|---|---|
+| 1-step | 32884 | 2.27 / 2.62 | 2.51 / 2.80 | 3.35 / 3.89 |
+| 3-step | 32408 | 3.06 / 3.60 | 3.75 / 4.38 | 3.35 / 3.87 |
+
+Freeze base rate: real train 0.059, real validation 0.043, imagined (20000 nights, train station/date distribution) 0.056.
+
+## 2. AUC on the real eval set (mean +/- s.e.m. over 8 seeds: [0, 1, 2, 3, 4, 5, 6, 7])
+
+| regime | culture_teach | logistic (levels) |
+|---|---|---|
+| 25 real | 0.558 +/- 0.026 | 0.849 +/- 0.011 |
+| 150 imagined + 25 real | 0.668 +/- 0.035 | 0.870 +/- 0.003 |
+| 50 real | 0.605 +/- 0.033 | 0.866 +/- 0.011 |
+| 150 imagined + 50 real | 0.685 +/- 0.034 | 0.876 +/- 0.002 |
+| 150 imagined only | 0.655 +/- 0.035 | 0.861 +/- 0.004 |
+
+Paired differences across seeds (mean [95% bootstrap CI, 10000 resamples over seeds]):
+
+| contrast | culture_teach dAUC | logistic dAUC |
+|---|---|---|
+| (150 imagined + 25 real) - (25 real) | +0.109 [+0.071, +0.147] | +0.021 [+0.003, +0.041] |
+| (150 imagined + 50 real) - (50 real) | +0.081 [+0.062, +0.104] | +0.009 [-0.007, +0.032] |
+| (150 imagined only) - (25 real) | +0.097 [+0.066, +0.124] | +0.012 [-0.007, +0.033] |
+| (150 imagined only) - (50 real) | +0.051 [+0.028, +0.072] | -0.005 [-0.020, +0.014] |
+
+## 3. Season reward in FrostWorld (3 real validation seasons x 60 nights; reward -1 per deploy, -10 per unprotected freeze)
+
+Seasons: USW00093209 from 2016-12-01, USW00093227 from 2017-12-01, USW00053119 from 2018-12-01 (the three coldest stations by train freeze rate; freeze nights per season [23, 14, 7]).
+The culture acts on the sign of its decode score (DEPLOY if deploy-pool spikes > hold-pool spikes); no cost-aware threshold was fitted.
+
+| policy | mean season reward | deploys / season | damaged nights / season |
+|---|---|---|---|
+| always_hold | -146.7 | 0.0 | 14.7 |
+| always_deploy | -60.0 | 60.0 | 0.0 |
+| tmin_lag3 < 2 C (thr fit on train) | -71.7 | 28.3 | 4.3 |
+| culture_teach, 25 real | -95.417 +/- 10.337 | 31.7 | 6.4 |
+| culture_teach, 150 imagined + 25 real | -95.375 +/- 13.396 | 33.7 | 6.2 |
+| culture_teach, 50 real | -97.917 +/- 12.644 | 32.9 | 6.5 |
+| culture_teach, 150 imagined + 50 real | -94.625 +/- 13.368 | 33.8 | 6.1 |
+| culture_teach, 150 imagined only | -96.125 +/- 12.533 | 32.8 | 6.3 |
+
+Paired season-reward differences (culture_teach):
+
+- (150 imagined + 25 real) - (25 real): +0.042 [-13.750, +12.583]
+- (150 imagined + 50 real) - (50 real): +3.292 [-7.667, +15.417]
+
+## 4. Did imagination help?
+
+- culture_teach, 150 imagined + 25 real vs 25 real: dAUC +0.109 [+0.071, +0.147] -> HELPED (CI excludes 0).
+- culture_teach, 150 imagined + 50 real vs 50 real: dAUC +0.081 [+0.062, +0.104] -> HELPED (CI excludes 0).
+
+## 5. Caveats
+
+- 8 seeds; bootstrap CIs over 8 paired values are rough and somewhat too narrow.
+- The imagination arm sees 150 more teaching trials in total, so any gain confounds 'imagined data' with 'more trials';
+  the fair reading is 'imagined trials are free, real labelled nights are not'.
+- The world model is linear-Gaussian and fitted on series reconstructed from lag features (Oct-Apr station-days only);
+  it has no cloud/wind/humidity, so imagined freezes are just cold-tail draws of a VAR(1).
+- Imagined rows reuse the empirical train (station, date) distribution; only the weather is generated.
+- Season rewards: 3 seasons at cold stations where always-DEPLOY is near-optimal under the -1/-10 costs; the culture's
+  action threshold is uncalibrated, so season reward mostly reflects its deploy bias, not its ranking skill.
+- 'Real' seasons are consecutive available validation rows (near-daily, occasional gaps).
+
