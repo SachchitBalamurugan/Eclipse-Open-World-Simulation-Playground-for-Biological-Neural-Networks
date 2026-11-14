@@ -43,12 +43,18 @@ Three background agents were still writing when this was pushed. Each folder may
    - `vm_train.sh` for Freestyle seeds
 
    To finish: check `sim/runs/<run>/progress.csv` shows improvement and that `eval.json` and the video exist. Then add a short README section with the eval table.
-2. **`assets/simready/`: NVIDIA SimReady props for the field** (fences, wheelbarrow, drums, crates; CC-BY-4.0).
-   - SimReady assets ship their own MuJoCo payload (`payloads/MuJoCo/enabled.usda`).
-   - Plan: convert to `assets/simready/mjcf/props.xml` (includable by `sim/assets/rover.xml`), GLBs for the app, and `ATTRIBUTION.md`.
-   - Hugging Face downloads were flaky (connection resets).
-
-   To finish: run `assets/simready/mjcf/scene_test.xml` and confirm a box rests on a crate. Include `props.xml` in the rover scene, then credit SimReady in README.md.
+2. **`assets/simready/`: DONE.** Seven NVIDIA SimReady props (CC-BY-4.0, revision 7879e0e5; see `assets/simready/ATTRIBUTION.md`) are converted to MuJoCo with `assets/simready/usd_to_mjcf.py`. The official MuJoCo USD import doesn't work on the Windows wheel ("could not find decoder").
+   - Scene: `assets/simready/mjcf/props.xml` lays out 121 fence panels at |x|,|y| = 15 with a gate at y = -15, a yard with a wheelbarrow, drums and a pallet, and crates at x = -11.5. The centre (|x|,|y| < 9) is clear.
+   - Verified: no NaNs, and a dropped box rests on a crate (`scene_test.png`).
+   - GLBs for the app are in `assets/simready/glb/`.
+   - Lost in conversion: textures/materials, joints inside assets, per-asset friction. Raw USD downloads (`assets/simready/hf/`) are gitignored.
+   - To finish: include it in the rover scene with `<include file="../assets/simready/mjcf/props.xml"/>`, index by body name (18 props have freejoints), and load the GLBs in the app's field scene.
+4. **`neurorover/envdata/`: real-world environment data (in progress).**
+   - Joins Open-Meteo hourly archive weather (CC BY 4.0; wind, gusts, dew point, humidity, cloud, rain, soil moisture and temperature) to the 35 NOAA stations and dates in the freeze data.
+   - Adds a soil-probe noise model from the KU Leuven DRIP data in the resources repo.
+   - `EnvGenerator` samples realistic correlated nights and seasons, fitted on 2000-2014 and validated on 2015-2019. It also gives physical effects for the sim: friction from soil moisture, wind load on the cover, sensor noise.
+   - Plus a no-leakage test of whether these covariates improve frost prediction.
+   - To finish: check `neurorover/envdata/README.md` and `results/validation.json`, then wire `EnvGenerator` into `sim/night_loop.py`.
 3. **`surgical/`: NVIDIA SimReady `robotic_system_a01` surgical robot** (four arms, 47 bodies, 40 revolute + 6 prismatic joints, CC-BY-4.0).
    - The source zip is in the user's Downloads, extracted to `assets/surgical/` (gitignored, 624 MB).
    - Plan:
