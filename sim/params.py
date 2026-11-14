@@ -78,7 +78,7 @@ ENC_NOISE = 0.3                 # rad/s  EST encoder quantisation + noise at 20 
 SIM_DT = 0.005                  # s      EST (DUCK uses 0.002 for a biped; wheels are stiffer-tolerant)
 CTRL_DT = 0.05                  # s      EST 20 Hz control on the Pi 5 (DUCK uses 50 Hz)
 FILTER_CUTOFF_HZ = 4.0          # Hz     EST first-order low-pass on actions (DUCK LowPassActionFilter idea)
-EPISODE_S = 25.0                # s      task time limit
+EPISODE_S = 30.0                # s      task time limit
 
 # ------------------------------------------------------------------ domain randomisation (per episode)
 DR = dict(

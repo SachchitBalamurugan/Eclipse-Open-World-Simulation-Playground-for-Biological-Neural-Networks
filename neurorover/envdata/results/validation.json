@@ -1,0 +1,333 @@
+{
+ "fit": {
+  "train_years": [
+   2000,
+   2014
+  ],
+  "n_analog_nights": 3932,
+  "n_stations": 30,
+  "analog_seasons_per_station_median": 1.0
+ },
+ "heldout": {
+  "years": [
+   2015,
+   2019
+  ],
+  "n_real_nights": 2000,
+  "n_generated": 2000,
+  "tmin_source_generated": "WorldModel.rollout (train-only VAR), not the real tmin"
+ },
+ "ks": {
+  "air_tmin_c": {
+   "ks_stat": 0.099,
+   "real_mean": 7.191,
+   "gen_mean": 6.758,
+   "real_sd": 3.713,
+   "gen_sd": 4.12
+  },
+  "tdmin_night_c": {
+   "ks_stat": 0.169,
+   "real_mean": 3.65,
+   "gen_mean": 5.352,
+   "real_sd": 5.243,
+   "gen_sd": 3.65
+  },
+  "rh_mean_night_pct": {
+   "ks_stat": 0.217,
+   "real_mean": 74.751,
+   "gen_mean": 83.425,
+   "real_sd": 19.198,
+   "gen_sd": 12.341
+  },
+  "wind_max_kmh": {
+   "ks_stat": 0.257,
+   "real_mean": 13.55,
+   "gen_mean": 11.043,
+   "real_sd": 6.285,
+   "gen_sd": 5.271
+  },
+  "gust_max_kmh": {
+   "ks_stat": 0.0265,
+   "real_mean": 27.258,
+   "gen_mean": 26.918,
+   "real_sd": 14.254,
+   "gen_sd": 13.552
+  },
+  "wind_mean_kmh": {
+   "ks_stat": 0.1735,
+   "real_mean": 8.638,
+   "gen_mean": 7.195,
+   "real_sd": 4.554,
+   "gen_sd": 3.749
+  },
+  "cloud_mean_pct": {
+   "ks_stat": 0.211,
+   "real_mean": 47.209,
+   "gen_mean": 62.907,
+   "real_sd": 36.284,
+   "gen_sd": 31.818
+  },
+  "precip_24h_mm": {
+   "ks_stat": 0.072,
+   "real_mean": 2.643,
+   "gen_mean": 3.419,
+   "real_sd": 6.603,
+   "gen_sd": 7.198
+  },
+  "soil_moist_06_m3m3": {
+   "ks_stat": 0.278,
+   "real_mean": 0.252,
+   "gen_mean": 0.301,
+   "real_sd": 0.134,
+   "gen_sd": 0.103
+  },
+  "soil_temp_06_c": {
+   "ks_stat": 0.189,
+   "real_mean": 9.703,
+   "gen_mean": 8.43,
+   "real_sd": 3.439,
+   "gen_sd": 3.125
+  }
+ },
+ "correlations_spearman": {
+  "air_tmin_c~cloud_mean_pct": {
+   "real_pooled": 0.239,
+   "gen_pooled": 0.205,
+   "real_within_station": 0.259,
+   "gen_within_station": 0.17
+  },
+  "air_tmin_c~wind_mean_kmh": {
+   "real_pooled": 0.169,
+   "gen_pooled": 0.225,
+   "real_within_station": 0.122,
+   "gen_within_station": 0.213
+  },
+  "air_tmin_c~tdmin_night_c": {
+   "real_pooled": 0.603,
+   "gen_pooled": 0.727,
+   "real_within_station": 0.652,
+   "gen_within_station": 0.734
+  },
+  "soil_moist_06_m3m3~precip_24h_mm": {
+   "real_pooled": 0.632,
+   "gen_pooled": 0.646,
+   "real_within_station": 0.675,
+   "gen_within_station": 0.635
+  },
+  "cloud_mean_pct~precip_24h_mm": {
+   "real_pooled": 0.527,
+   "gen_pooled": 0.515,
+   "real_within_station": 0.508,
+   "gen_within_station": 0.486
+  },
+  "air_tmin_c~soil_temp_06_c": {
+   "real_pooled": 0.786,
+   "gen_pooled": 0.835,
+   "real_within_station": 0.871,
+   "gen_within_station": 0.862
+  }
+ },
+ "freeze_frequency": {
+  "overall_real": 0.024,
+  "overall_gen": 0.046,
+  "per_station_pearson_r": 0.3684,
+  "per_station_mae": 0.0427,
+  "per_station": {
+   "USW00023110": [
+    0.095,
+    0.048
+   ],
+   "USW00023155": [
+    0.01,
+    0.05
+   ],
+   "USW00023213": [
+    0.12,
+    0.133
+   ],
+   "USW00023230": [
+    0.0,
+    0.012
+   ],
+   "USW00023232": [
+    0.0,
+    0.073
+   ],
+   "USW00023233": [
+    0.0,
+    0.011
+   ],
+   "USW00023234": [
+    0.0,
+    0.0
+   ],
+   "USW00023237": [
+    0.0,
+    0.065
+   ],
+   "USW00023244": [
+    0.0,
+    0.0
+   ],
+   "USW00023254": [
+    0.0,
+    0.042
+   ],
+   "USW00023257": [
+    0.081,
+    0.061
+   ],
+   "USW00023258": [
+    0.06,
+    0.012
+   ],
+   "USW00023259": [
+    0.0,
+    0.0
+   ],
+   "USW00023271": [
+    0.0,
+    0.013
+   ],
+   "USW00023272": [
+    0.0,
+    0.0
+   ],
+   "USW00023277": [
+    0.011,
+    0.022
+   ],
+   "USW00023285": [
+    0.049,
+    0.098
+   ],
+   "USW00023293": [
+    0.0,
+    0.01
+   ],
+   "USW00024216": [
+    0.011,
+    0.078
+   ],
+   "USW00024257": [
+    0.1,
+    0.033
+   ],
+   "USW00053119": [
+    0.0,
+    0.172
+   ],
+   "USW00093193": [
+    0.0,
+    0.083
+   ],
+   "USW00093206": [
+    0.0,
+    0.034
+   ],
+   "USW00093209": [
+    0.12,
+    0.12
+   ],
+   "USW00093210": [
+    0.0,
+    0.0
+   ],
+   "USW00093225": [
+    0.036,
+    0.071
+   ],
+   "USW00093227": [
+    0.043,
+    0.217
+   ],
+   "USW00093228": [
+    0.0,
+    0.0
+   ],
+   "USW00093241": [
+    0.0,
+    0.087
+   ],
+   "USW00093242": [
+    0.036,
+    0.143
+   ]
+  }
+ },
+ "persistence_lag1_autocorr": {
+  "soil_moist_06_m3m3": {
+   "real": 0.895,
+   "gen": 0.665
+  },
+  "cloud_mean_pct": {
+   "real": 0.486,
+   "gen": 0.365
+  },
+  "air_tmin_c": {
+   "real": 0.727,
+   "gen": 0.586
+  }
+ },
+ "physics_generated_summary": {
+  "ground_friction_mu": {
+   "p5": 0.507,
+   "median": 0.562,
+   "p95": 0.638
+  },
+  "cover_force_gust_N": {
+   "p5": 4.11,
+   "median": 14.905,
+   "p95": 85.569
+  },
+  "leaf_minus_air_c": {
+   "p5": -1.71,
+   "median": -1.065,
+   "p95": -0.48
+  }
+ },
+ "soil_probe_model": {
+  "A": {
+   "sensor = a*true + b": [
+    0.77,
+    0.018
+   ],
+   "device_offset_sd": 0.0,
+   "noise_sd": 0.0222
+  },
+  "L": {
+   "sensor = a*true + b": [
+    0.816,
+    -0.005
+   ],
+   "device_offset_sd": 0.0158,
+   "noise_sd": 0.0212
+  },
+  "P": {
+   "sensor = a*true + b": [
+    0.556,
+    0.062
+   ],
+   "device_offset_sd": 0.013,
+   "noise_sd": 0.025
+  },
+  "S": {
+   "sensor = a*true + b": [
+    0.651,
+    0.041
+   ],
+   "device_offset_sd": 0.008,
+   "noise_sd": 0.0294
+  },
+  "Z": {
+   "sensor = a*true + b": [
+    0.736,
+    0.031
+   ],
+   "device_offset_sd": 0.0252,
+   "noise_sd": 0.0203
+  },
+  "train_resid_sd": 0.0299,
+  "validation_resid_sd": 0.0379
+ }
+}

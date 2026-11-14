@@ -1,0 +1,4 @@
+t=250000  1.7 min  train R -86.6 succ 0.00 | heldout succ 0.00 E 1098 J crop 0.13
+t=500000  3.3 min  train R -59.1 succ 0.00 | heldout succ 0.00 E 1148 J crop 0.03
+t=750000  5.2 min  train R -43.9 succ 0.00 | heldout succ 0.00 E 1092 J crop 0.17
+t=1000000  7.8 min  train R -29.9 succ 0.00 | heldout succ 0.00 E 1036 J crop 0.03

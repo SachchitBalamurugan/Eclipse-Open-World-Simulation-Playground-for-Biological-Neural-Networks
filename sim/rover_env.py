@@ -24,6 +24,7 @@ from . import params as P
 from .build_model import (HF_NCOL, HF_NROW, HF_POS, HF_SIZE, ROW_HALF_W, ROW_H, ROW_X0, ROW_X1, ROW_YS)
 
 XML = pathlib.Path(__file__).resolve().parent / "assets" / "rover.xml"
+XML_PROPS = pathlib.Path(__file__).resolve().parent / "assets" / "rover_props.xml"   # + SimReady props (render/eval only)
 LANE_OFFSET = 0.65          # m, rover centre to row centre so the boom tip sits over the row
 N_SUB = int(round(P.CTRL_DT / P.SIM_DT))
 MAX_STEPS = int(P.EPISODE_S / P.CTRL_DT)
@@ -45,8 +46,8 @@ def wrap(a):
 class FrostRoverEnv(gym.Env):
     metadata = {"render_modes": ["rgb_array"], "render_fps": int(1 / P.CTRL_DT)}
 
-    def __init__(self, randomize: bool = True, render_mode: str | None = None):
-        self.m = mujoco.MjModel.from_xml_path(str(XML))
+    def __init__(self, randomize: bool = True, render_mode: str | None = None, props: bool = False):
+        self.m = mujoco.MjModel.from_xml_path(str(XML_PROPS if props else XML))
         self.d = mujoco.MjData(self.m)
         self.randomize = randomize
         self.render_mode = render_mode
@@ -54,6 +55,8 @@ class FrostRoverEnv(gym.Env):
         self.action_space = gym.spaces.Box(-1.0, 1.0, (3,), np.float32)
         m = self.m
         self.cid = m.body("chassis").id
+        self.rq = m.joint("root").qposadr[0]   # index by name: SimReady props add free joints
+        self.rv = m.joint("root").dofadr[0]
         self.bat_id = m.body("chassis").id
         self.base = dict(mass=m.body_mass.copy(), inertia=m.body_inertia.copy(), ipos=m.body_ipos.copy(),
                          fric=m.geom_friction.copy(), gain=m.actuator_gainprm.copy(), bias=m.actuator_biasprm.copy())
@@ -85,7 +88,8 @@ class FrostRoverEnv(gym.Env):
             kx, ky = rng.uniform(2, 8, 2) * rng.choice([-1, 1], 2)
             h += np.sin(kx * xx + ky * yy + rng.uniform(0, 2 * np.pi))
         h = (h - h.min()) / (np.ptp(h) + 1e-9) * amp
-        self.m.hfield_data[:] = (h / HF_SIZE[2]).ravel().astype(np.float32)
+        hid = self.m.hfield('terrain').id; a = self.m.hfield_adr[hid]
+        self.m.hfield_data[a:a + h.size] = (h / HF_SIZE[2]).ravel().astype(np.float32)
         self._hf = h
 
     def ground_z(self, x, y):
@@ -93,7 +97,7 @@ class FrostRoverEnv(gym.Env):
         j = int(np.clip((x - HF_POS[0] + HF_SIZE[0]) / (2 * HF_SIZE[0]) * (HF_NCOL - 1), 0, HF_NCOL - 1))
         return float(self._hf[i, j])
 
-    def _apply_dr(self, rng):
+    def _apply_dr(self, rng, override=None):
         m, b = self.m, self.base
         m.body_mass[:] = b["mass"]; m.body_inertia[:] = b["inertia"]; m.body_ipos[:] = b["ipos"]
         m.geom_friction[:] = b["fric"]; m.actuator_gainprm[:] = b["gain"]; m.actuator_biasprm[:] = b["bias"]
@@ -109,6 +113,8 @@ class FrostRoverEnv(gym.Env):
                            act_delay=int(rng.integers(R["act_delay"][0], R["act_delay"][1] + 1)),
                            terrain=u("terrain"), wind=u("wind"), gnss_sigma=float(rng.uniform(*P.GNSS_NOISE)),
                            com=rng.uniform(*R["com_shift"], 3) * np.array([1, 1, 0.3]))
+        if override:   # e.g. real-data nightly conditions from neurorover.envdata (wind, soil friction, noise)
+            self.dr.update({k: v for k, v in override.items() if k in self.dr})
         dr = self.dr
         for gid in [self.ground_geom] + self.tyre_geom:
             m.geom_friction[gid, 0] = dr["friction"]
@@ -123,14 +129,14 @@ class FrostRoverEnv(gym.Env):
         m.actuator_biasprm[:4, 2] = b["bias"][:4, 2] * dr["motor"]
         self._terrain(rng, dr["terrain"])
         if self.renderer is not None:
-            mujoco.mjr_uploadHField(self.m, self.renderer._mjr_context, 0)
+            mujoco.mjr_uploadHField(self.m, self.renderer._mjr_context, self.m.hfield('terrain').id)
 
     # ------------------------------------------------------------------ gym API
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         rng = self.np_random
         options = options or {}
-        self._apply_dr(rng)
+        self._apply_dr(rng, options.get("dr_override"))
         mujoco.mj_resetData(self.m, self.d)
         self.deploy = bool(options["deploy"]) if "deploy" in options else bool(rng.random() < 0.5)
         self.row = int(options.get("row", rng.integers(len(ROW_YS))))
@@ -140,11 +146,16 @@ class FrostRoverEnv(gym.Env):
         self.goal_yaw = 0.0
         sx, sy = rng.uniform(-3.0, -0.5), rng.uniform(-3.6, 3.6)
         syaw = rng.uniform(-math.pi, math.pi)
+        if not options.get("full_task", False) and rng.random() < 0.5:
+            # training curriculum: 50% of episodes start in the lane or near its entry, roughly lined up
+            sx = rng.uniform(-1.2, gx - 1.0)
+            sy = self.goal[1] + (rng.uniform(-0.3, 0.3) if sx < ROW_X0 - 0.3 else rng.uniform(-0.08, 0.08))
+            syaw = rng.uniform(-0.6, 0.6)
         if "start" in options:
             sx, sy, syaw = options["start"]
         z = self.ground_z(sx, sy) + P.WHEEL_RADIUS + 0.03
-        self.d.qpos[:3] = [sx, sy, z]
-        self.d.qpos[3:7] = [math.cos(syaw / 2), 0, 0, math.sin(syaw / 2)]
+        self.d.qpos[self.rq:self.rq + 3] = [sx, sy, z]
+        self.d.qpos[self.rq + 3:self.rq + 7] = [math.cos(syaw / 2), 0, 0, math.sin(syaw / 2)]
         self.d.mocap_pos[self.station_mocap] = [gx, self.goal[1], self.ground_z(gx, self.goal[1]) + 0.005]
         mujoco.mj_forward(self.m, self.d)
         for _ in range(20):  # settle on the terrain
@@ -159,17 +170,23 @@ class FrostRoverEnv(gym.Env):
         self.hold = 0
         self.success = False
         self.t_goal = None
-        self.dist_prev = self._true_state()["dist"]
+        self.dist_prev = self._true_state()["path"]
         o = self._obs_now()
         self.obs_q = collections.deque([o] * (self.dr["obs_delay"] + 1), maxlen=self.dr["obs_delay"] + 1)
         return self.obs_q[0].astype(np.float32), {"deploy": self.deploy, "dr": {k: v for k, v in self.dr.items() if k != "com"}}
 
     def _true_state(self):
-        x, y = self.d.qpos[0], self.d.qpos[1]
-        yaw = yaw_of(self.d.qpos[3:7])
+        x, y = self.d.qpos[self.rq], self.d.qpos[self.rq + 1]
+        yaw = yaw_of(self.d.qpos[self.rq + 3:self.rq + 7])
         dist = float(np.hypot(self.goal[0] - x, self.goal[1] - y))
-        return dict(x=x, y=y, yaw=yaw, dist=dist, herr=wrap(self.goal_yaw - yaw),
-                    speed=float(np.hypot(*self.d.qvel[:2])))
+        # path ("geodesic") distance: outside the lane, go via the lane-entry point in the headland
+        if abs(y - self.goal[1]) < 0.15 and x < self.goal[0] + 0.5:
+            path = dist
+        else:
+            ex, ey = ROW_X0 - 0.6, self.goal[1]
+            path = float(np.hypot(ex - x, ey - y) + np.hypot(self.goal[0] - ex, 0))
+        return dict(path=path, x=x, y=y, yaw=yaw, dist=dist, herr=wrap(self.goal_yaw - yaw),
+                    speed=float(np.hypot(*self.d.qvel[self.rv:self.rv + 2])))
 
     def sensors(self):
         """Noisy sensor readings (what the Pi would see). Shared by the PPO obs and the baseline controller."""
@@ -268,13 +285,13 @@ class FrostRoverEnv(gym.Env):
         ext = boom / BOOM_MAX
 
         dist = st["dist"]
-        rew = 4.0 * (self.dist_prev - dist)
-        self.dist_prev = dist
+        rew = 10.0 * (self.dist_prev - st["path"])
+        self.dist_prev = st["path"]
         near = math.exp(-dist / 0.5)
         rew += 0.3 * math.cos(st["herr"]) * near
-        rew -= 0.002 * e_mot
+        rew -= 0.001 * e_mot
         rew -= 0.05 * float(np.sum((action - self.a_prev) ** 2))
-        rew -= 1.0 * on_crops
+        rew -= 0.5 * on_crops
         rew -= 0.01
         rew -= 0.2 * st["speed"] * near * (dist < 0.3)
         if self.deploy:
@@ -290,7 +307,7 @@ class FrostRoverEnv(gym.Env):
         ok = aligned and ((not self.deploy and ext < 0.1) or (self.deploy and ext > 0.85 and cov >= 0.5))
         self.hold = self.hold + 1 if ok else 0
         terminated = False
-        if self.hold >= 10:
+        if self.hold >= 5:
             self.success = True
             terminated = True
             rew += 20.0 + (10.0 * cov if self.deploy else 0.0)
@@ -316,8 +333,8 @@ class FrostRoverEnv(gym.Env):
     # ------------------------------------------------------------------ rendering / export
     def render(self, camera=None):
         if self.renderer is None:
-            self.renderer = mujoco.Renderer(self.m, 540, 960)
-            mujoco.mjr_uploadHField(self.m, self.renderer._mjr_context, 0)
+            self.renderer = mujoco.Renderer(self.m, 544, 960)
+            mujoco.mjr_uploadHField(self.m, self.renderer._mjr_context, self.m.hfield('terrain').id)
         cam = camera or self._chase_cam()
         self.renderer.update_scene(self.d, camera=cam)
         return self.renderer.render()
@@ -325,7 +342,7 @@ class FrostRoverEnv(gym.Env):
     def _chase_cam(self):
         cam = mujoco.MjvCamera()
         cam.type = mujoco.mjtCamera.mjCAMERA_FREE
-        x, y = self.d.qpos[0], self.d.qpos[1]
+        x, y = self.d.qpos[self.rq], self.d.qpos[self.rq + 1]
         cam.lookat[:] = [(x + self.goal[0]) / 2 * 0.6 + x * 0.4, (y + self.goal[1]) / 2, 0.3]
         cam.distance = 5.5
         cam.azimuth = -60

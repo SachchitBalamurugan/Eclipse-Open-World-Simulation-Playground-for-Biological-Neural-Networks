@@ -34,7 +34,7 @@ def run_policy_episodes(policy_fn, seeds, options_fn=None, randomize=True):
     env = FrostRoverEnv(randomize=randomize)
     out = []
     for s in seeds:
-        opts = options_fn(s) if options_fn else {"deploy": bool(s % 2)}
+        opts = options_fn(s) if options_fn else {"deploy": bool(s % 2), "full_task": True}
         o, _ = env.reset(seed=s, options=opts)
         done = False
         R = 0.0
@@ -55,6 +55,42 @@ def ppo_policy_fn(model, vecnorm):
     return f
 
 
+def bc_warm_start(model, venv, n_eps, seed, out):
+    """Imitation warm start (cf. Open Duck's imitation reward, here as behaviour cloning): roll out the hand-written
+    controller in the randomised env, keep successful episodes, fit the PPO actor mean by MSE, and seed the
+    VecNormalize observation statistics from the demo data."""
+    import torch
+    from .controller import PController
+    from .rover_env import FrostRoverEnv
+    env = FrostRoverEnv(randomize=True); ctrl = PController()
+    O, A, n_ok = [], [], 0
+    for e in range(n_eps):
+        o, _ = env.reset(seed=700_000 + seed * 10_000 + e); ctrl.reset(); done = False; eo, ea = [], []
+        while not done:
+            a = ctrl(o); eo.append(o); ea.append(a)
+            o, r, te, tr, info = env.step(a); done = te or tr
+        if info["episode_metrics"]["success"]:
+            O += eo; A += ea; n_ok += 1
+    O, A = np.array(O, np.float64), np.clip(np.array(A, np.float32), -1, 1)
+    print(f"BC: {n_ok}/{n_eps} successful controller episodes, {len(O)} samples", flush=True)
+    venv.obs_rms.mean = O.mean(0); venv.obs_rms.var = O.var(0) + 1e-6; venv.obs_rms.count = len(O)
+    X = torch.tensor(np.clip((O - O.mean(0)) / np.sqrt(O.var(0) + 1e-6 + 1e-8), -10, 10), dtype=torch.float32)
+    Y = torch.tensor(A)
+    pol = model.policy
+    opt = torch.optim.Adam(list(pol.mlp_extractor.policy_net.parameters()) + list(pol.action_net.parameters()), lr=1e-3)
+    for ep in range(30):
+        perm = torch.randperm(len(X))
+        for i in range(0, len(X), 512):
+            idx = perm[i:i + 512]
+            lat = pol.mlp_extractor.forward_actor(pol.extract_features(X[idx], pol.pi_features_extractor))
+            loss = ((pol.action_net(lat) - Y[idx]) ** 2).mean()
+            opt.zero_grad(); loss.backward(); opt.step()
+    with torch.no_grad():
+        pol.log_std.fill_(-1.2)
+    print(f"BC: final MSE {loss.item():.4f}", flush=True)
+    (out / "bc.json").write_text(json.dumps({"episodes": n_eps, "successful": n_ok, "samples": len(O), "mse": loss.item()}))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", default="ppo_s0")
@@ -64,6 +100,7 @@ def main():
     ap.add_argument("--envs", type=int, default=5)
     ap.add_argument("--eval-every", type=int, default=300_000)
     ap.add_argument("--threads", type=int, default=1)
+    ap.add_argument("--bc", type=int, default=0, help="warm-start: behaviour-clone N controller episodes first")
     args = ap.parse_args()
 
     import torch
@@ -85,6 +122,8 @@ def main():
     (out / "hparams.json").write_text(json.dumps({**hp, "policy_kwargs": str(hp["policy_kwargs"]), "n_envs": args.envs,
                                                   "seed": args.seed}, indent=1))
     model = PPO("MlpPolicy", venv, seed=args.seed, verbose=0, device="cpu", **hp)
+    if args.bc:
+        bc_warm_start(model, venv, args.bc, args.seed, out)
 
     class Logger(BaseCallback):
         def __init__(self):

@@ -1,0 +1,14 @@
+BC: 75/120 successful controller episodes, 20061 samples
+BC: final MSE 0.0263
+t=250000  2.0 min  train R 19.4 succ 0.38 | heldout succ 0.10 E 1613 J crop 0.47
+t=500000  4.2 min  train R 1.1 succ 0.46 | heldout succ 0.23 E 1393 J crop 0.77
+t=750000  6.5 min  train R 14.4 succ 0.48 | heldout succ 0.10 E 1315 J crop 0.60
+t=1000000  8.5 min  train R 35.5 succ 0.63 | heldout succ 0.47 E 1234 J crop 0.50
+t=1250000  10.4 min  train R 49.7 succ 0.75 | heldout succ 0.73 E 1176 J crop 0.50
+t=1500000  12.2 min  train R 61.8 succ 0.87 | heldout succ 0.63 E 1167 J crop 0.43
+t=1750000  13.9 min  train R 74.9 succ 0.79 | heldout succ 0.63 E 1243 J crop 0.37
+t=2000000  15.5 min  train R 70.6 succ 0.75 | heldout succ 0.60 E 1186 J crop 0.43
+t=2250000  17.1 min  train R 73.5 succ 0.73 | heldout succ 0.73 E 1148 J crop 0.37
+t=2500000  18.7 min  train R 91.5 succ 0.69 | heldout succ 0.77 E 1153 J crop 0.37
+wall budget reached
+t=2734290  20.1 min  train R 92.0 succ 0.68 | heldout succ 0.80 E 1135 J crop 0.33

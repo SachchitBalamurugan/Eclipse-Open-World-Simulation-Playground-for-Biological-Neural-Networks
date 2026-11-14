@@ -1,0 +1,51 @@
+{
+ "n_freeze_rows_labelled": 128271,
+ "n_joined_labelled": 82852,
+ "n_joined_cases": 3606,
+ "n_stations_joined": 31,
+ "tmin_night_c": {
+  "agreement_threshold_0C": 0.9618,
+  "freeze_recall": 0.2608,
+  "freeze_precision": 0.7399,
+  "best_threshold_c": 0.5,
+  "agreement_best_threshold": 0.9625,
+  "base_rate_target": 0.0459,
+  "archive_freeze_rate": 0.0162
+ },
+ "tmin_calday_c": {
+  "agreement_threshold_0C": 0.9618,
+  "freeze_recall": 0.2627,
+  "freeze_precision": 0.7353,
+  "best_threshold_c": 0.5,
+  "agreement_best_threshold": 0.9623,
+  "base_rate_target": 0.0459,
+  "archive_freeze_rate": 0.0164
+ },
+ "archive_calday_tmin_vs_station_lag_features": {
+  "tmin_lag3": {
+   "pearson_r": 0.8458,
+   "mean_bias_archive_minus_station_c": 0.947,
+   "n": 82852
+  },
+  "tmin_lag4": {
+   "pearson_r": 0.8468,
+   "mean_bias_archive_minus_station_c": 0.953,
+   "n": 82852
+  },
+  "tmin_lag7": {
+   "pearson_r": 0.8504,
+   "mean_bias_archive_minus_station_c": 0.974,
+   "n": 82852
+  }
+ },
+ "per_station_agreement_night_0C": {
+  "min": 0.897,
+  "median": 0.966,
+  "max": 1.0,
+  "worst3": {
+   "USW00093209": 0.897,
+   "USW00093227": 0.899,
+   "USW00023110": 0.913
+  }
+ }
+}

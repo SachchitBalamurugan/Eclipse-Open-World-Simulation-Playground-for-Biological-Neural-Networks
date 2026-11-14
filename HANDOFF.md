@@ -103,3 +103,14 @@ python -m venv .venv && .venv/Scripts/pip install cl-sdk==1.0.0 numpy matplotlib
 .venv/Scripts/python -u fleet/server.py                  # http://localhost:8770
 cd app && npm install && npm start                       # 3D desktop app
 ```
+
+## Update 2026-11-14 ~14:30 PT (end of session)
+
+- **Rover RL sim (`sim/`):** its agent died from a network/TLS error before finishing.
+  - Local run `sim/runs/ppo_bc_s0` (PPO warm-started with `--bc 120` behaviour cloning) reached 80% held-out success (10% at start, 20 min). Plain PPO (`ppo_s0`) stayed at 0%.
+  - Still missing: `python -m sim.eval --run ppo_bc_s0`, `python -m sim.render --run ppo_bc_s0`, `python -m sim.night_loop --run ppo_bc_s0`, and a README section.
+  - The code builds and steps locally (checked).
+- **VM rover seeds failed.** `sim/vm_train.sh` sets `MUJOCO_GL=egl`, and Freestyle VMs have no libEGL, so `import mujoco` crashes. Fix: leave `MUJOCO_GL` unset on VMs, pass `--bc 120`, and skip render on VMs. The VMs also had an older copy of the code without `--bc`, so rebuild the payload (`bash sweep/run_jobs.sh launch ...` rebuilds it).
+- **Surgical learning-rate sweep:** ran on 4 VMs and was collected before teardown, partway through training (about episode 100-150 of 150). Curves are in `surgical/results/vm_lr_sweep/curve_teach_lr*.json`. At lr 0.05 median error is about 150-165 mm with 0% success. Add all four curves to `surgical/REPORT.md` without picking a winner.
+- **Environment data (`neurorover/envdata/`):** its agent hadn't reported when this was written. Check the folder for README/results before claiming anything.
+- **All Freestyle VMs deleted (confirmed 0).**

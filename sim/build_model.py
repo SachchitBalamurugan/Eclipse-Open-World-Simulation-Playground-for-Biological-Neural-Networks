@@ -67,7 +67,7 @@ def build() -> str:
   <compiler angle="degree" autolimits="true"/>
   <option timestep="{P.SIM_DT}" integrator="implicitfast" cone="pyramidal"/>
   <visual>
-    <global offwidth="960" offheight="540"/>
+    <global offwidth="960" offheight="544"/>
     <quality shadowsize="2048"/>
     <headlight ambient="0.35 0.35 0.4" diffuse="0.5 0.5 0.5"/>
   </visual>
@@ -139,8 +139,22 @@ def build() -> str:
 """
 
 
+def build_props(xml: str) -> str:
+    """Same rover/field plus the NVIDIA SimReady props (fence, yard, crates; another agent's assets/simready/).
+    Adds a ground plane (props.xml has none) under the heightfield so props outside the field rest on something."""
+    inc = '  <include file="../../assets/simready/mjcf/props.xml"/>\n'
+    xml = xml.replace("<worldbody>", '<worldbody>\n    <geom name="outer_ground" type="plane" size="20 20 0.1" pos="0 0 -0.002" '
+                      'rgba="0.25 0.2 0.14 1" contype="1" conaffinity="1"/>', 1)
+    return xml.replace("  <worldbody>", inc + "  <worldbody>", 1)
+
+
 if __name__ == "__main__":
-    OUT.write_text(build())
+    xml = build()
+    OUT.write_text(xml)
+    props_src = pathlib.Path(__file__).resolve().parents[1] / "assets" / "simready" / "mjcf" / "props.xml"
+    if props_src.exists():
+        (OUT.parent / "rover_props.xml").write_text(build_props(xml))
+        print("wrote rover_props.xml (SimReady props included)")
     import mujoco
     m = mujoco.MjModel.from_xml_path(str(OUT))
     d = mujoco.MjData(m)

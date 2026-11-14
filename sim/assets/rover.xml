@@ -3,7 +3,7 @@
   <compiler angle="degree" autolimits="true"/>
   <option timestep="0.005" integrator="implicitfast" cone="pyramidal"/>
   <visual>
-    <global offwidth="960" offheight="540"/>
+    <global offwidth="960" offheight="544"/>
     <quality shadowsize="2048"/>
     <headlight ambient="0.35 0.35 0.4" diffuse="0.5 0.5 0.5"/>
   </visual>
