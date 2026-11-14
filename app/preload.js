@@ -28,7 +28,7 @@ contextBridge.exposeInMainWorld('lab', {
   studioImport: (file, opts) => call('studio-import', file, opts),
   studioScene: (name) => call('studio-scene', name),
   studioTrain: (cfg) => call('studio-train', cfg),
-  studioStop: () => call('studio-stop'),
+  studioStop: (slot) => call('studio-stop', slot),
   studioRuns: () => call('studio-runs'),
   studioFleetStatus: () => call('studio-fleet-status'),
   transferTargets: () => call('transfer-targets'),
@@ -37,6 +37,9 @@ contextBridge.exposeInMainWorld('lab', {
   transferReveal: (p) => call('transfer-reveal', p),
   studioReplay: (id) => call('studio-replay', id),
   studioDownload: (id) => call('studio-download', id),
+  studioPack: (id) => call('studio-pack', id),
+  studioDemoTeardown: () => call('studio-demo-teardown'),
+  demoQuit: () => call('demo-quit'),
   onStudioEvent: (fn) => ipcRenderer.on('studio-event', (_e, p) => fn(p)),
   pathForFile: (file) => { try { return webUtils.getPathForFile(file) || ''; } catch (e) { return ''; } },
 });

@@ -382,7 +382,11 @@ handle('fleet-popout', fleetPopout);
 // User strings only ever reach Python as separate argv entries (no shell), after validation.
 const ROBOT_RE = /^[a-z0-9_]{1,40}$/;
 const PY_ENV = () => Object.assign({}, process.env, { PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' });
-let studioChild = null;
+let studioChild = null; // the 'main' slot (local train / replay / transfer run)
+let fleetLaunch = null;  // the 'fleet' slot: fleet launches run beside a replay
+const DEMO = process.argv.includes('--demo');
+const DEMO_TITLE = 'BNN Robot Studio Demo';
+const demoVms = new Set(); // VMs created by fleet launches in this session (demo teardown only touches these)
 function lastJson(text) {
   const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i--) { if (lines[i][0] !== '{') continue; try { return JSON.parse(lines[i]); } catch (e) {} }
@@ -431,7 +435,6 @@ async function studioScene(name) {
 function intIn(v, lo, hi, what) { const n = Number(v); if (!Number.isInteger(n) || n < lo || n > hi) throw new Error(what + ' must be an integer in [' + lo + ', ' + hi + ']'); return n; }
 function studioTrain(cfg) {
   cfg = cfg || {};
-  if (studioChild) throw new Error('a training run is already active - stop it first');
   const robot = String(cfg.robot || '');
   if (!ROBOT_RE.test(robot)) throw new Error('bad robot name');
   const task = cfg.task || 'reach'; if (!['reach'].includes(task)) throw new Error('unknown task');
@@ -447,13 +450,20 @@ function studioTrain(cfg) {
     '--episodes', String(episodes), '--lr', String(lr), '--neurons', String(neurons), '--electrodes', String(electrodes),
     '--rule', rule, '--seed', String(seed)];
   if (platform === 'fleet') { args.push('--vms', String(vms)); if (cfg.dryRun) args.push('--dry-run'); }
-  return spawnStream(args, 'training');
+  const slot = platform === 'fleet' ? 'fleet' : 'main';
+  if (slot === 'main' ? studioChild : fleetLaunch) throw new Error('a ' + (slot === 'fleet' ? 'fleet launch' : 'run') + ' is already active - stop it first');
+  return spawnStream(args, 'training', slot);
 }
 // spawn a JSON-Lines producing python command; forward each stdout line as a studio-event (partial lines buffered)
-function spawnStream(args, what) {
+function spawnStream(args, what, slot) {
+  slot = slot || 'main';
   const child = spawn(pythonExe(), args, { cwd: REPO, windowsHide: true, env: PY_ENV() });
-  studioChild = child; children.add(child);
-  const ev = (o) => send('studio-event', o);
+  if (slot === 'fleet') fleetLaunch = child; else studioChild = child;
+  children.add(child);
+  const ev = (o) => {
+    if (o.type === 'fleet' && Array.isArray(o.jobs) && !o.dry_run) for (const j of o.jobs) if (j && typeof j.vm === 'string' && /^bnn-/.test(String(j.slug || ''))) demoVms.add(j.vm);
+    send('studio-event', Object.assign(o, { slot }));
+  };
   ev({ type: 'log', level: 'sys', message: '$ python ' + args.slice(1).join(' ') });
   let sawEnd = false, buf = '', ebuf = '';
   const onLine = (line) => {
@@ -470,8 +480,9 @@ function spawnStream(args, what) {
     for (const line of parts) if (line.trim()) ev({ type: 'log', level: 'err', message: line });
   });
   const finish = (code, err) => {
-    if (studioChild !== child) return;
-    studioChild = null; children.delete(child);
+    if (slot === 'fleet') { if (fleetLaunch !== child) return; fleetLaunch = null; }
+    else { if (studioChild !== child) return; studioChild = null; }
+    children.delete(child);
     if (buf.trim()) onLine(buf);
     if (ebuf.trim()) ev({ type: 'log', level: 'err', message: ebuf });
     if (err) ev({ type: 'error', message: String(err.message || err) });
@@ -487,9 +498,10 @@ function killTree(child) {
   if (process.platform === 'win32') execFile('taskkill', ['/pid', String(child.pid), '/t', '/f'], { windowsHide: true }, () => {});
   else { try { child.kill('SIGTERM'); } catch (e) {} }
 }
-function studioStop() {
-  if (!studioChild) return { stopped: false };
-  studioChild.killedByUser = true; killTree(studioChild);
+function studioStop(slot) {
+  const c = slot === 'fleet' ? fleetLaunch : studioChild;
+  if (!c) return { stopped: false };
+  c.killedByUser = true; killTree(c);
   return { stopped: true };
 }
 handle('studio-list', () => studioCli(['list'], 90000));
@@ -502,6 +514,21 @@ handle('studio-runs', () => studioCli(['runs'], 60000));
 handle('studio-fleet-status', () => studioCli(['fleet-status'], 60000));
 const RUNID_RE = /^[A-Za-z0-9_.-]{1,160}$/;
 function checkRunId(id) { if (typeof id !== 'string' || !RUNID_RE.test(id) || id.includes('..')) throw new Error('bad run id'); return id; }
+handle('studio-pack', (id) => studioCli(['pack', '--run', checkRunId(id)], 180000));
+// demo only: delete the Freestyle VMs that fleet launches in THIS session reported (slug bnn-*); never anything else
+handle('studio-demo-teardown', async () => {
+  if (!DEMO) throw new Error('teardown is only available in --demo mode');
+  const out = [];
+  for (const id of [...demoVms]) {
+    if (!/^[A-Za-z0-9_-]{1,80}$/.test(id)) continue;
+    const r = await new Promise((res) => execFile('cmd.exe', ['/d', '/c', 'npx.cmd', '-y', 'freestyle@latest', 'vm', 'delete', id],
+      { cwd: REPO, timeout: 90000, windowsHide: true }, (err, so, se) => res({ vm: id, ok: !err, msg: String(err ? (se || err.message) : so).trim().slice(-200) })));
+    if (r.ok) demoVms.delete(id);
+    out.push(r);
+  }
+  return out;
+});
+handle('demo-quit', () => { setTimeout(() => app.quit(), 300); return true; });
 handle('studio-replay', (id) => { if (studioChild) throw new Error('a run is already active - stop it first'); return spawnStream(['-u', '-m', 'bnn_platform', 'studio', 'replay', '--run', checkRunId(id)], 'replay'); });
 handle('studio-download', async (id) => {
   checkRunId(id);
@@ -554,6 +581,7 @@ handle('transfer-run', transferRun);
 handle('transfer-reveal', transferReveal);
 
 function createWindow() {
+  if (DEMO) return createDemoWindow();
   const sizeArg = process.argv.find((a) => a.startsWith('--size='));
   const wh = sizeArg ? sizeArg.slice(7).split('x').map(Number) : [1500, 900];
   win = new BrowserWindow({
@@ -575,4 +603,21 @@ function createWindow() {
 
 app.whenReady().then(() => { ensureFleetServer().catch(() => {}); createWindow(); watchReplays(); });
 app.on('before-quit', () => { stopFleetServer(); watchers.forEach((w) => { try { w.close(); } catch (e) {} }); });
-app.on('window-all-closed', () => { if (studioChild) killTree(studioChild); for (const c of children) { try { c.kill(); } catch (e) {} } stopFleetServer(); app.quit(); });
+function createDemoWindow() {
+  // exactly 1920x1080 physical pixels at (0,0): divide by the display scale factor so gdigrab captures 1920x1080
+  const { screen } = require('electron');
+  const sf = screen.getPrimaryDisplay().scaleFactor || 1;
+  win = new BrowserWindow({
+    x: 0, y: 0, width: Math.round(1920 / sf), height: Math.round(1080 / sf), useContentSize: true, resizable: false, maximizable: false,
+    frame: false, alwaysOnTop: true, autoHideMenuBar: true, backgroundColor: '#0f0f0f', title: DEMO_TITLE,
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
+  });
+  win.setMenuBarVisibility(false);
+  win.on('page-title-updated', (e) => { e.preventDefault(); win.setTitle(DEMO_TITLE); });
+  const dlog = path.join(__dirname, 'demo.log'); fs.writeFileSync(dlog, '');
+  win.webContents.on('console-message', (_e, level, message) => fs.appendFileSync(dlog, new Date().toISOString().slice(11, 19) + ' [' + level + '] ' + message + '\n'));
+  if (process.argv.includes('--demo-shots')) { let k = 0; const t = setInterval(async () => { try { const img = await win.webContents.capturePage(); await fsp.writeFile(path.join(__dirname, 'demo_shot_' + String(++k).padStart(2, '0') + '.png'), img.toPNG()); } catch (e) { clearInterval(t); } }, 8000); }
+  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: '0', tab: 'studio', demo: '1', dryfleet: process.argv.includes('--demo-dry-fleet') ? '1' : '0' } });
+  win.on('closed', () => app.quit());
+}
+app.on('window-all-closed', () => { if (studioChild) killTree(studioChild); if (fleetLaunch) killTree(fleetLaunch); for (const c of children) { try { c.kill(); } catch (e) {} } stopFleetServer(); app.quit(); });

@@ -37,3 +37,7 @@ sweep/jobscripts/
 user_runs/
 user_robots/
 surgical/results/export/*/sessions/
+app/demo.log
+app/demo_shot_*.png
+demo/video/electron.log
+demo/video/raw.mkv

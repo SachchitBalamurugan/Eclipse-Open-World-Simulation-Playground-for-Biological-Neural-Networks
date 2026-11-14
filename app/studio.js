@@ -231,12 +231,12 @@ export function initStudio(root, lab, opts = {}) {
     if (!motion.reduce) gsap.from(el, { height: 0, opacity: 0, duration: 0.25, ease: 'power2.out', clearProps: 'all' });
     return el;
   }
-  async function importFile(file) {
+  async function importFile(file, iopts) {
     if (!file) return;
     const row = importRow(file); setStep(1);
     log('import ' + file, 'sys');
     try {
-      const r = await lab.studioImport(file, {});
+      const r = await lab.studioImport(file, iopts || {});
       const rob = r && r.robot;
       row.className = 'st-imp ok'; row.querySelector('.st-spin').remove();
       row.querySelector('em').textContent = 'imported as ' + (rob ? rob.name : '?') + (rob && rob.ee ? ' · EE ' + rob.ee : '');
@@ -470,7 +470,7 @@ export function initStudio(root, lab, opts = {}) {
   // ---------- training ----------
   function syncButtons() {
     const can = !!st.sel && st.sel.trainable !== false;
-    q('.st-train').disabled = st.running || !can;
+    q('.st-train').disabled = st.running || !can || (st.platform === 'fleet' && !!st.fleetRunning);
     q('.st-train').textContent = st.running ? 'Training...' : (st.platform === 'fleet' ? (q('.f-dry').checked ? 'Plan fleet run' : 'Launch on fleet') : 'Train');
     q('.st-stop').disabled = !st.running;
     qa('.st-right input, .st-right select, .st-right .seg button, .st-card, .st-export, .st-target').forEach((el) => { el.disabled = st.running; });
@@ -490,7 +490,15 @@ export function initStudio(root, lab, opts = {}) {
   async function train() {
     const c = cfg(); const bad = validate(c);
     if (bad) { trainErr(bad); return; }
-    trainErr(''); hideSummary();
+    trainErr('');
+    if (c.platform === 'fleet') {
+      if (st.fleetRunning) { trainErr('a fleet launch is already in progress'); return; }
+      st.fleetRunning = true; st.jobs = []; renderJobs(); syncButtons();
+      try { await lab.studioTrain(c); setStep(4); setStatus('run', 'Launching fleet'); startSequence(c); showTab('jobs'); }
+      catch (e) { st.fleetRunning = false; syncButtons(); trainErr(e.message); setStatus('err', 'Error'); log('fleet: ' + e.message, 'err'); }
+      return;
+    }
+    hideSummary();
     st.episodes = []; st.nEp = c.episodes; st.done = false; st.lastFrame = null; st.spikes = null; st.jobs = [];
     resetTrail(); drawCurve(); drawHeat(); setProgress(0, c.platform === 'local' ? c.episodes : 0);
     st.running = true; st.mode = 'train'; syncButtons();
@@ -541,8 +549,21 @@ export function initStudio(root, lab, opts = {}) {
       drawHeat();
     }
   }
+  function onFleetEvent(o) {
+    switch (o.type) {
+      case 'fleet':
+        st.jobs = o.jobs || []; renderJobs();
+        log(`fleet${o.dry_run ? ' (dry run, no VMs created)' : ''}: ` + st.jobs.map((j) => j.slug + '=' + j.state).join(', '), 'sys'); break;
+      case 'start': log('fleet run ' + o.run_id + ' launching', 'ok'); break;
+      case 'log': log(o.message, o.level || 'out'); break;
+      case 'done': log(o.dry_run ? 'fleet plan complete (dry run)' : 'fleet launch complete: ' + JSON.stringify(o.summary || {}).slice(0, 200), 'ok'); if (!st.running) setStatus('ok', o.dry_run ? 'Fleet planned' : 'Fleet running'); break;
+      case 'error': log('fleet: ' + o.message, 'err'); break;
+      case 'exit': st.fleetRunning = false; syncButtons(); break;
+    }
+  }
   function onEvent(o) {
     st.events++;
+    if (o.slot === 'fleet') { onFleetEvent(o); return; }
     switch (o.type) {
       case 'start':
         if (st.mode !== 'deploy') st.runId = o.run_id;
@@ -558,7 +579,7 @@ export function initStudio(root, lab, opts = {}) {
       }
       case 'log': log(o.message, o.level || 'out'); break;
       case 'calibration': {
-        const { type, stage, ...rest } = o;
+        const { type, stage, slot, ...rest } = o;
         log(`calibration · ${stage}: ` + Object.entries(rest).filter(([, v]) => typeof v !== 'object').map(([k, v]) => k + '=' + v).join(', ') + (Array.isArray(rest.changes) ? `, ${rest.changes.length} electrode remap(s)` : ''), rest.accepted === false ? 'warn' : 'sys');
         setStatus('run', 'Calibrating · ' + stage); break;
       }
@@ -757,14 +778,15 @@ export function initStudio(root, lab, opts = {}) {
     } catch (e) { st.bundle = null; renderBundle(null, e.message); log('export: ' + e.message, 'err'); }
     finally { btn.textContent = 'Export bundle'; syncButtons(); }
   }
-  async function dryRunBundle() {
+  async function dryRunBundle(neps) {
+    neps = neps || 3;
     if (!st.bundle) return;
     const run = st.runs.find((r) => q('.f-drun').value === 'user_runs/' + r.run_id);
     if (run && run.robot && st.robots.some((x) => x.name === run.robot) && (!st.sel || st.sel.name !== run.robot)) await selectRobot(run.robot);
-    hideSummary(); st.episodes = []; st.nEp = 3; st.lastFrame = null; st.spikes = null; resetTrail(); drawCurve(); drawHeat(); setProgress(0, 3);
+    hideSummary(); st.episodes = []; st.nEp = neps; st.lastFrame = null; st.spikes = null; resetTrail(); drawCurve(); drawHeat(); setProgress(0, neps);
     st.running = true; st.mode = 'deploy'; syncButtons();
     try {
-      await lab.transferRun(st.bundle.bundle, 3);
+      await lab.transferRun(st.bundle.bundle, neps);
       setStep(6); setStatus('run', 'Closed-loop dry run'); log('closed-loop dry run against mock MEA (simulated culture)', 'sys');
     } catch (e) { st.running = false; syncButtons(); setStatus('err', 'Error'); log('dry run: ' + e.message, 'err'); trainErr(e.message); }
   }
@@ -791,16 +813,39 @@ export function initStudio(root, lab, opts = {}) {
       jobs: st.jobs.length, runs: st.runs.length, targets: st.targets.length, targetsError: st.targetsError || null, bundle: st.bundle ? st.bundle.bundle : null, mode: st.mode || null, runsError: st.runsError, lastError: st.lastError, fps: Math.round(fps),
     }),
     select: (name) => selectRobot(name),
-    exportAndDryRun: async (target) => {
+    exportAndDryRun: async (target, neps) => {
       fillDeployRuns(); if (target) st.target = target; renderTargets();
       await exportBundle();
       if (!st.bundle) return { exported: false };
       const done = new Promise((res) => { lab.onStudioEvent((o) => { if (o.type === 'exit') res(o); }); setTimeout(() => res({ timeout: true }), 150000); });
-      await dryRunBundle();
+      await dryRunBundle(neps);
       return { exported: true, files: (st.bundle.files || []).length, exit: await done };
     },
     focus: (sec) => { const s = q(`.st-grp[data-sec="${String(sec).replace(/[^a-z]/g, '')}"]`); if (s) s.scrollIntoView({ block: 'start' }); },
     train: (overrides) => { Object.entries(overrides || {}).forEach(([k, v]) => { if (k === 'platform') setPlatform(v); else if (k === 'dryRun') q('.f-dry').checked = !!v; else if (k === 'episodes') q('.f-episodes').value = v; }); syncButtons(); return train(); },
     importFile,
+    demo: {
+      el: (s) => q(s),
+      setStep, showTab, refreshJobs, refreshRuns, replayRun, setPlatform: (p) => { setPlatform(p); syncButtons(); }, flash, log,
+      setStatus, exportBundle: async (target) => { fillDeployRuns(); if (target) st.target = target; renderTargets(); await exportBundle(); return st.bundle; },
+      dryRun: (n) => dryRunBundle(n), stop: (slot) => lab.studioStop(slot), hideSummary,
+      state: () => st,
+      focus: (sec) => { const s = q(`.st-grp[data-sec="${sec}"]`); if (s) { s.scrollIntoView({ block: 'nearest', behavior: motion.reduce ? 'auto' : 'smooth' }); flash(s); } },
+      // animate a property-grid field to a new value (numbers count, others snap), with a highlight
+      setField: (cls, v) => new Promise((res) => {
+        const el = q('.' + cls); if (!el) return res();
+        const row = el.closest('.pg'); flash(row);
+        if (el.type === 'number' && !motion.reduce) {
+          const o = { v: Number(el.value) || 0 }; const dec = String(v).includes('.') ? String(v).split('.')[1].length : 0;
+          gsap.to(o, { v: Number(v), duration: 0.7, ease: 'power2.inOut', onUpdate: () => { el.value = o.v.toFixed(dec); }, onComplete: () => { el.value = v; res(); } });
+        } else { el.value = v; res(); }
+      }),
+      setRule: (r) => { const b = q(`.f-rule button[data-v="${r}"]`); if (b) { b.click(); flash(b.closest('.pg')); } },
+      setVms: (n) => { const r = q('.f-vms'); r.value = n; r.dispatchEvent(new Event('input')); flash(r.closest('.pg')); },
+      setDry: (on) => { q('.f-dry').checked = !!on; syncButtons(); },
+      setEpisodes: (n) => { q('.f-episodes').value = n; flash(q('.f-episodes').closest('.pg')); },
+      pressTrain: () => { const b = q('.st-train'); if (!motion.reduce) gsap.fromTo(b, { scale: 0.95 }, { scale: 1, duration: 0.25, clearProps: 'transform' }); return train(); },
+      select: (name) => selectRobot(name),
+    },
   };
 }

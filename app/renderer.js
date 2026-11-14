@@ -807,6 +807,7 @@ function renderHardware() {
     if (QS.get('replay') === '1') { setRoverReplay(true); if (START_TAB === 'surgical' && surgUI) surgUI.startReplay(); }
     if (START_CAM === 'robot') setTimeout(demoTip, 6500);
     const first = DEFAULT_RUNS.find((n) => runs.some((r) => r.name === n)) || (runs[0] && runs[0].name);
+    if (QS.get('demo') === '1' && studioUI) import('./demo.js').then((m) => m.runDemo(studioUI, lab, { dryFleet: QS.get('dryfleet') === '1' }));
     const demo = QS.get('studiodemo');
     if (QS.get('studiosec') && studioUI) studioUI.ready().then(() => setTimeout(() => studioUI.focus(QS.get('studiosec')), 2500));
     if (demo && studioUI) { // screenshot helper: --studio-demo=ROBOT trains that robot locally for a few episodes
