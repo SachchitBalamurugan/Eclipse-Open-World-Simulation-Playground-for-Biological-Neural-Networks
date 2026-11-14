@@ -111,12 +111,12 @@ def fit_mlp(X, y, seed, hidden=16, epochs=400, lr=0.02, l2=1e-3):
 
 
 # ---------------------------------------------------------------- jobs
-def run_job(condition: str, seed: int) -> dict:
+def run_job(condition: str, seed: int, culture_kw: dict | None = None, tag: str = "") -> dict:
     t0 = time.perf_counter()
     task = FrostTask(seed)
     rng = np.random.default_rng(seed)
     Xs, ys = task.train_stream(max(BUDGETS))
-    res = {"condition": condition, "seed": seed, "auc": {}, "train_acc": {}}
+    res = {"condition": condition, "seed": seed, "auc": {}, "train_acc": {}, "culture_kw": culture_kw or {}, "tag": tag}
     if condition in BASELINE_CONDS:
         for n in BUDGETS:
             X, y = Xs[:n], ys[:n]
@@ -133,7 +133,7 @@ def run_job(condition: str, seed: int) -> dict:
             res["auc"][n] = auc(s, task.yev)
     else:
         rule = RULE[condition]
-        c = Culture(seed=seed, rule="stdp" if rule == "fep" else rule)
+        c = Culture(seed=seed, rule="stdp" if rule == "fep" else rule, **(culture_kw or {}))
         c.run(1000)  # settle
         L = task.levels(Xs)
         tr_counts = np.zeros((len(L), N_CH))
@@ -151,7 +151,6 @@ def run_job(condition: str, seed: int) -> dict:
                 ev_scores = f((ev_counts - mu) / sd)
             res["auc"][n] = auc(ev_scores, task.yev)
             res["train_acc"][n] = float(np.mean(correct[-25:]))
-        res["mean_rate_hz"] = float(c.t_ms and 0)  # placeholder overwritten below
         spk = c.run(1000)
         res["mean_rate_hz"] = len(spk) / c.N
     res["wall_s"] = round(time.perf_counter() - t0, 1)
@@ -159,11 +158,11 @@ def run_job(condition: str, seed: int) -> dict:
 
 
 def _worker(args):
-    cond, seed = args
-    out = OUT / f"{cond}_s{seed}.json"
+    cond, seed, kw, tag = args
+    out = OUT / (f"{cond}{'_' + tag if tag else ''}_s{seed}.json")
     if out.exists():
         return json.loads(out.read_text())
-    r = run_job(cond, seed)
+    r = run_job(cond, seed, kw, tag)
     out.write_text(json.dumps(r))
     print(f"{cond} s{seed}: " + " ".join(f"{k}:{v:.3f}" for k, v in r["auc"].items()) + f"  ({r['wall_s']}s)", flush=True)
     return r
@@ -178,11 +177,14 @@ def main():
     ap.add_argument("--procs", type=int, default=1)
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--nshards", type=int, default=1)
+    ap.add_argument("--culture-kw", default="{}", help='JSON kwargs for Culture, e.g. {"lr":0.2}')
+    ap.add_argument("--tag", default="", help="suffix for result files (hyperparameter variants)")
     a = ap.parse_args()
     OUT.mkdir(exist_ok=True)
     conds = ALL if a.all else [a.condition]
     seeds = range(a.seeds) if a.all or a.seeds > 1 else [a.seed]
-    jobs = [(c, s) for s in seeds for c in conds]
+    kw = json.loads(a.culture_kw)
+    jobs = [(c, s, kw, a.tag) for s in seeds for c in conds]
     jobs = jobs[a.shard::a.nshards]
     if a.procs > 1:
         with mp.Pool(a.procs) as p:
