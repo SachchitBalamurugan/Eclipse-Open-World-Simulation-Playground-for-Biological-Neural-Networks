@@ -23,11 +23,11 @@ pip install -q --upgrade pip
 pip install -q torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
 pip install -q mujoco==4.0.1 gymnasium==1.4.0 stable-baselines3==2.9.2 numpy==2.5.4 pandas matplotlib imageio imageio-ffmpeg
 
-export MUJOCO_GL=egl        # headless; falls back to osmesa if EGL is missing (only render.py needs GL)
+# Training and evaluation do not render. Leave MUJOCO_GL unset: Freestyle workers
+# do not provide EGL, and importing MuJoCo with EGL forced fails there.
 export OMP_NUM_THREADS=1
 python -m sim.build_model
-python -m sim.train_ppo --run "ppo_s${SEED}" --seed "$SEED" --minutes "$MINUTES" --envs "$ENVS"
+python -m sim.train_ppo --run "ppo_s${SEED}" --seed "$SEED" --minutes "$MINUTES" --envs "$ENVS" --bc 120
 python -m sim.eval --run "ppo_s${SEED}" || true
-MUJOCO_GL=egl python -m sim.render --run "ppo_s${SEED}" || MUJOCO_GL=osmesa python -m sim.render --run "ppo_s${SEED}" || true
 tar czf "sim/runs/ppo_s${SEED}.tgz" -C sim/runs "ppo_s${SEED}"
 echo "done: sim/runs/ppo_s${SEED}.tgz"

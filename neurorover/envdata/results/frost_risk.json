@@ -1,9 +1,9 @@
 {
- "n_train_rows_with_covariates": 3966,
- "n_validation_rows_with_covariates": 6601,
+ "n_train_rows_with_covariates": 50730,
+ "n_validation_rows_with_covariates": 32122,
  "n_train_rows_total": 96149,
  "n_validation_rows_total": 32122,
- "freeze_rate_val_subset": 0.0259,
+ "freeze_rate_val_subset": 0.0433,
  "lagged_covariates": [
   "tmin_night_c@D-3",
   "tdmin_night_c@D-3",
@@ -31,29 +31,29 @@
  ],
  "auc_validation": {
   "base_14_features": {
-   "lam=1": 0.8472,
-   "lam=10": 0.8489,
-   "lam=100": 0.8466
+   "lam=1": 0.8982,
+   "lam=10": 0.8976,
+   "lam=100": 0.8958
   },
   "base+lagged_covariates": {
-   "lam=1": 0.8283,
-   "lam=10": 0.8433,
-   "lam=100": 0.8302
+   "lam=1": 0.9076,
+   "lam=10": 0.9069,
+   "lam=100": 0.9037
   },
   "base+D-3_dewpoint_cloud_wind_rh": {
-   "lam=1": 0.8473,
-   "lam=10": 0.8458,
-   "lam=100": 0.8462
+   "lam=1": 0.9049,
+   "lam=10": 0.9043,
+   "lam=100": 0.9022
   },
   "ORACLE_LEAKAGE_base+target_night_covariates": {
-   "lam=1": 0.9745,
-   "lam=10": 0.9795,
-   "lam=100": 0.972
+   "lam=1": 0.9848,
+   "lam=10": 0.9847,
+   "lam=100": 0.9831
   },
   "archive_target_night_tmin_only_LEAKAGE": {
-   "lam=1": 0.9653,
-   "lam=10": 0.9653,
-   "lam=100": 0.9653
+   "lam=1": 0.9634,
+   "lam=10": 0.9634,
+   "lam=100": 0.9634
   }
  }
 }

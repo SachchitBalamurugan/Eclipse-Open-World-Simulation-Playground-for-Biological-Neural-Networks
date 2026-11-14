@@ -1,0 +1,69 @@
+{
+  "method": "supervised random-Fourier-feature ridge ensemble on synthetic IK transitions",
+  "model_role": "one-step forward dynamics predictor; not a controller or generative model",
+  "input_features": 61,
+  "predicted_delta_dimensions": 19,
+  "training": {
+    "episodes": 12,
+    "transitions": 317,
+    "seed_start": 700000,
+    "seed_end": 700011,
+    "controller": "DLSIK + clipped Gaussian action noise",
+    "action_noise_std": 0.05,
+    "domain_randomization": "enabled"
+  },
+  "heldout_ik": {
+    "episodes": 3,
+    "transitions": 87,
+    "seed_start": 800000,
+    "seed_end": 800002
+  },
+  "one_step": {
+    "split": "heldout_ik",
+    "evaluation_type": "teacher_forced_one_step",
+    "transitions": 87,
+    "tip_displacement_rmse_mm": 14.09,
+    "persistence_zero_delta_tip_rmse_mm": 18.29,
+    "rmse_improvement_vs_persistence_pct": 22.96,
+    "tip_delta_abs_error_mm_median": 14.025,
+    "joint_q_delta_mae_norm": 0.002426,
+    "ensemble_tip_uncertainty_mm_p50_p95": [
+      3.276,
+      3.735
+    ],
+    "nearest_train_feature_distance_p50_p95": [
+      6.848,
+      7.323
+    ]
+  },
+  "open_loop": {
+    "horizons": [
+      {
+        "horizon_steps": 1,
+        "evaluation_type": "recorded_action_open_loop",
+        "windows": 87,
+        "tip_state_rmse_mm": 14.09,
+        "persistence_tip_state_rmse_mm": 18.29,
+        "tip_state_error_median_mm": 14.025
+      },
+      {
+        "horizon_steps": 5,
+        "evaluation_type": "recorded_action_open_loop",
+        "windows": 75,
+        "tip_state_rmse_mm": 70.333,
+        "persistence_tip_state_rmse_mm": 81.752,
+        "tip_state_error_median_mm": 75.198
+      },
+      {
+        "horizon_steps": 10,
+        "evaluation_type": "recorded_action_open_loop",
+        "windows": 60,
+        "tip_state_rmse_mm": 115.332,
+        "persistence_tip_state_rmse_mm": 99.873,
+        "tip_state_error_median_mm": 120.56
+      }
+    ],
+    "note": "Actions are from the held-out IK trajectory; this is a model test, not a policy rollout."
+  },
+  "uncertainty_note": "Ensemble disagreement and nearest standardized training distance are diagnostics, not calibrated confidence."
+}

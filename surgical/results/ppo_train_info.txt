@@ -1,0 +1,1 @@
+timesteps=235540 wall_s=1200 envs=4 (DummyVecEnv, 1 process)

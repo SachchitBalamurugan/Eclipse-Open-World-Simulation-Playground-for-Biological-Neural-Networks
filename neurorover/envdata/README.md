@@ -118,4 +118,88 @@ Keys of a night dict (all floats unless noted):
   (datasheet +-0.5 C max); soil probe from the DRIP-fitted error model (below). `sample_season` keeps the
   per-device biases fixed across the season.
 
-RESULTS_PLACEHOLDER
+## Results (run of 2026-11-14)
+
+**Coverage.** 430 of 835 needed station x season windows fetched (Open-Meteo quota is 5000 calls/hour,
+a full pull costs ~11.6k): all 185 validation-year windows (seasons 2014-2019) and 245 train-year
+windows (seasons 1999-2006 and 2013). 94,721 station-nights, 31 stations, `cache/nightly.parquet` 1.9 MB
+(raw cache 24 MB, gitignored). Not yet fetched: train seasons 2007-2012 and the 2020-2025 cases years
+(incl. the 4 cases-only stations). Re-run `fetch` later (resumable), then `aggregate`, `validate`, `frost_risk`.
+
+**Join validation** (`results/join.json`, 82,852 labelled freeze rows joined):
+
+| Check | Value |
+| --- | --- |
+| Agreement archive night tmin < 0 C vs freeze target | 0.962 (base rate 4.6 %; archive says frost on 1.6 %) |
+| Freeze recall / precision of archive tmin < 0 C | 0.26 / 0.74 |
+| Per-station agreement min / median / max | 0.897 / 0.966 / 1.000 |
+| Pearson r, archive calendar-day tmin vs station tmin lag3 / lag4 / lag7 | 0.846 / 0.847 / 0.850 |
+| Mean bias archive - station tmin | +0.95 C (reanalysis grid is warmer: station frost pockets are missed) |
+
+So the reanalysis is a good proxy for weather *context* but misses most station frosts; the frost ground
+truth in the generator is therefore the station-scale tmin (`air_tmin_c`), never the reanalysis one.
+
+**Generator vs held-out real nights 2015-2019** (`results/validation.json`, 12,000 nights, generated
+tmin from the WorldModel, not the real one):
+
+| Variable | KS | real mean | gen mean |
+| --- | --- | --- | --- |
+| station tmin (C) | 0.126 | 7.14 | 6.34 |
+| dew point min (C) | 0.035 | 4.44 | 4.64 |
+| RH mean (%) | 0.064 | 77.3 | 79.6 |
+| wind max (km/h) | 0.187 | 12.5 | 10.4 |
+| gust max (km/h) | 0.064 | 26.6 | 24.6 |
+| wind mean (km/h) | 0.129 | 7.97 | 6.84 |
+| cloud mean (%) | 0.022 | 49.6 | 50.0 |
+| precip 24 h (mm) | 0.022 | 2.58 | 2.28 |
+| soil moisture 06:00 | 0.052 | 0.266 | 0.279 |
+| soil temp 06:00 (C) | 0.140 | 9.66 | 8.74 |
+
+| Spearman, within station | real | generated |
+| --- | --- | --- |
+| tmin ~ cloud (cloudy nights milder) | 0.289 | 0.151 |
+| tmin ~ wind (windy nights milder) | 0.103 | 0.096 |
+| tmin ~ dew point | 0.692 | 0.727 |
+| soil moisture ~ precip | 0.559 | 0.558 |
+| cloud ~ precip | 0.435 | 0.425 |
+| tmin ~ soil temp | 0.873 | 0.857 |
+
+Freeze frequency: overall real 4.4 % vs generated 5.7 % (the train years were colder, and the WorldModel
+reproduces train climate); per station r = 0.94, MAE 1.6 points (`results/freeze_frequency.png`).
+Lag-1 autocorrelation in 30-night seasons (real / gen): tmin 0.63 / 0.60, soil moisture 0.69 / 0.80,
+cloud 0.24 / 0.44 (generated cloud spells are too persistent). Physics on generated nights (p5 / median /
+p95): friction 0.52 / 0.58 / 0.64 (loamy sand), gust force on a 2 m2 cover 3.9 / 12 / 65 N, leaf - air
+-1.8 / -1.2 / -0.6 C. Plots: `results/marginals.png`, `results/joint.png`, `results/freeze_frequency.png`.
+
+**Soil-probe error model** (DRIP train split, per soil type): sensor = a * true + b + device offset + noise,
+a = 0.56-0.82, b = -0.005-0.062, device offset sd 0-0.025, noise sd 0.020-0.029 m3/m3; residual sd
+0.030 (train) / 0.038 (validation devices). The capacitance probes under-read by ~0.04-0.06 m3/m3.
+
+**Frost risk: does real weather context help?** (`results/frost_risk.json`; `bench.fit_logistic`,
+lambda = 1, fit on 50,730 train rows with covariates, AUC on all 32,122 validation rows)
+
+| Features | Validation AUC |
+| --- | --- |
+| 14 encoded freeze features | 0.898 |
+| + Open-Meteo covariates from the input window (nights D-3, D-4, mean D-9..D-3; no leakage) | **0.908** |
+| + only dew point, cloud, wind, RH at D-3 | 0.905 |
+| ORACLE (LEAKAGE, upper bound): + target-night covariates | 0.985 |
+| ORACLE (LEAKAGE): archive target-night tmin alone | 0.963 |
+
+Real lagged covariates add about +0.01 AUC; knowing the target night's weather (a forecast) would add far more.
+
+## Limitations
+
+* Partial fetch (see coverage): the generator has 52,168 complete analog nights over 31 stations, with a
+  median of 9 contributing calendar years per station after its 2000-2014 date filter. Train frost-season
+  windows for 2007-2012 and case years 2020-2025 were not fetched. Winds in the available analog pool are
+  a little weaker than 2015-2019 (KS 0.13-0.19).
+* Reanalysis (ERA5 ~25 km / ERA5-Land ~9 km) vs point station: archive tmin is ~1 C warmer and misses
+  three-quarters of station frosts; soil moisture is the grid-cell model value, not field truth.
+* The tmin ~ cloud dependence is weaker than real (0.15 vs 0.29), because the analog kernel (1.5 C) and the
+  temperature shift blur it; narrow `BANDWIDTH` if the sim needs a stronger signal.
+* tmin persistence and freeze rate come from the existing WorldModel (train climate, colder than 2015-19).
+* Friction coefficients, the 2 m2 cover area, the noise_level multiplier and the leaf energy balance are
+  labelled assumptions, not measurements. DRIP probes are Belgian field sensors used as a stand-in for the
+  rover's probe; the "true" moisture fed to them is ERA5-Land.
+* Hourly detail is aggregated away; the night dict gives night extremes/means, not an hourly trajectory.

@@ -280,6 +280,17 @@
    "collision_contacts_total": 649,
    "episodes_with_collision": 20
   },
+  "ppo": {
+   "n": 50,
+   "success_rate": 0.98,
+   "final_err_mm_median": 5.696241876471076,
+   "final_err_mm_mean": 6.654719299197281,
+   "time_to_reach_s_median": 0.8,
+   "reached_1cm_frac": 0.98,
+   "joint_limit_steps_total": 220,
+   "collision_contacts_total": 15,
+   "episodes_with_collision": 1
+  },
   "culture_teach": {
    "n": 50,
    "success_rate": 0.0,

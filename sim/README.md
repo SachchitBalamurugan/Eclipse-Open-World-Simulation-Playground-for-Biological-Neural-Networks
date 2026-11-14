@@ -101,7 +101,42 @@ parallel envs and about 1e8 to 3e8 steps. We have 5 CPU envs and a few million s
 version of that recipe, not a reproduction. A plateau check stops training early once held-out success flattens
 after reaching 0.6. Otherwise training stops at the wall-clock budget.
 
-RESULTS_PLACEHOLDER
+## Results
+
+`ppo_bc_s0` was warm-started with 120 hand-controller demonstrations, then trained with PPO. On 100 fixed-seed
+randomised full-task episodes (half DEPLOY, half HOLD), it was compared with the hand-written controller using the
+same seeds and randomisation draws:
+
+| Metric | PPO (randomised) | Hand controller (randomised) | PPO (nominal) | Hand controller (nominal) |
+|---|---:|---:|---:|---:|
+| Success | 72% | 59% | 80% | 72% |
+| DEPLOY success | 82% | 52% | 84% | 68% |
+| HOLD success | 62% | 66% | 76% | 76% |
+| Mean time to goal among successes | 15.0 s | 18.3 s | 13.6 s | 18.7 s |
+| Crop-collision episodes | 32% | 49% | 28% | 63% |
+| Tip events | 0% | 0% | 0% | 0% |
+| Median final distance | 0.151 m | 0.156 m | 0.154 m | 0.150 m |
+
+The saved rollout (`runs/ppo_bc_s0/deploy_bc.mp4` and `trajectory_deploy_bc.json`) reached the station in 14.95 s,
+deployed the cover, and achieved 50% cloth coverage on that one episode.
+
+### Culture-driven season
+
+The frozen culture was taught on 100 balanced samples, then controlled DEPLOY/HOLD decisions over a 30-night
+validation season for station `USW00023110` starting 2016-12-01. The EnvGenerator hook supplied wind, friction, and
+sensor-noise conditions on all 30 nights.
+
+| Metric | Result |
+|---|---:|
+| Decision accuracy | 63.3% |
+| Freezes / deployments | 11 / 8 |
+| Freezes protected / damaged | 3 / 8 |
+| Rover drive success | 66.7% |
+| Season reward | -78 |
+| Energy used | 7.42 Wh (2.9% of nominal battery capacity) |
+
+This is a single season and one culture seed. The culture misses most freezes, so the season result is a failure case,
+not evidence of a deployable frost-protection system. Detailed rows are in `runs/ppo_bc_s0/season.csv`.
 
 ## Sources
 

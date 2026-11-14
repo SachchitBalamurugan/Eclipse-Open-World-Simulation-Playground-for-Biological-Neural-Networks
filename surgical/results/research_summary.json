@@ -1,0 +1,160 @@
+{
+  "seeds": [
+    100,
+    101,
+    102,
+    103
+  ],
+  "files": [
+    "research_vm_0.json",
+    "research_vm_1.json",
+    "research_vm_2.json",
+    "research_vm_3.json"
+  ],
+  "summary": [
+    {
+      "scenario": "actuator_mismatch",
+      "controller": "culture_frozen",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 469.83725946928075,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "actuator_mismatch",
+      "controller": "culture_teach",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 244.405388334003,
+      "contact_episode_rate": 0.5
+    },
+    {
+      "scenario": "actuator_mismatch",
+      "controller": "ik_dls",
+      "n": 12,
+      "success_rate": 1.0,
+      "median_error_mm": 2.7139505980585334,
+      "contact_episode_rate": 0.08333333333333333
+    },
+    {
+      "scenario": "calibration_bias",
+      "controller": "culture_frozen",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 463.6904802494663,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "calibration_bias",
+      "controller": "culture_teach",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 260.65311357365937,
+      "contact_episode_rate": 0.08333333333333333
+    },
+    {
+      "scenario": "calibration_bias",
+      "controller": "ik_dls",
+      "n": 12,
+      "success_rate": 0.6666666666666666,
+      "median_error_mm": 9.29205455765194,
+      "contact_episode_rate": 0.08333333333333333
+    },
+    {
+      "scenario": "combined_stress",
+      "controller": "culture_frozen",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 579.5803262051121,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "combined_stress",
+      "controller": "culture_teach",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 373.44028952137427,
+      "contact_episode_rate": 0.16666666666666666
+    },
+    {
+      "scenario": "combined_stress",
+      "controller": "ik_dls",
+      "n": 12,
+      "success_rate": 0.5,
+      "median_error_mm": 9.789262855293412,
+      "contact_episode_rate": 0.08333333333333333
+    },
+    {
+      "scenario": "measurement_noise",
+      "controller": "culture_frozen",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 496.66316278096286,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "measurement_noise",
+      "controller": "culture_teach",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 244.81500943883083,
+      "contact_episode_rate": 0.25
+    },
+    {
+      "scenario": "measurement_noise",
+      "controller": "ik_dls",
+      "n": 12,
+      "success_rate": 1.0,
+      "median_error_mm": 3.1382695943661654,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "nominal",
+      "controller": "culture_frozen",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 485.1033026015506,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "nominal",
+      "controller": "culture_teach",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 287.5208441677365,
+      "contact_episode_rate": 0.16666666666666666
+    },
+    {
+      "scenario": "nominal",
+      "controller": "ik_dls",
+      "n": 12,
+      "success_rate": 1.0,
+      "median_error_mm": 3.340661364946537,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "novel_targets",
+      "controller": "culture_frozen",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 600.4065831841217,
+      "contact_episode_rate": 0.0
+    },
+    {
+      "scenario": "novel_targets",
+      "controller": "culture_teach",
+      "n": 12,
+      "success_rate": 0.0,
+      "median_error_mm": 345.23619958146537,
+      "contact_episode_rate": 0.25
+    },
+    {
+      "scenario": "novel_targets",
+      "controller": "ik_dls",
+      "n": 12,
+      "success_rate": 0.8333333333333334,
+      "median_error_mm": 5.081428988811375,
+      "contact_episode_rate": 0.25
+    }
+  ]
+}

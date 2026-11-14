@@ -1,0 +1,248 @@
+{
+ "schema_version": 1,
+ "seed": 314,
+ "episodes_per_scenario": 1,
+ "controllers": [
+  "culture_teach",
+  "culture_frozen",
+  "ik_dls"
+ ],
+ "biology": "simulated Izhikevich culture only; no living neural tissue",
+ "scenario_definitions": [
+  {
+   "name": "nominal_0000",
+   "family": "nominal",
+   "episode": 0,
+   "seed": 3768433750,
+   "target_xyz_m": [
+    1.1269940908529095,
+    0.1457194670852589,
+    0.7650302711513417
+   ],
+   "randomize": false,
+   "error_bias_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "measurement_sigma_m": 0.0,
+   "action_gain": 1.0
+  },
+  {
+   "name": "novel_targets_0000",
+   "family": "novel_targets",
+   "episode": 0,
+   "seed": 519932914,
+   "target_xyz_m": [
+    1.2745584399896939,
+    0.4441195399636361,
+    0.8545316799185769
+   ],
+   "randomize": true,
+   "error_bias_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "measurement_sigma_m": 0.0,
+   "action_gain": 1.0
+  }
+ ],
+ "summary": {
+  "nominal": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 270.86276115194937,
+    "mean_error_mm": 270.86276115194937,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 173.0,
+    "world_model_tip_error_mm_mean": null
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 532.8597067525022,
+    "mean_error_mm": 532.8597067525022,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": null
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 3.527487058548271,
+    "mean_error_mm": 3.527487058548271,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 0.6000000000000001,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": null
+   }
+  },
+  "novel_targets": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 528.7891021353802,
+    "mean_error_mm": 528.7891021353802,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 1.0,
+    "mean_collisions": 27.0,
+    "mean_joint_limit_steps": 158.0,
+    "world_model_tip_error_mm_mean": null
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 594.2429167341868,
+    "mean_error_mm": 594.2429167341868,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": null
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 6.12357848142767,
+    "mean_error_mm": 6.12357848142767,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 0.9500000000000001,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": null
+   }
+  }
+ },
+ "rows": [
+  {
+   "scenario": "nominal",
+   "scenario_id": "nominal_0000",
+   "episode": 0,
+   "seed": 3768433750,
+   "target_xyz_m": [
+    1.1269940908529095,
+    0.1457194670852589,
+    0.7650302711513417
+   ],
+   "family": "nominal",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 270.86276115194937,
+   "reach_time_s": null,
+   "limit_hits": 173,
+   "collisions": 0
+  },
+  {
+   "scenario": "nominal",
+   "scenario_id": "nominal_0000",
+   "episode": 0,
+   "seed": 3768433750,
+   "target_xyz_m": [
+    1.1269940908529095,
+    0.1457194670852589,
+    0.7650302711513417
+   ],
+   "family": "nominal",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 532.8597067525022,
+   "reach_time_s": null,
+   "limit_hits": 0,
+   "collisions": 0
+  },
+  {
+   "scenario": "nominal",
+   "scenario_id": "nominal_0000",
+   "episode": 0,
+   "seed": 3768433750,
+   "target_xyz_m": [
+    1.1269940908529095,
+    0.1457194670852589,
+    0.7650302711513417
+   ],
+   "family": "nominal",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 3.527487058548271,
+   "reach_time_s": 0.6000000000000001,
+   "limit_hits": 0,
+   "collisions": 0
+  },
+  {
+   "scenario": "novel_targets",
+   "scenario_id": "novel_targets_0000",
+   "episode": 0,
+   "seed": 519932914,
+   "target_xyz_m": [
+    1.2745584399896939,
+    0.4441195399636361,
+    0.8545316799185769
+   ],
+   "family": "novel_targets",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 528.7891021353802,
+   "reach_time_s": null,
+   "limit_hits": 158,
+   "collisions": 27
+  },
+  {
+   "scenario": "novel_targets",
+   "scenario_id": "novel_targets_0000",
+   "episode": 0,
+   "seed": 519932914,
+   "target_xyz_m": [
+    1.2745584399896939,
+    0.4441195399636361,
+    0.8545316799185769
+   ],
+   "family": "novel_targets",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 594.2429167341868,
+   "reach_time_s": null,
+   "limit_hits": 0,
+   "collisions": 0
+  },
+  {
+   "scenario": "novel_targets",
+   "scenario_id": "novel_targets_0000",
+   "episode": 0,
+   "seed": 519932914,
+   "target_xyz_m": [
+    1.2745584399896939,
+    0.4441195399636361,
+    0.8545316799185769
+   ],
+   "family": "novel_targets",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 6.12357848142767,
+   "reach_time_s": 0.9500000000000001,
+   "limit_hits": 0,
+   "collisions": 0
+  }
+ ],
+ "world_model": {
+  "status": "skipped_by_flag"
+ },
+ "limitations": [
+  "state-based single-arm reaching only; no tissue contact, instruments, or camera simulation",
+  "bias/noise/action-gain ranges are procedural stress assumptions, not measured clinical distributions",
+  "DLSIK is a geometry-aware reference and uses the simulator Jacobian",
+  "three episodes per family are robustness checks, not precise success estimates"
+ ]
+}

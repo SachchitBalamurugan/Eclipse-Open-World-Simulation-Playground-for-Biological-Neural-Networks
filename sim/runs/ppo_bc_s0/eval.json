@@ -1,0 +1,58 @@
+{
+ "ppo_randomized": {
+  "episodes": 100,
+  "success_rate": 0.72,
+  "success_deploy": 0.82,
+  "success_hold": 0.62,
+  "time_to_goal_s": 14.955555555555557,
+  "energy_J": 1091.7951600219433,
+  "energy_J_successful": 1059.0133497267893,
+  "crop_collision_rate": 0.32,
+  "crop_wheel_steps": 26.24,
+  "tip_rate": 0.0,
+  "cover_coverage_on_deploy": 0.47,
+  "final_dist_m": 0.15143299259873688
+ },
+ "controller_randomized": {
+  "episodes": 100,
+  "success_rate": 0.59,
+  "success_deploy": 0.52,
+  "success_hold": 0.66,
+  "time_to_goal_s": 18.260169491525428,
+  "energy_J": 1587.9148914462871,
+  "energy_J_successful": 1234.4256845952557,
+  "crop_collision_rate": 0.49,
+  "crop_wheel_steps": 34.96,
+  "tip_rate": 0.0,
+  "cover_coverage_on_deploy": 0.275,
+  "final_dist_m": 0.15615313373051287
+ },
+ "ppo_nominal": {
+  "episodes": 100,
+  "success_rate": 0.8,
+  "success_deploy": 0.84,
+  "success_hold": 0.76,
+  "time_to_goal_s": 13.605625,
+  "energy_J": 1089.7889310624942,
+  "energy_J_successful": 1019.2457705787605,
+  "crop_collision_rate": 0.28,
+  "crop_wheel_steps": 15.37,
+  "tip_rate": 0.0,
+  "cover_coverage_on_deploy": 0.48,
+  "final_dist_m": 0.1542254388835659
+ },
+ "controller_nominal": {
+  "episodes": 100,
+  "success_rate": 0.72,
+  "success_deploy": 0.68,
+  "success_hold": 0.76,
+  "time_to_goal_s": 18.70763888888889,
+  "energy_J": 1610.2061623192953,
+  "energy_J_successful": 1406.5364701620108,
+  "crop_collision_rate": 0.63,
+  "crop_wheel_steps": 34.81,
+  "tip_rate": 0.0,
+  "cover_coverage_on_deploy": 0.4,
+  "final_dist_m": 0.1497617482920497
+ }
+}

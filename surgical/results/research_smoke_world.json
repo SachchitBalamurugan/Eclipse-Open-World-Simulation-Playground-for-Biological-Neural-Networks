@@ -1,0 +1,907 @@
+{
+ "schema_version": 1,
+ "seed": 315,
+ "episodes_per_scenario": 1,
+ "controllers": [
+  "culture_teach",
+  "culture_frozen",
+  "ik_dls"
+ ],
+ "biology": "simulated Izhikevich culture only; no living neural tissue",
+ "scenario_definitions": [
+  {
+   "name": "nominal_0000",
+   "family": "nominal",
+   "episode": 0,
+   "seed": 4137073868,
+   "target_xyz_m": [
+    1.2178397767260516,
+    0.18049848644753394,
+    0.8936570039813249
+   ],
+   "randomize": false,
+   "error_bias_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "measurement_sigma_m": 0.0,
+   "action_gain": 1.0
+  },
+  {
+   "name": "novel_targets_0000",
+   "family": "novel_targets",
+   "episode": 0,
+   "seed": 1728501263,
+   "target_xyz_m": [
+    1.5213835403600442,
+    0.261342757174574,
+    0.8949135482317028
+   ],
+   "randomize": true,
+   "error_bias_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "measurement_sigma_m": 0.0,
+   "action_gain": 1.0
+  },
+  {
+   "name": "calibration_bias_0000",
+   "family": "calibration_bias",
+   "episode": 0,
+   "seed": 3268883732,
+   "target_xyz_m": [
+    1.239551004858555,
+    0.04437493986647109,
+    0.9234454674757049
+   ],
+   "randomize": true,
+   "error_bias_m": [
+    0.0034599367397069266,
+    0.006812769140175085,
+    0.006450970035576374
+   ],
+   "measurement_sigma_m": 0.0,
+   "action_gain": 1.0
+  },
+  {
+   "name": "measurement_noise_0000",
+   "family": "measurement_noise",
+   "episode": 0,
+   "seed": 1652143035,
+   "target_xyz_m": [
+    1.209781136031894,
+    0.2396833225940343,
+    0.8581606025405537
+   ],
+   "randomize": true,
+   "error_bias_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "measurement_sigma_m": 0.003,
+   "action_gain": 1.0
+  },
+  {
+   "name": "actuator_mismatch_0000",
+   "family": "actuator_mismatch",
+   "episode": 0,
+   "seed": 437044348,
+   "target_xyz_m": [
+    1.2285194275490114,
+    0.21927370761614529,
+    0.8835703996707895
+   ],
+   "randomize": true,
+   "error_bias_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "measurement_sigma_m": 0.0,
+   "action_gain": 0.9026194763752482
+  },
+  {
+   "name": "combined_stress_0000",
+   "family": "combined_stress",
+   "episode": 0,
+   "seed": 2387614590,
+   "target_xyz_m": [
+    1.387146541032005,
+    0.3783073685865448,
+    0.7742332255050546
+   ],
+   "randomize": true,
+   "error_bias_m": [
+    -0.008130064958243704,
+    0.0058190879484969985,
+    -0.00020064700943395766
+   ],
+   "measurement_sigma_m": 0.003,
+   "action_gain": 1.063248710357604
+  }
+ ],
+ "summary": {
+  "nominal": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 132.45504180997182,
+    "mean_error_mm": 132.45504180997182,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 177.0,
+    "world_model_tip_error_mm_mean": 46.56451932040632
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 492.9491223047927,
+    "mean_error_mm": 492.9491223047927,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 6.0,
+    "world_model_tip_error_mm_mean": 8.590195684739403
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 0.47587494579087564,
+    "mean_error_mm": 0.47587494579087564,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 0.2,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 6.969949066433639
+   }
+  },
+  "novel_targets": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 428.79494609622986,
+    "mean_error_mm": 428.79494609622986,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 196.0,
+    "world_model_tip_error_mm_mean": 50.38585300896989
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 604.7723277547384,
+    "mean_error_mm": 604.7723277547384,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 20.318104546740308
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 0.4028571128188508,
+    "mean_error_mm": 0.4028571128188508,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 1.6500000000000001,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 15.0,
+    "world_model_tip_error_mm_mean": 19.14208158161484
+   }
+  },
+  "calibration_bias": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 208.78052357930596,
+    "mean_error_mm": 208.78052357930596,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 179.0,
+    "world_model_tip_error_mm_mean": 29.162370199516353
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 374.07843422515845,
+    "mean_error_mm": 374.07843422515845,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 4.0,
+    "world_model_tip_error_mm_mean": 28.490191594590225
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 8.041765950400823,
+    "mean_error_mm": 8.041765950400823,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 0.8500000000000001,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 25.724658260855243
+   }
+  },
+  "measurement_noise": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 249.32679731725554,
+    "mean_error_mm": 249.32679731725554,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 154.0,
+    "world_model_tip_error_mm_mean": 56.36265852847821
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 408.28241168219967,
+    "mean_error_mm": 408.28241168219967,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 14.74405566608404
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 5.160188443251229,
+    "mean_error_mm": 5.160188443251229,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 0.55,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 10.197281287277052
+   }
+  },
+  "actuator_mismatch": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 177.41608099038922,
+    "mean_error_mm": 177.41608099038922,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 148.0,
+    "world_model_tip_error_mm_mean": 57.84076430001816
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 452.0440403682053,
+    "mean_error_mm": 452.0440403682053,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 17.108278199664493
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 2.50924459890836,
+    "mean_error_mm": 2.50924459890836,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 0.55,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 11.286707154759483
+   }
+  },
+  "combined_stress": {
+   "culture_teach": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 513.8740976139189,
+    "mean_error_mm": 513.8740976139189,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 188.0,
+    "world_model_tip_error_mm_mean": 54.8098283194244
+   },
+   "culture_frozen": {
+    "n": 1,
+    "success_rate": 0.0,
+    "median_error_mm": 658.2591695016602,
+    "mean_error_mm": 658.2591695016602,
+    "reach_rate": 0.0,
+    "median_reach_time_s": null,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 11.880418444634177
+   },
+   "ik_dls": {
+    "n": 1,
+    "success_rate": 1.0,
+    "median_error_mm": 5.926864593911608,
+    "mean_error_mm": 5.926864593911608,
+    "reach_rate": 1.0,
+    "median_reach_time_s": 1.2000000000000002,
+    "collision_episode_rate": 0.0,
+    "mean_collisions": 0.0,
+    "mean_joint_limit_steps": 0.0,
+    "world_model_tip_error_mm_mean": 9.195381851540162
+   }
+  }
+ },
+ "rows": [
+  {
+   "scenario": "nominal",
+   "scenario_id": "nominal_0000",
+   "episode": 0,
+   "seed": 4137073868,
+   "target_xyz_m": [
+    1.2178397767260516,
+    0.18049848644753394,
+    0.8936570039813249
+   ],
+   "family": "nominal",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 132.45504180997182,
+   "reach_time_s": null,
+   "limit_hits": 177,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 46.56451932040632,
+    "tip_prediction_error_mm_median": 54.59142986852334,
+    "tip_delta_uncertainty_mm_mean": 24.845616160860118,
+    "novelty_mean": 46.34749494524393,
+    "next_obs_rmse_mean": 0.06130134716276723
+   }
+  },
+  {
+   "scenario": "nominal",
+   "scenario_id": "nominal_0000",
+   "episode": 0,
+   "seed": 4137073868,
+   "target_xyz_m": [
+    1.2178397767260516,
+    0.18049848644753394,
+    0.8936570039813249
+   ],
+   "family": "nominal",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 492.9491223047927,
+   "reach_time_s": null,
+   "limit_hits": 6,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 8.590195684739403,
+    "tip_prediction_error_mm_median": 7.952571978152504,
+    "tip_delta_uncertainty_mm_mean": 5.2734252900787215,
+    "novelty_mean": 22.534897506059572,
+    "next_obs_rmse_mean": 0.025445988732876373
+   }
+  },
+  {
+   "scenario": "nominal",
+   "scenario_id": "nominal_0000",
+   "episode": 0,
+   "seed": 4137073868,
+   "target_xyz_m": [
+    1.2178397767260516,
+    0.18049848644753394,
+    0.8936570039813249
+   ],
+   "family": "nominal",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 0.47587494579087564,
+   "reach_time_s": 0.2,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 18,
+    "tip_prediction_error_mm_mean": 6.969949066433639,
+    "tip_prediction_error_mm_median": 6.9896135434660795,
+    "tip_delta_uncertainty_mm_mean": 1.2831415723693924,
+    "novelty_mean": 5.494816190800177,
+    "next_obs_rmse_mean": 0.005337672122698738
+   }
+  },
+  {
+   "scenario": "novel_targets",
+   "scenario_id": "novel_targets_0000",
+   "episode": 0,
+   "seed": 1728501263,
+   "target_xyz_m": [
+    1.5213835403600442,
+    0.261342757174574,
+    0.8949135482317028
+   ],
+   "family": "novel_targets",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 428.79494609622986,
+   "reach_time_s": null,
+   "limit_hits": 196,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 50.38585300896989,
+    "tip_prediction_error_mm_median": 55.94562986185663,
+    "tip_delta_uncertainty_mm_mean": 22.918875568256368,
+    "novelty_mean": 48.06928473337196,
+    "next_obs_rmse_mean": 0.060674406278721935
+   }
+  },
+  {
+   "scenario": "novel_targets",
+   "scenario_id": "novel_targets_0000",
+   "episode": 0,
+   "seed": 1728501263,
+   "target_xyz_m": [
+    1.5213835403600442,
+    0.261342757174574,
+    0.8949135482317028
+   ],
+   "family": "novel_targets",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 604.7723277547384,
+   "reach_time_s": null,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 20.318104546740308,
+    "tip_prediction_error_mm_median": 20.893909496871665,
+    "tip_delta_uncertainty_mm_mean": 7.799196688167254,
+    "novelty_mean": 25.27451220406798,
+    "next_obs_rmse_mean": 0.028770185458677773
+   }
+  },
+  {
+   "scenario": "novel_targets",
+   "scenario_id": "novel_targets_0000",
+   "episode": 0,
+   "seed": 1728501263,
+   "target_xyz_m": [
+    1.5213835403600442,
+    0.261342757174574,
+    0.8949135482317028
+   ],
+   "family": "novel_targets",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 0.4028571128188508,
+   "reach_time_s": 1.6500000000000001,
+   "limit_hits": 15,
+   "collisions": 0,
+   "world_model": {
+    "steps": 42,
+    "tip_prediction_error_mm_mean": 19.14208158161484,
+    "tip_prediction_error_mm_median": 19.07941417273618,
+    "tip_delta_uncertainty_mm_mean": 3.8122200846973735,
+    "novelty_mean": 7.657689536280443,
+    "next_obs_rmse_mean": 0.011862825222810113
+   }
+  },
+  {
+   "scenario": "calibration_bias",
+   "scenario_id": "calibration_bias_0000",
+   "episode": 0,
+   "seed": 3268883732,
+   "target_xyz_m": [
+    1.239551004858555,
+    0.04437493986647109,
+    0.9234454674757049
+   ],
+   "family": "calibration_bias",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 208.78052357930596,
+   "reach_time_s": null,
+   "limit_hits": 179,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 29.162370199516353,
+    "tip_prediction_error_mm_median": 33.364202791312934,
+    "tip_delta_uncertainty_mm_mean": 22.792035853602673,
+    "novelty_mean": 47.443346098727474,
+    "next_obs_rmse_mean": 0.05900353261107409
+   }
+  },
+  {
+   "scenario": "calibration_bias",
+   "scenario_id": "calibration_bias_0000",
+   "episode": 0,
+   "seed": 3268883732,
+   "target_xyz_m": [
+    1.239551004858555,
+    0.04437493986647109,
+    0.9234454674757049
+   ],
+   "family": "calibration_bias",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 374.07843422515845,
+   "reach_time_s": null,
+   "limit_hits": 4,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 28.490191594590225,
+    "tip_prediction_error_mm_median": 27.088425523677493,
+    "tip_delta_uncertainty_mm_mean": 5.85423105282825,
+    "novelty_mean": 24.494546075096338,
+    "next_obs_rmse_mean": 0.027023695627163457
+   }
+  },
+  {
+   "scenario": "calibration_bias",
+   "scenario_id": "calibration_bias_0000",
+   "episode": 0,
+   "seed": 3268883732,
+   "target_xyz_m": [
+    1.239551004858555,
+    0.04437493986647109,
+    0.9234454674757049
+   ],
+   "family": "calibration_bias",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 8.041765950400823,
+   "reach_time_s": 0.8500000000000001,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 54,
+    "tip_prediction_error_mm_mean": 25.724658260855243,
+    "tip_prediction_error_mm_median": 25.793175001653896,
+    "tip_delta_uncertainty_mm_mean": 2.1319523953448045,
+    "novelty_mean": 7.368263956250722,
+    "next_obs_rmse_mean": 0.012356042061016778
+   }
+  },
+  {
+   "scenario": "measurement_noise",
+   "scenario_id": "measurement_noise_0000",
+   "episode": 0,
+   "seed": 1652143035,
+   "target_xyz_m": [
+    1.209781136031894,
+    0.2396833225940343,
+    0.8581606025405537
+   ],
+   "family": "measurement_noise",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 249.32679731725554,
+   "reach_time_s": null,
+   "limit_hits": 154,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 56.36265852847821,
+    "tip_prediction_error_mm_median": 62.42138187074458,
+    "tip_delta_uncertainty_mm_mean": 24.12080431504305,
+    "novelty_mean": 48.242654053929144,
+    "next_obs_rmse_mean": 0.06192781709609081
+   }
+  },
+  {
+   "scenario": "measurement_noise",
+   "scenario_id": "measurement_noise_0000",
+   "episode": 0,
+   "seed": 1652143035,
+   "target_xyz_m": [
+    1.209781136031894,
+    0.2396833225940343,
+    0.8581606025405537
+   ],
+   "family": "measurement_noise",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 408.28241168219967,
+   "reach_time_s": null,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 14.74405566608404,
+    "tip_prediction_error_mm_median": 15.30303673241573,
+    "tip_delta_uncertainty_mm_mean": 7.5093538485717914,
+    "novelty_mean": 23.87713256811881,
+    "next_obs_rmse_mean": 0.02798296990419996
+   }
+  },
+  {
+   "scenario": "measurement_noise",
+   "scenario_id": "measurement_noise_0000",
+   "episode": 0,
+   "seed": 1652143035,
+   "target_xyz_m": [
+    1.209781136031894,
+    0.2396833225940343,
+    0.8581606025405537
+   ],
+   "family": "measurement_noise",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 5.160188443251229,
+   "reach_time_s": 0.55,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 20,
+    "tip_prediction_error_mm_mean": 10.197281287277052,
+    "tip_prediction_error_mm_median": 9.690190089502234,
+    "tip_delta_uncertainty_mm_mean": 3.2407412568012406,
+    "novelty_mean": 6.341016203800022,
+    "next_obs_rmse_mean": 0.01620243152633875
+   }
+  },
+  {
+   "scenario": "actuator_mismatch",
+   "scenario_id": "actuator_mismatch_0000",
+   "episode": 0,
+   "seed": 437044348,
+   "target_xyz_m": [
+    1.2285194275490114,
+    0.21927370761614529,
+    0.8835703996707895
+   ],
+   "family": "actuator_mismatch",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 177.41608099038922,
+   "reach_time_s": null,
+   "limit_hits": 148,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 57.84076430001816,
+    "tip_prediction_error_mm_median": 66.72890858866376,
+    "tip_delta_uncertainty_mm_mean": 23.103302937828808,
+    "novelty_mean": 45.31642096376123,
+    "next_obs_rmse_mean": 0.058972401075780924
+   }
+  },
+  {
+   "scenario": "actuator_mismatch",
+   "scenario_id": "actuator_mismatch_0000",
+   "episode": 0,
+   "seed": 437044348,
+   "target_xyz_m": [
+    1.2285194275490114,
+    0.21927370761614529,
+    0.8835703996707895
+   ],
+   "family": "actuator_mismatch",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 452.0440403682053,
+   "reach_time_s": null,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 17.108278199664493,
+    "tip_prediction_error_mm_median": 16.996029193308264,
+    "tip_delta_uncertainty_mm_mean": 7.045013910763224,
+    "novelty_mean": 21.50008582489825,
+    "next_obs_rmse_mean": 0.024523710341995807
+   }
+  },
+  {
+   "scenario": "actuator_mismatch",
+   "scenario_id": "actuator_mismatch_0000",
+   "episode": 0,
+   "seed": 437044348,
+   "target_xyz_m": [
+    1.2285194275490114,
+    0.21927370761614529,
+    0.8835703996707895
+   ],
+   "family": "actuator_mismatch",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 2.50924459890836,
+   "reach_time_s": 0.55,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 20,
+    "tip_prediction_error_mm_mean": 11.286707154759483,
+    "tip_prediction_error_mm_median": 10.821000050494376,
+    "tip_delta_uncertainty_mm_mean": 1.3957804381413674,
+    "novelty_mean": 5.798092228302889,
+    "next_obs_rmse_mean": 0.011258695454860676
+   }
+  },
+  {
+   "scenario": "combined_stress",
+   "scenario_id": "combined_stress_0000",
+   "episode": 0,
+   "seed": 2387614590,
+   "target_xyz_m": [
+    1.387146541032005,
+    0.3783073685865448,
+    0.7742332255050546
+   ],
+   "family": "combined_stress",
+   "controller": "culture_teach",
+   "success": false,
+   "final_err_mm": 513.8740976139189,
+   "reach_time_s": null,
+   "limit_hits": 188,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 54.8098283194244,
+    "tip_prediction_error_mm_median": 63.39968899973837,
+    "tip_delta_uncertainty_mm_mean": 24.86408964877981,
+    "novelty_mean": 47.91233246195691,
+    "next_obs_rmse_mean": 0.06336310093856232
+   }
+  },
+  {
+   "scenario": "combined_stress",
+   "scenario_id": "combined_stress_0000",
+   "episode": 0,
+   "seed": 2387614590,
+   "target_xyz_m": [
+    1.387146541032005,
+    0.3783073685865448,
+    0.7742332255050546
+   ],
+   "family": "combined_stress",
+   "controller": "culture_frozen",
+   "success": false,
+   "final_err_mm": 658.2591695016602,
+   "reach_time_s": null,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 80,
+    "tip_prediction_error_mm_mean": 11.880418444634177,
+    "tip_prediction_error_mm_median": 12.385847599022789,
+    "tip_delta_uncertainty_mm_mean": 8.513904958662081,
+    "novelty_mean": 25.48568348021194,
+    "next_obs_rmse_mean": 0.03300260836374093
+   }
+  },
+  {
+   "scenario": "combined_stress",
+   "scenario_id": "combined_stress_0000",
+   "episode": 0,
+   "seed": 2387614590,
+   "target_xyz_m": [
+    1.387146541032005,
+    0.3783073685865448,
+    0.7742332255050546
+   ],
+   "family": "combined_stress",
+   "controller": "ik_dls",
+   "success": true,
+   "final_err_mm": 5.926864593911608,
+   "reach_time_s": 1.2000000000000002,
+   "limit_hits": 0,
+   "collisions": 0,
+   "world_model": {
+    "steps": 33,
+    "tip_prediction_error_mm_mean": 9.195381851540162,
+    "tip_prediction_error_mm_median": 9.41487547924619,
+    "tip_delta_uncertainty_mm_mean": 1.7302004086921976,
+    "novelty_mean": 9.46286063009838,
+    "next_obs_rmse_mean": 0.007864090252731652
+   }
+  }
+ ],
+ "world_model": {
+  "status": "fit",
+  "train_seed_start": 700000,
+  "eval_seed_start": 800000,
+  "metrics": {
+   "method": "supervised random-Fourier-feature ridge ensemble on synthetic IK transitions",
+   "model_role": "one-step forward dynamics predictor; not a controller or generative model",
+   "input_features": 61,
+   "predicted_delta_dimensions": 19,
+   "training": {
+    "episodes": 12,
+    "transitions": 317,
+    "seed_start": 700000,
+    "seed_end": 700011,
+    "controller": "DLSIK + clipped Gaussian action noise",
+    "action_noise_std": 0.05,
+    "domain_randomization": "enabled"
+   },
+   "heldout_ik": {
+    "episodes": 3,
+    "transitions": 87,
+    "seed_start": 800000,
+    "seed_end": 800002
+   },
+   "one_step": {
+    "split": "heldout_ik",
+    "evaluation_type": "teacher_forced_one_step",
+    "transitions": 87,
+    "tip_displacement_rmse_mm": 14.09,
+    "persistence_zero_delta_tip_rmse_mm": 18.29,
+    "rmse_improvement_vs_persistence_pct": 22.96,
+    "tip_delta_abs_error_mm_median": 14.025,
+    "joint_q_delta_mae_norm": 0.002426,
+    "ensemble_tip_uncertainty_mm_p50_p95": [
+     3.276,
+     3.735
+    ],
+    "nearest_train_feature_distance_p50_p95": [
+     6.848,
+     7.323
+    ]
+   },
+   "open_loop": {
+    "horizons": [
+     {
+      "horizon_steps": 1,
+      "evaluation_type": "recorded_action_open_loop",
+      "windows": 87,
+      "tip_state_rmse_mm": 14.09,
+      "persistence_tip_state_rmse_mm": 18.29,
+      "tip_state_error_median_mm": 14.025
+     },
+     {
+      "horizon_steps": 5,
+      "evaluation_type": "recorded_action_open_loop",
+      "windows": 75,
+      "tip_state_rmse_mm": 70.333,
+      "persistence_tip_state_rmse_mm": 81.752,
+      "tip_state_error_median_mm": 75.198
+     },
+     {
+      "horizon_steps": 10,
+      "evaluation_type": "recorded_action_open_loop",
+      "windows": 60,
+      "tip_state_rmse_mm": 115.332,
+      "persistence_tip_state_rmse_mm": 99.873,
+      "tip_state_error_median_mm": 120.56
+     }
+    ],
+    "note": "Actions are from the held-out IK trajectory; this is a model test, not a policy rollout."
+   },
+   "uncertainty_note": "Ensemble disagreement and nearest standardized training distance are diagnostics, not calibrated confidence."
+  }
+ },
+ "limitations": [
+  "state-based single-arm reaching only; no tissue contact, instruments, or camera simulation",
+  "bias/noise/action-gain ranges are procedural stress assumptions, not measured clinical distributions",
+  "DLSIK is a geometry-aware reference and uses the simulator Jacobian",
+  "three episodes per family are robustness checks, not precise success estimates"
+ ]
+}

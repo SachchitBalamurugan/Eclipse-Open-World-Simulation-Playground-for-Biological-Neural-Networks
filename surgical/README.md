@@ -1,7 +1,7 @@
 # surgical/ - simulated culture driving one arm of a SimReady surgical cart
 
-Robot: NVIDIA SimReady `robotic_system_a01` (CC-BY-4.0, see
-`assets/surgical/robotic_system_a01/.metadata/LICENSE.txt`), a four-arm patient-side cart.
+Robot: NVIDIA SimReady `robotic_system_a01` (CC-BY-4.0; see `ATTRIBUTION.md` and `ASSET_LICENSE.txt`), a four-arm
+patient-side cart. The source USD package is gitignored; the converted MuJoCo model and meshes are included here.
 
 | file | what |
 |---|---|

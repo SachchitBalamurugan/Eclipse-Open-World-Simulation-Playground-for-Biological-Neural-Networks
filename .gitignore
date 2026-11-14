@@ -23,6 +23,8 @@ assets/simready/hf/
 assets/simready/raw/
 sim/runs/**/*.zip
 sim/runs/**/*.mp4
+!sim/runs/ppo_bc_s0/best_model.zip
+!sim/runs/ppo_bc_s0/deploy_bc.mp4
 surgical/**/*.mp4
 *.pt
 sweep/jobs_payload.tar.gz

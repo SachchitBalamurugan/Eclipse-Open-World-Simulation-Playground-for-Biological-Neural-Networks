@@ -13,7 +13,7 @@ export function initSurgical(root, lab, opts = {}) {
   root.innerHTML = `<div class="surg">
     <div class="sviz"><canvas></canvas><div class="sbadge">Simulated culture model - no living neurons</div>
       <div class="shud"></div><div class="stag"></div>
-      <div class="credits" style="bottom:8px">Robot: NVIDIA SimReady robotic_system_a01 (CC-BY-4.0)</div></div>
+      <div class="credits" style="bottom:8px">Robot: robotic_system_a01 (CC-BY-4.0)</div></div>
     <div class="spanel panel">
       <h2>Arm 1 joints (forward kinematics)</h2><div class="sliders"></div>
       <button class="shome">Home pose</button>

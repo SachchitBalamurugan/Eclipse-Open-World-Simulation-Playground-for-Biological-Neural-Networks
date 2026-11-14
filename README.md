@@ -26,7 +26,7 @@ The robot's job: every station-night, decide whether to deploy frost protection 
    - `culture_teach`: paired-stimulation teaching. After every trial we replay the sensory pattern and stimulate the correct motor region 3 ms after each sensory pulse (and the other region 3 ms before), so spike-timing plasticity strengthens the sensory-to-correct-motor pathway. It needs the label but only uses stimulation, so the same protocol could run on a real MEA.
    - `culture_reservoir`: the culture stays frozen and a logistic readout is trained on its 64-electrode spike counts (the Brainoware approach). Here the learning happens in silicon.
 4. **Real CL API path** (`neurorover/culture/izh_source.py`, `neurorover/run_cl.py`). The culture is a `cl.sim.SimulatorDataSource`, so the loop uses `cl.open()`, `neurons.loop()`, stim plans and `tick.analysis.spikes`, the same calls you'd make on a CL1. Pass `--hardware` and it registers no simulated source.
-5. **Benchmark** (`neurorover/bench.py`). There are 9 conditions, 10 seeds, and training budgets of 25, 50, 100 and 200 class-balanced samples. Every condition is scored by AUC on the same fixed validation subset (150 freeze nights, 150 non-freeze).
+5. **Benchmark** (`neurorover/bench.py`). There are 10 conditions, 50 seeds, and training budgets of 25, 50, 100 and 200 class-balanced samples. Every condition is scored by AUC on the same fixed validation subset (150 freeze nights, 150 non-freeze).
 6. **Held-out submission** (`neurorover/submit_heldout.py`). The reservoir culture and a matched logistic model each produce a full freeze-challenge submission (37,842 rows). Both pass the challenge's `check_submission.py` (outputs in `neurorover/submissions/`).
 7. **Demo pages** (`demo/index.html`, `demo/lab.html`). `lab.html` is a lab-console view: the electrode well, scrolling voltage traces (waveform shapes are synthesized from the logged spike times), a 64-channel raster and a per-run trial explorer with CSV downloads.
    `demo/index.html`: Evaluation mode plays back recorded trials: the electrode grid lights up with spikes, the robot deploys or holds, and a scoreboard keeps count. Training mode shows the first 40 training trials with the feedback phase, a rolling accuracy line, weight drift, and a heatmap of which electrodes fire.
@@ -36,7 +36,37 @@ The robot's job: every station-night, decide whether to deploy frost protection 
 10. **Cloud fleet dashboard** (`fleet/`). `python fleet/server.py` serves http://localhost:8770, a live view of the Freestyle VMs running benchmark shards (CPU, memory, progress, log tail) with launch / collect / teardown.
 11. **Weather world model** (`neurorover/world/`). Fitted on the training split only: per-station seasonal means plus a VAR(1) on daily min/max temperature anomalies, reconstructed from the lagged features. One-day-ahead error on validation is 2.27 C for the daily low, against 2.51 C for persistence and 3.35 C for climatology. It can imagine new station-nights in the same 15-feature format (imagined freeze rate 5.6% vs 5.9% real), and `env.py` wraps a station's season as a gym-style environment (reward -1 per deployment, -10 for an unprotected freeze night).
 
-What's incomplete: we never ran on real neurons. Seeds 10 to 49 and the learning-rate runs ran on 10 Freestyle VMs (`sweep/run_sweep.sh`, `sweep/run_sens.sh`); everything else ran locally.
+What's incomplete: we never ran on real neurons. The rover physics policy is a single training seed, the environment-data archive is partial, and none of these simulations establish performance on hardware.
+
+## Platform: train any robot with a BNN
+
+`bnn_platform/` puts the pieces above behind one CLI. You can train a simulated-culture controller for any registered robot on your own machine, or fan the runs out in parallel across Freestyle VMs (one job per VM). The BNN is the simulated Izhikevich culture in `neurorover/culture/`; no living tissue is involved.
+
+```bash
+python -m bnn_platform robots                                   # rover, surgical_reach: env + culture controller
+python -m bnn_platform train --robot surgical_reach --lr 0.05 --episodes 60
+python -m bnn_platform eval  --robot surgical_reach             # procedural stress scenarios + IK world model
+python -m bnn_platform train --robot rover --episodes 30        # culture DEPLOY/HOLD + MuJoCo rover season
+python -m bnn_platform fleet sweep --robot surgical_reach --lrs 0.02 0.05 0.1 0.2 --dry-run
+python -m bnn_platform fleet status | collect | teardown        # wraps sweep/run_jobs.sh
+```
+
+Every command runs an existing entry point (`surgical/train_culture.py`, `surgical.research_eval`, `sim.night_loop`, `sim.eval`, `sweep/run_jobs.sh`). Add `--dry-run` to any command to print it without running it. To add a robot, copy [`bnn_platform/robots/template.py`](bnn_platform/robots/template.py) and fill in three adapter functions: observation to stimulation (`encode`), spikes to action (`decode`), and a teaching or reward signal (`teach`). Then call `register_robot(...)`. The template's toy closed loop runs on its own: `python -m bnn_platform.robots.template 5`.
+
+The surgical scenarios borrow ideas from ORBIT-Surgical, SuFIA and SuFIA-BC. [docs/RESEARCH_PAPERS.md](docs/RESEARCH_PAPERS.md) maps what we took from each paper and what we did not build (no Isaac Sim rendering, tissue, suturing or LLM planning).
+
+**Paper-inspired surgical scenarios on 4 Freestyle VMs** (seeds 100-103, 12 episodes per cell; see [surgical/RESEARCH_RESULTS.md](surgical/RESEARCH_RESULTS.md)). Success / median final error:
+
+| Scenario | culture_teach | culture_frozen | IK (DLS) |
+|---|---|---|---|
+| nominal | 0%, 288 mm | 0%, 485 mm | 100%, 3.3 mm |
+| novel targets | 0%, 345 mm | 0%, 600 mm | 83%, 5.1 mm |
+| calibration bias | 0%, 261 mm | 0%, 464 mm | 67%, 9.3 mm |
+| measurement noise | 0%, 245 mm | 0%, 497 mm | 100%, 3.1 mm |
+| actuator mismatch | 0%, 244 mm | 0%, 470 mm | 100%, 2.7 mm |
+| combined stress | 0%, 373 mm | 0%, 580 mm | 50%, 9.8 mm |
+
+The taught culture gets about 2x closer than the frozen one but reaches no target. The learned world model beats a no-motion baseline by 23% one step ahead (14.1 vs 18.3 mm) and at 5 steps, but not at 10.
 
 ## Run or view the demo
 
@@ -98,6 +128,22 @@ What this doesn't answer:
 - **Whether a better plasticity model would learn.** Our culture is a reasonable but uncalibrated model. We matched firing and burst rates by eye to typical culture numbers; we didn't fit it to real MEA recordings.
 - **The 37,842-row held-out submission can't be scored by us.** The held-out labels are withheld.
 - **Two choices are on us, not the data.** The task is a contextual bandit (one decision, one outcome), and we balanced the training stream 50/50 because freezes are only about 5% of nights.
+
+## Rover physics simulation
+
+The separate MuJoCo rover task in `sim/` trains PPO to drive to a field station and deploy a frost cover. Behavior cloning from 120 hand-controller drives was needed: plain PPO stayed at 0% success, while the warm-started policy reached 72% on 100 fixed, randomised episodes (the hand controller reached 59%). Nominal success was 80%. The rendered deployment and replay are under `sim/runs/ppo_bc_s0/`.
+
+We also ran a 30-night culture-driven season at station `USW00023110`. The culture made the frost decision on each night, and the EnvGenerator supplied weather-derived wind and ground-friction variation to the rover. It got 63.3% decision accuracy; 3 of 11 freeze nights were protected and 8 were missed, with a season reward of -78. This is a negative single-season result. See [`sim/README.md`](sim/README.md) and [`sim/runs/ppo_bc_s0/season_summary.md`](sim/runs/ppo_bc_s0/season_summary.md).
+
+The field scene uses seven NVIDIA SimReady props converted to MuJoCo and GLB assets. Their source files are CC-BY-4.0; see [`assets/simready/ATTRIBUTION.md`](assets/simready/ATTRIBUTION.md). The conversion drops textures, internal joints, and per-asset friction.
+
+## Surgical robot simulation
+
+`surgical/` converts the four-arm SimReady `robotic_system_a01` cart to a 47-body, 46-joint MuJoCo model and trains a simulated culture to reach targets with arm 1. A two-second gravity hold stayed stable (no NaNs, 0.00 mm tip drift). On 50 held-out targets, PPO reached 98% success, inverse kinematics 94%, and culture teaching 0%; the taught culture's median final error was 223.5 mm. PPO and IK are engineering references, while the culture result shows the current learning method is not adequate for this task. The arm replay is available in the desktop app's Surgical tab. Full metrics and limits are in [`surgical/REPORT.md`](surgical/REPORT.md), and the adapted asset is credited in [`surgical/ATTRIBUTION.md`](surgical/ATTRIBUTION.md) under CC BY 4.0.
+
+## Environment data
+
+`neurorover/envdata/` joins Open-Meteo archive conditions to the challenge's NOAA stations and adds a calibrated soil-probe noise model. The local archive contains 94,721 station-nights for 31 stations, but the fetch is partial. On the fixed validation rows, lagged weather covariates improved logistic AUC from 0.898 to 0.908; target-night weather is shown only as a leakage upper bound. The generator and physics are documented in [`neurorover/envdata/README.md`](neurorover/envdata/README.md), including the partial coverage and assumptions.
 
 ## Data and permissions
 

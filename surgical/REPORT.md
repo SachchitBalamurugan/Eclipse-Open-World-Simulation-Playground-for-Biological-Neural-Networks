@@ -38,10 +38,10 @@ only from the arm's own defined workspace.
 | controller | success (1 cm, 0.5 s hold) | final error median / mean (mm) | reached 1 cm | median time to 1 cm (s) | joint-limit steps | collision contacts (episodes) |
 |---|---|---|---|---|---|---|
 | ik_dls (engineering reference) | 94% | 2.6 / 4.4 | 94% | 0.65 | 125 | 440 (5) |
+| ppo (235,540 steps) | 98% | 5.7 / 6.7 | 98% | 0.80 | 220 | 15 (1) |
 | culture_teach (2400 teaching steps) | 0% | 223.5 / 237.8 | 2% | 1.25 | 8905 | 272 (7) |
 | culture_frozen | 0% | 446.8 / 440.5 | 0% | - | 241 | 0 (0) |
 | random | 0% | 274.9 / 272.7 | 0% | - | 135 | 649 (20) |
-| ppo | not evaluated: training was still running at the time box (see below) | | | | | |
 
 Collisions are all arm 1's instrument holder hull touching arm 2's (mechanism_01 vs mechanism_02).
 
@@ -64,17 +64,49 @@ Median final error on 6 held-out targets as teaching steps increase:
 - Untried fixes: lower lr with weight normalization, early stopping at the best checkpoint, and 2-electrode pools
   to cut readout noise.
 
+### Learning-rate sweep (4 Freestyle VMs)
+
+Four Freestyle VMs each ran `surgical/train_culture.py teach 60 <lr>` (jobs in `sweep/jobs_surgical.txt`) with
+the same culture and task setup for 60 episodes (4,800 paired-teaching steps) at plasticity learning rates 0.02,
+0.05, 0.1 and 0.2. Curve checkpoints (every 10 episodes) report the median final error on the same six held-out
+targets; the final evaluation covers all 50 held-out targets. Regenerate the figure and table with
+`python surgical/make_report.py --sweep-only`.
+
+![Median error vs episode for the four VM learning rates](results/vm_lr_sweep/learning_curves.png)
+
+| plasticity lr | final success (50 targets) | final median error (mm) | final mean error (mm) | final 6-target median (mm) | best 6-target median (episode) |
+|---:|---:|---:|---:|---:|---:|
+| 0.02 | 0% | 146.6 | 156.0 | 137.8 | 47.0 (50) |
+| 0.05 | 0% | 202.1 | 200.0 | 158.2 | 21.0 (20) |
+| 0.1 | 0% | 205.1 | 212.5 | 166.2 | 151.7 (10) |
+| 0.2 | 0% | 193.5 | 202.1 | 144.1 | 113.2 (20) |
+
+- None of the four rates reached the target. Every run scored 0% success on the 50-target final evaluation, and
+  the final median errors (147-205 mm) are about 15-20 times the 1 cm success threshold.
+- Every rate shows the instability seen in the local run: a transient dip (as low as 21 mm at lr 0.05) and then a
+  rebound to 140-170 mm by episode 60. No learning rate wins. The checkpoints are noisy, use only six targets,
+  and come from a single seed.
+- Data integrity: the first set of `curve_teach_lr*.json` files in this folder was four byte-identical copies of
+  the local `lr=0.08` run and was not valid sweep data. Those files were detected and replaced with the
+  `surgical/results/lr<lr>/curve_teach.json` members of the collected VM tarballs (`sweep/collected/nr-surg-lr*.tgz`).
+  The current files have distinct hashes and distinct curves, each has the matching `lr` field and
+  `episodes = 60`, and each matches its tarball member exactly. `make_report.py` now refuses to plot duplicate curves.
+
 ## Artifacts
 - `results/eval.json`: per-controller metrics plus the held-out targets.
 - `results/trajectory.json`: 3 culture episodes with per-step q, qref, tip, target, distance, action, sensory
   levels and the 64-channel spike counts.
 - `results/culture_episode0_spikes.csv` and `results/culture_episode0_stims.csv`: per-spike and per-stimulus
   logs in the style of record_run.py.
+- `results/vm_lr_sweep/learning_curves.png` and `curve_teach_lr*.json`: four distinct 60-episode CPU VM runs at
+  lr 0.02, 0.05, 0.10 and 0.20; only curve rows and final 50-target aggregate metrics are retained.
+- `results/world_model_metrics.json`: one-step and recorded-action open-loop error for the synthetic IK-trained
+  forward model, including the persistence baseline.
 - `results/culture_teach_reach.mp4` (and `.gif`): offscreen `mujoco.Renderer` (default GL works on Windows) at
   20 fps, 240 frames. The red sphere is the tip, the green sphere is the target.
-- PPO: `ppo_train.py` was still training when the time box ran out. The host was shared with another agent's
-  6-process PPO, so it reached only about 86k steps in about 440 s of learner time. When `results/ppo_reach.zip`
-  appears, rerun `evaluate.py` and then `make_report.py` to add the PPO row.
+- PPO: `ppo_train.py` completed its 1,200 s time box at 235,540 steps using four `DummyVecEnv` environments in
+  one process (`results/ppo_train_info.txt`). On the same 50 held-out targets it reached 98%, close to IK's 94%,
+  with a 5.7 mm median final error. This is a single seed and does not establish robust performance.
 
 ## Not realistic / known gaps
 - No tissue or table contact physics (the table is visual only). No instrument shaft, wrist or jaw, and no

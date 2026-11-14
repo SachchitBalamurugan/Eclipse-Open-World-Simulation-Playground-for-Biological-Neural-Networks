@@ -1,51 +1,43 @@
 # NeuroRover demo script (about 3 minutes)
 
-Before judges arrive:
-- Open the desktop app: `app\start.bat`.
-- Serve the web pages: `.venv/Scripts/python -m http.server 8765 -d demo`.
-- Check no VMs are running: `npx -y freestyle@latest vm list`. Only launch a fleet if you want the live wall; 10 VMs cost about $2.70/h. Tear down afterwards.
+## Before judges arrive
+
+- Open the desktop app with `app\start.bat`.
+- Serve the web demo with `.venv/Scripts/python -m http.server 8765 -d demo`.
+- The app labels every neural controller as a simulated culture. There are no living cells or connected robots.
+- If training workers are running, the Fleet tab can show them live. Ten Freestyle VMs cost about $2.70/hour; collect results and tear them down after use.
 
 ## Hook (20 seconds)
 
-Companies like Cortical Labs rent out living neurons and say they learn from far fewer examples than silicon. Testing that costs about $300 a week per dish, and most of the work isn't the neurons, it's the plumbing. So we built the whole closed loop with no living cells. A simulated culture sits behind the real Cortical Labs API, it drives a frost-protection robot on the hackathon's NOAA freeze data, and we benchmark it against normal models.
+Companies like Cortical Labs rent out living neuron cultures and say they may learn with fewer examples than silicon. Testing that is expensive, and much of the work is the plumbing: encoding a task as stimulation, reading activity back, closing the loop, and comparing against fair baselines. We built that full pipeline with a simulated culture, and also tested the control loop on rover and surgical-robot simulations.
 
 ## The app (60 seconds)
 
-1. **Simulate tab.** The dish in the middle is the culture: 1,024 model neurons on a 64-electrode array.
-   - Blue electrodes are sensory: tonight's weather features become stimulation pulses.
-   - Amber votes DEPLOY, teal votes HOLD.
-   - Green beams are the teaching stimulation.
-2. **The field.** Click Robot. The rover is built from real parts (Raspberry Pi 5, SHT45 sensor, Pololu motors, Actuonix actuator); hover any part to see its spec. On a freeze night it drives out and the cover deploys. The fence, crates and drums are NVIDIA SimReady assets.
-3. **Right panel.** Rolling accuracy and weight drift: the sensory-to-motor weights change as it's taught. The learning curve at the bottom compares it with every baseline.
-4. **Fleet tab** (only if VMs are up). Each tile is a cloud VM training a different seed. Pop one out into its own window.
+1. **Simulate tab.** The dish is a model of 1,024 Izhikevich neurons on a 64-electrode array. Blue electrodes carry sensory input; amber and teal groups vote DEPLOY and HOLD; green pulses show paired-stimulation teaching.
+2. **The field.** Click Robot to see the frost-guard rover assembled from the bill of materials. Its field props are licensed SimReady assets; their source and CC-BY-4.0 attribution are in `assets/simready/ATTRIBUTION.md`.
+3. **Rover replay.** Click **MuJoCo replay**, then choose the `ppo_bc_s0` deployment trajectory from the dropdown. Play or scrub the recorded MuJoCo run; the metadata panel shows the policy, decision and episode result.
+4. **Surgical tab.** Choose an episode and play or scrub the arm-1 reach trajectory. The tab shows the four-arm patient-side cart, target and instrument-tip path, plus the culture's electrode counts for each step. The robot meshes and their license attribution are documented in `surgical/README.md`.
+5. **Fleet tab** (when workers are active). Show each VM's training status and log tail.
 
-## The result (40 seconds)
+## Results (60 seconds)
 
-Show `neurorover/analysis/fig_learning_curves.png` or the app's learning-curve panel. AUC on 300 held-out nights, 50 seeds.
+Show `neurorover/analysis/fig_learning_curves.png` for the frost task. AUC is measured on 300 held-out nights across 50 seeds.
 
-- **Reward-only learning doesn't work.** DishBrain-style feedback and reward-modulated STDP stay near chance, the same wall two public DishBrain replications hit.
-- **Paired-stimulation teaching works.** Replay the input, then stimulate the correct motor region a few milliseconds later. The culture goes from 0.55 to 0.73 AUC, +0.24 over the untrained culture at 200 nights. It's stimulation only, so a real dish could be taught the same way.
-- **Imagined nights help.** Training first on 150 nights imagined by our weather world model adds about +0.11 at 25 real nights.
-- **Silicon still wins.** Logistic regression gets 0.89 at 200. The culture learns, but it's slower.
+- **Paired-stimulation teaching learns in the simulator.** `culture_teach` rises from 0.55 AUC at 25 examples to 0.73 at 200, but logistic regression reaches 0.89 at 200. Reward-only feedback and R-STDP stay near chance.
+- **The rover policy improves on the hand-written controller in simulation.** With 120 demonstration drives used to initialize PPO, success was 72% versus 59% for the controller over 100 fixed-seed randomized episodes. In the nominal model it was 80% versus 72%. This is a single training seed and not a real-robot result.
+- **The surgical reach test.** On 50 held-out targets, PPO succeeded on 98% and the IK reference on 94%; the 1,024-neuron taught culture succeeded on 0% and had 223.5 mm median final error. Teaching improved median error from 446.8 mm for the frozen culture, but it remained far from the engineering references.
+- **Environment data adds a small signal.** The no-leakage weather-context experiment improves validation AUC from 0.898 to 0.908. The archive is partial and the generated weather has documented biases in `neurorover/envdata/README.md`.
 
-## Honest limitation (15 seconds)
+## Honest limitations (20 seconds)
 
-A simulation can't tell you whether real neurons are more sample-efficient. What we built is the harness that can, with the experiment already written.
-
-## Next step (15 seconds)
-
-A week on Cortical Cloud with `run_cl.py --hardware`: same encoding, same teaching protocol, same 300 nights, same sample budgets. If living neurons beat this curve, that's real evidence. If they don't, we learn it for $300.
+The culture is a simulation, not wetware. The rover and surgical arm are also simulated; neither result demonstrates sim-to-real transfer. The surgical model omits tissue contact, a remote-centre-of-motion constraint and clinical safety controls. Its culture controller is unstable and does not reach the target reliably.
 
 ## Likely questions
 
-**Why freeze data, not soil?** We tried the soil data first. Calibration error barely correlated with any feature (|r| < 0.16), so every method sat at chance.
+**Does the surgical result mean it can operate?** No. It is a reach-control experiment on one arm of a simulated cart. The culture has 0% success on the held-out targets; the IK reference is the engineering baseline.
 
-**Why trust the simulator?** Its activity looks like a culture: about 5 Hz per neuron, a network burst every 2.5 s, and stimulation raises local firing about 9x over sham. It isn't fit to real recordings, so we don't claim it predicts real neurons.
+**Why is the rover policy initialized from demonstrations?** Plain PPO stayed at 0% success in this run. Behavior cloning from 120 demonstration drives gave PPO a useful starting controller; it then reached 72% success on randomized held-out episodes.
 
-**Isn't teaching just supervised learning?** Yes: the label decides which motor region gets stimulated. The point is that the label goes in as stimulation, which a real dish can receive. Reward-only signals didn't work in our model.
+**Why no hardware claim?** We have no real robot or living-cell data. The simulator gives a reproducible control experiment, not evidence of biological performance or safe clinical use.
 
-**What's the CL API path?** The culture is a `cl.sim.SimulatorDataSource`, so the loop uses the same calls as a CL1. Through the API, reservoir AUC matched the fast harness (0.89 vs 0.87 on the same rows).
-
-**How many seeds?** 50 per condition (10 local, 40 on Freestyle cloud VMs), with paired bootstrap confidence intervals.
-
-**What would change your mind?** A living culture taught this way that beats our simulated curve at 25 to 50 samples. That would be the first real evidence for the sample-efficiency claim.
+**What did the environment data change?** Lagged weather covariates raised frost-prediction AUC by about 0.01. Target-night covariates are excluded from that result to avoid leakage.
