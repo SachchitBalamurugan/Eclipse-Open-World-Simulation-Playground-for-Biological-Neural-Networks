@@ -22,7 +22,8 @@ Route:
             practice for CAD-derived robots whose hulls interpenetrate).
   actuators = position actuators on all limited joints. The USD drives are
             force-type with stiffness 0 (damping 0.1), i.e. no usable gain, so
-            kp is a stated value: 60 N*m/rad (hinge), 2000 N/m (slide).
+            kp is a stated value: 400 N*m/rad (hinge), 4000 N/m (slide), joint
+            damping 25 N*m*s/rad / 300 N*s/m, armature 0.05 (servo-like, near critical).
 
 Usage: .venv/Scripts/python -I surgical/usd_to_mjcf.py   (writes surgical/model/)
 """
@@ -39,8 +40,8 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 USD = ROOT / "assets/surgical/robotic_system_a01/simready_usd/sm_robotic_system_a01_01.usd"
 OUT = HERE / "model"
-KP_HINGE, KP_SLIDE = 60.0, 2000.0
-DAMP_HINGE, DAMP_SLIDE = 3.0, 80.0
+KP_HINGE, KP_SLIDE = 400.0, 4000.0
+DAMP_HINGE, DAMP_SLIDE = 25.0, 300.0
 
 
 def mat(m: Gf.Matrix4d) -> np.ndarray:
@@ -200,7 +201,7 @@ def main():
          '  <option timestep="0.002" integrator="implicitfast" gravity="0 0 -9.81"/>',
          '  <default>',
          '    <geom type="mesh" rgba="0.85 0.87 0.9 1" contype="1" conaffinity="1" condim="3" density="0"/>',
-         '    <joint armature="0.01"/>',
+         '    <joint armature="0.05"/>',
          '  </default>',
          '  <visual><global offwidth="960" offheight="720"/><quality shadowsize="2048"/></visual>',
          '  <asset>']

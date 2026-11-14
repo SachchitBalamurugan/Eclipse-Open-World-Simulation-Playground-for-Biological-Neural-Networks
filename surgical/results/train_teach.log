@@ -1,0 +1,5 @@
+{"episode": 0, "teaching_steps": 0, "success": 0.0, "median_err_mm": 405.695046027755, "mean_err_mm": 406.5112826986888, "wall_s": 6.103721618652344}
+{"episode": 10, "teaching_steps": 800, "success": 0.0, "median_err_mm": 185.75650476612446, "mean_err_mm": 178.4900039961552, "wall_s": 85.73995447158813}
+{"episode": 20, "teaching_steps": 1600, "success": 0.0, "median_err_mm": 74.19160614197637, "mean_err_mm": 85.32650251420921, "wall_s": 158.92451453208923}
+{"episode": 30, "teaching_steps": 2400, "success": 0.0, "median_err_mm": 218.79919689583744, "mean_err_mm": 232.54687038317297, "wall_s": 260.214262008667}
+final success 0.0 median err 223.51537642423148 wall 308.8644907474518

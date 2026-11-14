@@ -1,0 +1,10 @@
+nr-ppo-s1|PYTHON=python3 bash sim/vm_train.sh 1 35 4
+nr-ppo-s2|PYTHON=python3 bash sim/vm_train.sh 2 35 4
+nr-ppo-s3|PYTHON=python3 bash sim/vm_train.sh 3 35 4
+nr-ppo-s4|PYTHON=python3 bash sim/vm_train.sh 4 35 4
+nr-ppo-s5|PYTHON=python3 bash sim/vm_train.sh 5 35 4
+nr-ppo-s6|PYTHON=python3 bash sim/vm_train.sh 6 35 4
+nr-surg-lr0p02|python3 -m venv .v && . .v/bin/activate && pip install -q mujoco==4.0.1 gymnasium==1.4.0 numpy && python surgical/train_culture.py teach 150 0.02 && mkdir -p surgical/results/lr0.02 && cp surgical/results/curve_teach.json surgical/results/lr0.02/ && cp surgical/results/culture_teach.pkl surgical/results/lr0.02/ 2>/dev/null; true
+nr-surg-lr0p05|python3 -m venv .v && . .v/bin/activate && pip install -q mujoco==4.0.1 gymnasium==1.4.0 numpy && python surgical/train_culture.py teach 150 0.05 && mkdir -p surgical/results/lr0.05 && cp surgical/results/curve_teach.json surgical/results/lr0.05/ && cp surgical/results/culture_teach.pkl surgical/results/lr0.05/ 2>/dev/null; true
+nr-surg-lr0p1|python3 -m venv .v && . .v/bin/activate && pip install -q mujoco==4.0.1 gymnasium==1.4.0 numpy && python surgical/train_culture.py teach 150 0.1 && mkdir -p surgical/results/lr0.1 && cp surgical/results/curve_teach.json surgical/results/lr0.1/ && cp surgical/results/culture_teach.pkl surgical/results/lr0.1/ 2>/dev/null; true
+nr-surg-lr0p2|python3 -m venv .v && . .v/bin/activate && pip install -q mujoco==4.0.1 gymnasium==1.4.0 numpy && python surgical/train_culture.py teach 150 0.2 && mkdir -p surgical/results/lr0.2 && cp surgical/results/curve_teach.json surgical/results/lr0.2/ && cp surgical/results/culture_teach.pkl surgical/results/lr0.2/ 2>/dev/null; true

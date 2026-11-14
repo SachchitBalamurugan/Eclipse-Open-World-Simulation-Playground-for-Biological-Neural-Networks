@@ -25,3 +25,7 @@ sim/runs/**/*.zip
 sim/runs/**/*.mp4
 surgical/**/*.mp4
 *.pt
+sweep/jobs_payload.tar.gz
+sweep/jobs_files.txt
+sweep/jobs_state.txt
+sweep/collected/
