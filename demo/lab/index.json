@@ -27,6 +27,7 @@
    "culture_frozen": 0.49,
    "culture_fep": 0.528,
    "culture_rstdp": 0.492,
+   "culture_teach": 0.726,
    "culture_reservoir": 0.872,
    "random": 0.497,
    "heuristic_tmin": 0.863,

@@ -177,9 +177,9 @@ async function loadIndex(){
   S.index.runs.forEach(x => {const o=document.createElement('option');o.value=x.id;o.textContent=`${x.condition} · s${x.seed} · ${x.n_trials} trials`;sel.appendChild(o)});
   $('src').textContent = 'source: ' + S.index.source;
   const b = S.index.benchmark.auc_at_max_budget || {};
-  const pick = [['culture_reservoir','reservoir'],['culture_fep','FEP'],['culture_frozen','frozen'],['logistic','logistic'],['heuristic_tmin','Tmin rule'],['random','random']];
+  const pick = [['culture_teach','teach'],['culture_reservoir','reservoir'],['culture_fep','FEP'],['culture_frozen','frozen'],['logistic','logistic'],['heuristic_tmin','Tmin rule'],['random','random']];
   $('bench').innerHTML = pick.filter(p=>b[p[0]]!=null).map(p=>`<span>${p[1]} <em>${b[p[0]].toFixed(3)}</em></span>`).join('');
-  if (S.index.runs.length) await loadRun(S.index.runs[0].id);
+  if (S.index.runs.length) { const d = S.index.runs.find(x=>x.condition==='culture_teach') || S.index.runs[0]; await loadRun(d.id); const sel=document.querySelector('select#run, #runSel, select[data-role=run]'); if(sel) sel.value=d.id; }
 }
 async function loadRun(id){
   if (!S.cache[id]) S.cache[id] = await (await fetch(`lab/run_${id}.json`,{cache:'no-store'})).json();
