@@ -1,0 +1,8 @@
+.venv/
+resources/
+__pycache__/
+*.pyc
+*.h5
+bench_local.log
+.env
+sweep/node_modules/
