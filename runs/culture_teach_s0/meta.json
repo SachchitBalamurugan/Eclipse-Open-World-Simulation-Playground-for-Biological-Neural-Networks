@@ -1,0 +1,10 @@
+{
+  "condition": "culture_teach",
+  "seed": 0,
+  "budget": 100,
+  "eval": 60,
+  "final_auc": 0.8727777777777778,
+  "n_spikes": 651844,
+  "n_stims": 15884,
+  "wall_s": 28.8
+}

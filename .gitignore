@@ -11,3 +11,7 @@ sweep/payload.tar.gz
 sweep/results_*.tgz
 sweep/vms.txt
 sweep/vms_sens.txt
+teach_local.log
+app/node_modules/
+fleet/state.json
+fleet/*.tar.gz

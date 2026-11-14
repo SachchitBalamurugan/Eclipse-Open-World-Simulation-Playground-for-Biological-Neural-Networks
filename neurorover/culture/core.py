@@ -111,7 +111,7 @@ class Culture:
         self.I_syn *= 0.8
         if fired.size:
             self.I_syn += self.W[fired].sum(0)
-        if self.rule in ("stdp", "fep", "rstdp"):
+        if self.rule in ("stdp", "fep", "rstdp", "teach"):
             self._plasticity(fired)
         self.t_ms += 1
         return fired
@@ -122,7 +122,18 @@ class Culture:
         if fired.size == 0:
             return
         a_plus, a_minus = 0.01, 0.012
-        if self.rule == "rstdp":
+        if self.rule == "teach":
+            # STDP only on the sensory->motor projection; step size scales with lr
+            k = self.lr / 0.02
+            P = self.plastic[:, fired]
+            if P.any():
+                Wc = self.W[:, fired] + k * a_plus * self.x_pre[:, None] * P
+                self.W[:, fired] = np.where(P, np.clip(Wc, 0.0, self.w_max), Wc)
+            Pr = self.plastic[fired, :]
+            if Pr.any():
+                Wr = self.W[fired, :] - k * a_minus * self.x_post[None, :] * Pr
+                self.W[fired, :] = np.where(Pr, np.clip(Wr, 0.0, self.w_max), Wr)
+        elif self.rule == "rstdp":
             # accumulate into eligibility on plastic synapses only
             self.elig *= 0.995
             self.elig[:, fired] += a_plus * self.x_pre[:, None] * self.plastic[:, fired]

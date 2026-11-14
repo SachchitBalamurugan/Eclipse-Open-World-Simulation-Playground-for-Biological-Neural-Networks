@@ -35,7 +35,7 @@ def decode(counts: np.ndarray) -> float:
     return float(counts[MOTOR_DEPLOY].sum() - counts[MOTOR_HOLD].sum())
 
 
-def feedback(rule: str, correct: bool, rng: np.random.Generator) -> list[tuple[int, int, float]]:
+def feedback(rule: str, correct: bool, rng: np.random.Generator, levels=None, label=None) -> list[tuple[int, int, float]]:
     """[(t_ms_from_FB_START, channel, current_uA)] feedback stim schedule.
 
     fep   : DishBrain-style. Correct -> predictable: synchronous 100 Hz train on the
@@ -51,6 +51,23 @@ def feedback(rule: str, correct: bool, rng: np.random.Generator) -> list[tuple[i
         ts = rng.integers(0, FB_MS, n)
         chs = rng.choice(SENSORY + FEEDBACK, n)
         return sorted((int(t), int(c), 1.0) for t, c in zip(ts, chs))
+    if rule == "teach":
+        # Paired-stimulation teaching (stim-only, so it ports to real MEAs):
+        # replay the sensory pattern; 3 ms after each sensory pulse stimulate the
+        # CORRECT motor pool (pre->post, LTP); 3 ms before it stimulate the other
+        # pool (post->pre, LTD). Runs on every trial, right or wrong.
+        good = MOTOR_DEPLOY if label == 1 else MOTOR_HOLD
+        bad = MOTOR_HOLD if label == 1 else MOTOR_DEPLOY
+        out = []
+        for k in range(4):
+            t = 10 + k * 20
+            sens = [SENSORY[f] for f, L in enumerate(levels) if int(L) > k]
+            if not sens:
+                continue
+            out += [(t - 3, ch, 1.0) for ch in bad]
+            out += [(t, ch, 1.0) for ch in sens]
+            out += [(t + 3, ch, 1.0) for ch in good]
+        return sorted(out)
     if rule == "rstdp":
         return [(0, REWARD[0] if correct else REWARD[2], 1.0)]
     return []

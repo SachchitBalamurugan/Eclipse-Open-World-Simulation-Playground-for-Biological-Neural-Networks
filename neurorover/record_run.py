@@ -112,12 +112,12 @@ def run(condition: str, seed: int, budget: int, eval_n: int, out_root: pathlib.P
     train_levels = task.levels(Xs[:budget])
     rule = bench.RULE[condition]
     c = Culture(seed=seed, rule="stdp" if rule == "fep" else rule)
-    start_W = c.W.copy() if rule in ("fep", "rstdp") else None
+    start_W = c.W.copy() if rule in ("fep", "rstdp", "teach") else None
     c.run(1000)  # Same initial settling period as bench.run_job.
 
     signal = SignalWriter(out)
     trials_path = out / "trials.csv"
-    plastic = rule in ("fep", "rstdp")
+    plastic = rule in ("fep", "rstdp", "teach")
     trials_f = trials_path.open("w", newline="", encoding="utf-8")
     trials = csv.writer(trials_f)
     trials.writerow(["trial", "phase", "station_label", "action", "correct", "score",

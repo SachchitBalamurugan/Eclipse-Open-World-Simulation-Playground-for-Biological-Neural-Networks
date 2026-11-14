@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuroRover MEA Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090c;--panel:#0d1116;--panel2:#111720;--line:#1d2632;--line2:#2a3646;
+  --text:#c9d4e0;--dim:#6b7a8c;--faint:#3b4756;
+  --acc:#4fd1c5;--sens:#5aa9ff;--dep:#ffb347;--hold:#c38bff;--fb:#ff6b8a;--rew:#7ee081;--warn:#ffcc4d;
+  --mono:'JetBrains Mono',ui-monospace,monospace;--sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:12px}
+body{display:flex;flex-direction:column;min-width:1260px;overflow-x:auto}
+.mono{font-family:var(--mono)}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--line);background:linear-gradient(#0f141b,#0b0f14);height:58px;flex:none}
+.brand{display:flex;flex-direction:column;justify-content:center;padding:0 14px;border-right:1px solid var(--line);min-width:190px}
+.brand b{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:#e8f0f8}
+.brand span{color:var(--dim);font-size:10.5px;font-family:var(--mono)}
+.ro{display:flex;flex-direction:column;justify-content:center;padding:0 12px;border-right:1px solid var(--line);min-width:84px}
+.ro label{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-family:var(--mono)}
+.ro div{font-family:var(--mono);font-size:14px;color:#eaf2fa;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ro div.ph{color:var(--acc)}
+.bench{display:flex;flex-direction:column;justify-content:center;padding:0 12px;border-right:1px solid var(--line);font-family:var(--mono);font-size:10.5px}
+.bench .t{font-size:9.5px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.bench .g{display:grid;grid-template-columns:repeat(3,auto);gap:0 12px}
+.bench .g span em{font-style:normal;color:#eaf2fa}
+.badge{margin-left:auto;display:flex;align-items:center;gap:8px;padding:0 14px;color:var(--warn);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;border-left:1px solid var(--line);background:rgba(255,204,77,.06)}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.toolbar{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);flex:none;font-family:var(--mono)}
+button,select{font-family:var(--mono);font-size:11.5px;background:#151c26;color:var(--text);border:1px solid var(--line2);border-radius:3px;padding:4px 9px;cursor:pointer}
+button:hover,select:hover{border-color:var(--acc)}
+button.on{background:#123432;border-color:var(--acc);color:#bff5ef}
+.sep{width:1px;height:20px;background:var(--line2)}
+.tb-l{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em}
+main{flex:1;display:grid;grid-template-columns:minmax(380px,430px) 1fr minmax(360px,410px);grid-template-rows:1fr 1fr;gap:6px;padding:6px;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.ph-h{display:flex;align-items:center;gap:8px;padding:5px 9px;border-bottom:1px solid var(--line);background:var(--panel2);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);flex:none}
+.ph-h b{color:#dfe8f2;font-weight:500}
+.ph-h .r{margin-left:auto;text-transform:none;letter-spacing:0}
+.body{flex:1;position:relative;min-height:0}
+canvas{display:block;width:100%;height:100%}
+#mea{grid-row:1 / span 2}
+#explorer{grid-row:1 / span 2;grid-column:3}
+.foot{font-size:10px;color:var(--dim);padding:3px 9px;border-top:1px solid var(--line);font-family:var(--mono);flex:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 9px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--dim);flex:none}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border:1.5px solid currentColor;margin-right:5px;vertical-align:-1px;border-radius:2px}
+.ex{overflow:auto;padding:8px;display:flex;flex-direction:column;gap:9px}
+.sec{border:1px solid var(--line);border-radius:3px;background:#0a0e13}
+.sec h4{margin:0;padding:4px 8px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);font-weight:500;display:flex}
+.sec h4 span{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--text)}
+.tbl{max-height:190px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10.5px;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:#121922;color:var(--dim);font-weight:500;text-align:right;padding:3px 5px}
+td{text-align:right;padding:2px 5px;border-top:1px solid #121820}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+tr{cursor:pointer}
+tbody tr:hover{background:#142030}
+tr.cur{background:#123432 !important;color:#e6fffb}
+.ok{color:var(--rew)}.bad{color:var(--fb)}
+.dl{display:flex;flex-wrap:wrap;gap:6px;padding:6px 8px}
+.dl a{font-family:var(--mono);font-size:10.5px;color:var(--acc);text-decoration:none;border:1px solid var(--line2);padding:2px 6px;border-radius:3px}
+.dl a:hover{border-color:var(--acc)}
+.chpick{position:absolute;z-index:20;top:84px;left:50%;transform:translateX(-50%);background:#0f151d;border:1px solid var(--line2);border-radius:4px;padding:10px;display:none;box-shadow:0 10px 40px #000a}
+.chpick.show{display:block}
+.chpick .grid{display:grid;grid-template-columns:repeat(8,34px);gap:3px}
+.chpick button{padding:3px 0;font-size:10.5px}
+.chpick .info{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:6px;display:flex;justify-content:space-between;gap:10px}
+input[type=range]{accent-color:var(--acc);width:90px}
+@media (max-width:1380px){main{grid-template-columns:380px 1fr 360px}.bench .g{grid-template-columns:repeat(2,auto)}.ro{padding:0 9px;min-width:70px}.ro div{font-size:13px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>NEURO·ROVER MEA</b><span>frost-guard closed loop · 8×8 HD-MEA model</span></div>
+  <div class="ro"><label>Condition</label><div id="hCond">--</div></div>
+  <div class="ro"><label>Seed</label><div id="hSeed">--</div></div>
+  <div class="ro"><label>Trial</label><div id="hTrial">--</div></div>
+  <div class="ro"><label>Phase</label><div id="hPhase" class="ph">--</div></div>
+  <div class="ro"><label>Sim time</label><div id="hTime">--</div></div>
+  <div class="ro"><label>Array rate</label><div id="hRate">--</div></div>
+  <div class="bench"><div class="t">Benchmark · val AUC @200</div><div class="g" id="bench"></div></div>
+  <div class="badge" title="Everything on this page is produced by a computer model."><i></i>SIMULATED CULTURE MODEL · NO LIVING NEURONS</div>
+</header>
+<div class="toolbar">
+  <button id="bPlay" class="on">❚❚ Pause</button>
+  <button id="bPrev">◀ Trial</button>
+  <button id="bNext">Trial ▶</button>
+  <div class="sep"></div>
+  <span class="tb-l">Speed</span>
+  <select id="speed">
+    <option value="25">0.025× (25 ms/s)</option>
+    <option value="60">0.06×</option>
+    <option value="120" selected>0.12×</option>
+    <option value="300">0.3×</option>
+    <option value="1000">1× real time</option>
+  </select>
+  <div class="sep"></div>
+  <button id="bCh">Channels ▾</button>
+  <span class="tb-l">Gain</span><input id="gain" type="range" min="0.5" max="3" step="0.1" value="1.2">
+  <div class="sep"></div>
+  <span class="tb-l">Run</span><select id="runSel"></select>
+  <span id="src" class="tb-l" style="margin-left:auto"></span>
+</div>
+<div class="chpick" id="chpick">
+  <div class="grid" id="chgrid"></div>
+  <div class="info"><span>Select 1 to 16 channels</span><span id="chcount"></span></div>
+</div>
+<main>
+  <section class="panel" id="mea">
+    <div class="ph-h"><b>Well A1 · electrode map</b><span class="r mono" id="meaInfo">1,024 model neurons · 64 electrodes</span></div>
+    <div class="body"><canvas id="cMea"></canvas></div>
+    <div class="legend">
+      <span style="color:var(--sens)">Sensory 0–13</span><span style="color:var(--dep)">Motor DEPLOY 40–47</span>
+      <span style="color:var(--hold)">Motor HOLD 48–55</span><span style="color:var(--fb)">Feedback 56–59</span>
+      <span style="color:var(--rew)">Reward 60–63</span><span style="color:#fff">◯ stim pulse</span>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="ph-h"><b>Extracellular traces</b><span class="mono" id="trInfo"></span><span class="r mono">100 ms window · 10 kHz display</span></div>
+    <div class="body"><canvas id="cTr"></canvas></div>
+    <div class="foot">Waveforms are synthesized from logged model spike times (negative-going ~1 ms spike + noise). The model does not simulate extracellular voltage.</div>
+  </section>
+  <section class="panel">
+    <div class="ph-h"><b>Raster · 64 ch</b><span class="r mono">ticks: spikes (zone colour) · <span style="color:#5aa9ff">▮</span> sensory stim · <span style="color:#ff6b8a">▮</span> feedback stim · <span style="color:#7ee081">▮</span> reward stim</span></div>
+    <div class="body"><canvas id="cRas"></canvas></div>
+  </section>
+  <section class="panel" id="explorer">
+    <div class="ph-h"><b>Run data explorer</b><span class="r mono" id="exInfo"></span></div>
+    <div class="ex">
+      <div class="sec"><h4>Trials<span id="accTxt"></span></h4><div class="tbl"><table><thead><tr><th>#</th><th>phase</th><th>label</th><th>act</th><th>ok</th><th>DEP</th><th>HOLD</th><th>spk</th></tr></thead><tbody id="tBody"></tbody></table></div></div>
+      <div class="sec"><h4>Electrode spike counts by window<span id="hmMax"></span></h4><canvas id="cHm" style="height:120px"></canvas></div>
+      <div class="sec"><h4>Motor readout · 0–50 ms<span id="mrTxt"></span></h4><canvas id="cBar" style="height:62px"></canvas></div>
+      <div class="sec"><h4>Training accuracy · rolling 10<span id="accNow"></span></h4><canvas id="cAcc" style="height:96px"></canvas></div>
+      <div class="sec"><h4>Weight drift · mean |ΔW|<span id="wTxt"></span></h4><canvas id="cW" style="height:84px"></canvas></div>
+      <div class="sec"><h4>Raw run files (CSV)</h4><div class="dl" id="dl"></div></div>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+'use strict';
+const COL = {sens:'#5aa9ff',dep:'#ffb347',hold:'#c38bff',fb:'#ff6b8a',rew:'#7ee081',acc:'#4fd1c5',dim:'#6b7a8c',line:'#1d2632',text:'#c9d4e0'};
+const STIM_MS = 40, RESP_MS = 50, FB0 = 60, FB1 = 160;
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const zoneOf = ch => ch < 14 ? 'sens' : ch < 16 ? 'sensx' : (ch >= 40 && ch < 48) ? 'dep' : (ch >= 48 && ch < 56) ? 'hold' : (ch >= 56 && ch < 60) ? 'fb' : ch >= 60 ? 'rew' : 'none';
+const zoneColor = ch => ({sens:COL.sens,dep:COL.dep,hold:COL.hold,fb:COL.fb,rew:COL.rew}[zoneOf(ch)] || '#8796a8');
+const $ = id => document.getElementById(id);
+
+const S = {index:null, run:null, ti:0, t:0, playing:!reduce, speed:120, chans:[0,3,7,12,20,27,35,42,45,50,53,57], glow:new Float32Array(64), ring:new Float32Array(64), cache:{}, gain:1.2};
+if (reduce) $('bPlay').textContent = '▶ Play', $('bPlay').classList.remove('on');
+
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(a,b){let h=(a*374761393+b*668265263)|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
+
+function fit(c){const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;const w=Math.max(10,Math.round(r.width*d)),h=Math.max(10,Math.round(r.height*d));if(c.width!==w||c.height!==h){c.width=w;c.height=h;c._chg=true}const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);return [x,r.width,r.height]}
+
+// ---------- data
+function trialLen(tr){return tr && tr.phase==='eval' ? 250 : 400}
+function trial(){return S.run.trials[S.ti]}
+function decoded(tr){ // per-trial cache: spikes [t,ch], stims [t,ch,kind]
+  if (tr._d) return tr._d;
+  const sp = tr.spk.map(v => [Math.floor(v/64), v%64]);
+  const st = tr.stm.map(v => {const k=v%4, r=Math.floor(v/4); return [Math.floor(r/64), r%64, k]});
+  const byCh = Array.from({length:64},()=>[]);
+  sp.forEach(([t,ch],i)=>byCh[ch].push(t + 0.15 + 0.7*hash(i,ch)));
+  tr._d = {sp, st, byCh};
+  return tr._d;
+}
+async function loadIndex(){
+  const r = await fetch('lab/index.json',{cache:'no-store'}); S.index = await r.json();
+  const sel = $('runSel'); sel.innerHTML='';
+  S.index.runs.forEach(x => {const o=document.createElement('option');o.value=x.id;o.textContent=`${x.condition} · s${x.seed} · ${x.n_trials} trials`;sel.appendChild(o)});
+  $('src').textContent = 'source: ' + S.index.source;
+  const b = S.index.benchmark.auc_at_max_budget || {};
+  const pick = [['culture_reservoir','reservoir'],['culture_fep','FEP'],['culture_frozen','frozen'],['logistic','logistic'],['heuristic_tmin','Tmin rule'],['random','random']];
+  $('bench').innerHTML = pick.filter(p=>b[p[0]]!=null).map(p=>`<span>${p[1]} <em>${b[p[0]].toFixed(3)}</em></span>`).join('');
+  if (S.index.runs.length) await loadRun(S.index.runs[0].id);
+}
+async function loadRun(id){
+  if (!S.cache[id]) S.cache[id] = await (await fetch(`lab/run_${id}.json`,{cache:'no-store'})).json();
+  S.run = S.cache[id]; S.ti = 0; S.t = 0; S.glow.fill(0); S.ring.fill(0);
+  $('runSel').value = id;
+  const m = S.run.meta || {};
+  $('hCond').textContent = m.condition || id; $('hSeed').textContent = m.seed ?? '--';
+  buildTable(); drawStatic();
+  $('dl').innerHTML = S.run.files.map(f=>`<a href="lab/raw/${id}/${f}" download="${id}_${f}">${f}</a>`).join('');
+  const tr = S.run.trials.filter(t=>t.phase==='train'), ev = S.run.trials.filter(t=>t.phase==='eval');
+  const acc = a => a.length ? (100*a.filter(t=>+t.correct===1).length/a.length).toFixed(0)+'%' : '--';
+  $('accTxt').textContent = `train ${acc(tr)} · eval ${acc(ev)} (sign readout)`;
+  $('exInfo').textContent = m.final_auc!=null ? `run AUC ${(+m.final_auc).toFixed(3)}` : `${tr.length} train / ${ev.length} eval`;
+}
+function buildTable(){
+  $('tBody').innerHTML = S.run.trials.map((t,i)=>`<tr data-i="${i}"><td>${t.trial}</td><td>${t.phase}</td><td>${t.station_label? 'FREEZE':'clear'}</td><td>${t.action?'DEP':'HOLD'}</td><td class="${+t.correct?'ok':'bad'}">${+t.correct?'✓':'✗'}</td><td>${t.deploy_spikes}</td><td>${t.hold_spikes}</td><td>${t.total_spikes}</td></tr>`).join('');
+}
+$('tBody').addEventListener('click', e => {const r=e.target.closest('tr'); if(r) jump(+r.dataset.i)});
+function jump(i){S.ti=Math.max(0,Math.min(S.run.trials.length-1,i)); S.t=0; S.glow.fill(0); S.ring.fill(0); onTrial()}
+let lastTi=-1;
+function onTrial(){
+  const rows = $('tBody').children;
+  if (lastTi>=0 && rows[lastTi]) rows[lastTi].classList.remove('cur');
+  if (rows[S.ti]) {rows[S.ti].classList.add('cur'); const box=rows[S.ti].closest('.tbl'); const top=rows[S.ti].offsetTop; if(top<box.scrollTop+20||top>box.scrollTop+box.clientHeight-30) box.scrollTop=top-60}
+  lastTi = S.ti; drawHeat(); drawBar(); drawAcc(); drawW();
+}
+
+// ---------- culture texture (seeded procedural)
+let cultureImg=null, cultureKey='';
+function drawCulture(w,h,grid){
+  const key=w+'x'+h; if(cultureKey===key) return; cultureKey=key;
+  const d=window.devicePixelRatio||1, off=document.createElement('canvas'); off.width=w*d; off.height=h*d;
+  const x=off.getContext('2d'); x.scale(d,d);
+  const g=x.createRadialGradient(w/2,h/2,10,w/2,h/2,Math.max(w,h)*0.7); g.addColorStop(0,'#111a1f'); g.addColorStop(1,'#07090c');
+  x.fillStyle=g; x.fillRect(0,0,w,h);
+  const rnd=mulberry(20251114);
+  const {x0,y0,size}=grid;
+  function branch(px,py,ang,len,depth,wid){
+    let cx=px,cy=py; x.beginPath(); x.moveTo(cx,cy);
+    const n=6+Math.floor(rnd()*6);
+    for(let i=0;i<n;i++){ang+=(rnd()-.5)*0.7; cx+=Math.cos(ang)*len/n; cy+=Math.sin(ang)*len/n; x.lineTo(cx,cy)}
+    x.lineWidth=wid; x.stroke();
+    if(depth>0){const k=1+(rnd()<.6); for(let j=0;j<k;j++) branch(cx,cy,ang+(rnd()-.5)*1.6,len*(.5+rnd()*.3),depth-1,wid*.65)}
+  }
+  x.lineCap='round';
+  const N=260;
+  for(let i=0;i<N;i++){
+    const sx=x0-20+rnd()*(size+40), sy=y0-20+rnd()*(size+40);
+    x.strokeStyle=`rgba(${120+rnd()*40|0},${150+rnd()*40|0},${150+rnd()*30|0},${0.10+rnd()*0.14})`;
+    const nb=2+Math.floor(rnd()*3);
+    for(let b=0;b<nb;b++) branch(sx,sy,rnd()*Math.PI*2,18+rnd()*38,2+Math.floor(rnd()*2),0.9+rnd()*0.6);
+  }
+  for(let i=0;i<N;i++){} // somata on top
+  const r2=mulberry(77);
+  for(let i=0;i<N;i++){
+    const sx=x0-20+r2()*(size+40), sy=y0-20+r2()*(size+40), r=1.6+r2()*2.4;
+    const sg=x.createRadialGradient(sx-r*.3,sy-r*.3,0,sx,sy,r*1.3); sg.addColorStop(0,'rgba(210,230,225,.55)'); sg.addColorStop(1,'rgba(120,150,150,0)');
+    x.fillStyle=sg; x.beginPath(); x.ellipse(sx,sy,r*1.2,r,r2()*3,0,7); x.fill();
+  }
+  cultureImg=off;
+}
+function meaGrid(w,h){const size=Math.min(w-60,h-50);return {size,x0:(w-size)/2+12,y0:(h-size)/2+4,pitch:size/8}}
+
+function drawMEA(){
+  const c=$('cMea'), [x,w,h]=fit(c), G=meaGrid(w,h);
+  drawCulture(w,h,G); x.drawImage(cultureImg,0,0,w,h);
+  const {x0,y0,pitch}=G;
+  // zone outlines
+  const zones=[[0,0,8,2,COL.sens,'SENSORY'],[0,5,8,1,COL.dep,'DEPLOY'],[0,6,8,1,COL.hold,'HOLD'],[0,7,4,1,COL.fb,'FEEDBACK'],[4,7,4,1,COL.rew,'REWARD']];
+  x.font='500 9.5px JetBrains Mono'; x.textBaseline='middle';
+  zones.forEach(([cx,cy,cw,chh,col,lab])=>{x.strokeStyle=col;x.globalAlpha=.75;x.setLineDash([4,3]);x.lineWidth=1.2;x.strokeRect(x0+cx*pitch+2,y0+cy*pitch+2,cw*pitch-4,chh*pitch-4);x.setLineDash([]);x.globalAlpha=1;x.fillStyle=col;x.save();x.translate(x0-10,y0+(cy+chh/2)*pitch);x.rotate(-Math.PI/2);x.textAlign='center';if(cx===0)x.fillText(lab,0,0);x.restore();if(cx===4){x.textAlign='right';x.fillText(lab,x0+8*pitch-4,y0+(cy+1)*pitch+9)}});
+  x.textAlign='left';x.fillStyle=COL.fb;x.fillText('',0,0);
+  // electrodes
+  for(let ch=0;ch<64;ch++){
+    const r=Math.floor(ch/8), cc=ch%8, ex=x0+(cc+.5)*pitch, ey=y0+(r+.5)*pitch, g=Math.min(1,S.glow[ch]);
+    const col=zoneColor(ch);
+    if(g>0.02){const rg=x.createRadialGradient(ex,ey,0,ex,ey,pitch*.55);rg.addColorStop(0,`rgba(255,255,255,${.85*g})`);rg.addColorStop(.25,hexA(col,.7*g));rg.addColorStop(1,hexA(col,0));x.fillStyle=rg;x.beginPath();x.arc(ex,ey,pitch*.55,0,7);x.fill()}
+    x.fillStyle=g>0.02?mix('#3a4654','#ffffff',g):'#2e3846'; x.strokeStyle=hexA('#9fb0c2',.55); x.lineWidth=1;
+    const er=pitch*.14; x.beginPath(); x.arc(ex,ey,er,0,7); x.fill(); x.stroke();
+    // lead trace
+    x.strokeStyle='rgba(140,160,180,.12)'; x.beginPath(); x.moveTo(ex,ey+er); x.lineTo(ex,ey+pitch*.42); x.stroke();
+    if(S.ring[ch]>0.02){const k=1-S.ring[ch];x.strokeStyle=`rgba(255,255,255,${S.ring[ch]})`;x.lineWidth=2;x.beginPath();x.arc(ex,ey,er+3+k*pitch*.32,0,7);x.stroke();x.lineWidth=1}
+    x.fillStyle='rgba(180,195,210,.55)'; x.font='8.5px JetBrains Mono'; x.fillText(ch,ex-pitch*.44,ey-pitch*.36);
+    if(S.chans.includes(ch)){x.strokeStyle=COL.acc;x.lineWidth=1;x.strokeRect(ex-pitch*.47,ey-pitch*.47,pitch*.94,pitch*.94)}
+  }
+  x.fillStyle=COL.dim; x.font='9.5px JetBrains Mono'; x.textAlign='right';
+  x.fillText('pitch 200 µm (schematic) · teal box = shown in traces', w-8, h-8); x.textAlign='left';
+}
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`}
+function mix(a,b,t){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);const f=s=>Math.round(((A>>s)&255)*(1-t)+((B>>s)&255)*t);return `rgb(${f(16)},${f(8)},${f(0)})`}
+
+// ---------- traces
+const WIN=100;
+function drawTraces(){
+  const c=$('cTr'), [x,w,h]=fit(c);
+  x.fillStyle='#05080b'; x.fillRect(0,0,w,h);
+  const L=56, R=8, n=S.chans.length, lh=(h-18)/n, pw=w-L-R;
+  // grid
+  x.strokeStyle='#0f1a22'; x.lineWidth=1;
+  for(let i=0;i<=10;i++){const gx=L+pw*i/10;x.beginPath();x.moveTo(gx,0);x.lineTo(gx,h-18);x.stroke()}
+  const tr=trial(), d=decoded(tr), prev=S.ti>0?S.run.trials[S.ti-1]:null, pd=prev?decoded(prev):null, plen=trialLen(prev);
+  const tEnd=S.t, tStart=tEnd-WIN;
+  const NS=Math.min(1400,Math.floor(pw)*2), dt=WIN/NS;
+  x.font='10px JetBrains Mono'; x.textBaseline='middle';
+  S.chans.forEach((ch,k)=>{
+    const cy=lh*(k+.5), amp=lh*.42*S.gain;
+    let times=d.byCh[ch].filter(t=>t>=tStart-2&&t<=tEnd+1);
+    if(pd&&tStart<0) times=pd.byCh[ch].map(t=>t-plen).filter(t=>t>=tStart-2).concat(times);
+    x.fillStyle=zoneColor(ch); x.fillText(('ch'+ch).padEnd(5), 6, cy);
+    x.fillStyle=COL.dim; x.font='8.5px JetBrains Mono'; x.fillText(times.filter(t=>t<=tEnd).length+' spk', 6, cy+11); x.font='10px JetBrains Mono';
+    x.strokeStyle='#18232e'; x.beginPath(); x.moveTo(L,cy); x.lineTo(L+pw,cy); x.stroke();
+    x.strokeStyle=zoneColor(ch); x.globalAlpha=.9; x.lineWidth=1; x.beginPath();
+    let ti=0;
+    for(let s=0;s<=NS;s++){
+      const t=tStart+s*dt; const absIdx=Math.floor((t+100000)/dt);
+      let v=(hash(absIdx,ch*7+1)+hash(absIdx+1,ch*7+2)-1)*0.09 + Math.sin(t*0.37+ch)*0.015;
+      while(ti<times.length&&times[ti]<t-3) ti++;
+      for(let j=ti;j<times.length&&times[j]<t+1;j++){
+        if(times[j]>tEnd) break;
+        const u=t-times[j], a=0.7+0.3*hash(Math.round(times[j]*10),ch);
+        v+= -a*Math.exp(-(((u-0.15)/0.18)**2)) + 0.28*a*Math.exp(-(((u-0.75)/0.4)**2));
+      }
+      if(t>tEnd) break;
+      const px=L+(s/NS)*pw, py=cy-v*amp;
+      s?x.lineTo(px,py):x.moveTo(px,py);
+    }
+    x.stroke(); x.globalAlpha=1;
+  });
+  // scale bar + axis
+  x.fillStyle=COL.dim; x.font='9.5px JetBrains Mono'; x.textBaseline='alphabetic';
+  for(let i=0;i<=10;i+=2){const gx=L+pw*i/10; x.fillText(`${Math.round(tStart+WIN*i/10)}`, gx-8, h-5)}
+  x.strokeStyle='#8aa'; x.beginPath(); x.moveTo(w-R-60,h-22); x.lineTo(w-R-60+pw/10,h-22); x.stroke(); x.fillText('10 ms', w-R-58, h-26);
+  $('trInfo').textContent=`${S.chans.length} ch · ms rel. trial onset`;
+}
+
+// ---------- raster
+function drawRaster(){
+  const c=$('cRas'), [x,w,h]=fit(c), tr=trial(), d=decoded(tr), len=trialLen(tr);
+  x.fillStyle='#05080b'; x.fillRect(0,0,w,h);
+  const L=40,R=10,T=16,B=18, pw=w-L-R, ph=h-T-B, X=t=>L+t/len*pw, rh=ph/64;
+  const bands=[[0,STIM_MS,'rgba(90,169,255,.10)','STIM'],[STIM_MS,RESP_MS,'rgba(79,209,197,.14)','RESP'],[FB0,Math.min(FB1,len),'rgba(255,107,138,.09)','FEEDBACK'],[Math.min(FB1,len),len,'rgba(255,255,255,.025)','REST']];
+  if(tr.phase==='eval') bands[2]=[FB0,FB0,'transparent',''], bands[3]=[RESP_MS,len,'rgba(255,255,255,.025)','REST (eval: no feedback)'];
+  x.font='9px JetBrains Mono';
+  bands.forEach(([a,b,col,lab])=>{x.fillStyle=col;x.fillRect(X(a),T,X(b)-X(a),ph);x.fillStyle=COL.dim;if(lab)x.fillText(lab,X(a)+3,T-4)});
+  x.fillStyle='rgba(79,209,197,.08)'; x.fillRect(X(0),T,X(RESP_MS)-X(0),ph); // response window 0-50 overlaps stim
+  // zone stripes on axis
+  for(let ch=0;ch<64;ch++){x.fillStyle=hexA(zoneColor(ch),zoneOf(ch)==='none'||zoneOf(ch)==='sensx'?.15:.7);x.fillRect(L-6,T+ch*rh,4,rh-0.5)}
+  x.fillStyle=COL.dim; [0,16,40,48,56,63].forEach(ch=>x.fillText(ch,6,T+ch*rh+rh));
+  // stims
+  d.st.forEach(([t,ch,k])=>{if(t>S.t)return;x.fillStyle=k===0?'rgba(90,169,255,.55)':k===1?'rgba(255,107,138,.6)':'rgba(126,224,129,.6)';x.fillRect(X(t)-0.5,T+ch*rh,2,rh)});
+  // spikes
+  x.fillStyle='#e6eef6';
+  for(const [t,ch] of d.sp){if(t>S.t)break;x.fillStyle=zoneOf(ch)==='none'||zoneOf(ch)==='sensx'?'#cfd8e2':zoneColor(ch);x.fillRect(X(t),T+ch*rh+rh*.15,1.3,Math.max(1,rh*.7))}
+  // cursor
+  x.strokeStyle=COL.acc; x.beginPath(); x.moveTo(X(S.t),T); x.lineTo(X(S.t),T+ph); x.stroke();
+  x.fillStyle=COL.dim; for(let t=0;t<=len;t+=50) x.fillText(t,X(t)-6,h-5);
+}
+
+// ---------- explorer charts
+function drawHeat(){
+  const c=$('cHm'), [x,w,h]=fit(c), tr=trial(), R=tr.rates||[];
+  x.clearRect(0,0,w,h);
+  const names=['stim 0–40','resp 0–50','fb 60–160','rest'], gw=Math.min((w-30)/4, h-22), cell=gw/8;
+  let mx=1; R.forEach(r=>r&&r.forEach(v=>mx=Math.max(mx,v)));
+  x.font='9.5px JetBrains Mono';
+  R.forEach((r,k)=>{const ox=6+k*(gw+6),oy=16;x.fillStyle=COL.dim;x.fillText(names[k],ox,10);
+    if(!r){x.fillText('n/a',ox+gw/3,oy+gw/2);return}
+    for(let ch=0;ch<64;ch++){const v=Math.sqrt(r[ch]/mx);x.fillStyle=v>0?`hsl(${190-v*160},80%,${10+v*52}%)`:'#0d141b';x.fillRect(ox+(ch%8)*cell,oy+Math.floor(ch/8)*cell,cell-1,cell-1)}
+    x.strokeStyle=hexA(COL.dep,.8);x.strokeRect(ox,oy+5*cell,gw-1,cell-1);x.strokeStyle=hexA(COL.hold,.8);x.strokeRect(ox,oy+6*cell,gw-1,cell-1);
+  });
+  $('hmMax').textContent=`trial ${tr.phase} #${tr.trial} · max ${mx} spk/ch (√ scale)`;
+}
+function drawBar(){
+  const c=$('cBar'),[x,w,h]=fit(c),tr=trial(); x.clearRect(0,0,w,h);
+  const D=+tr.deploy_spikes,H=+tr.hold_spikes,m=Math.max(D,H,1),bw=w-90;
+  x.font='10px JetBrains Mono';
+  [[D,'DEPLOY',COL.dep],[H,'HOLD',COL.hold]].forEach(([v,l,col],i)=>{const y=8+i*24;x.fillStyle=col;x.fillText(l,6,y+11);x.fillStyle=hexA(col,.85);x.fillRect(62,y,bw*v/m,16);x.fillStyle='#eaf2fa';x.fillText(v,66+bw*v/m,y+12)});
+  $('mrTxt').textContent=`score ${(+tr.score).toFixed(2)} → ${tr.action?'DEPLOY':'HOLD'} · truth ${tr.station_label?'FREEZE':'clear'} ${+tr.correct?'✓':'✗'}`;
+}
+function lineChart(c,series,opts){
+  const [x,w,h]=fit(c); x.clearRect(0,0,w,h);
+  const L=34,R=8,T=6,B=14,pw=w-L-R,ph=h-T-B,n=opts.n;
+  const lo=opts.lo,hi=opts.hi, X=i=>L+i/Math.max(1,n-1)*pw, Y=v=>T+ph-(v-lo)/(hi-lo||1)*ph;
+  x.strokeStyle='#182230';x.font='9px JetBrains Mono';x.fillStyle=COL.dim;
+  (opts.ticks||[lo,hi]).forEach(v=>{x.beginPath();x.moveTo(L,Y(v));x.lineTo(L+pw,Y(v));x.stroke();x.fillText(opts.fmt(v),2,Y(v)+3)});
+  if(opts.ref!=null){x.setLineDash([3,3]);x.strokeStyle='#445';x.beginPath();x.moveTo(L,Y(opts.ref));x.lineTo(L+pw,Y(opts.ref));x.stroke();x.setLineDash([])}
+  series.forEach(s=>{x.strokeStyle=s.col;x.lineWidth=1.5;x.beginPath();s.v.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v)));x.stroke();x.lineWidth=1});
+  if(opts.cur!=null&&opts.cur>=0){x.strokeStyle=COL.acc;x.beginPath();x.moveTo(X(opts.cur),T);x.lineTo(X(opts.cur),T+ph);x.stroke()}
+  x.fillStyle=COL.dim;x.fillText('trial →',L+pw-40,h-2);
+}
+function drawAcc(){
+  const tr=S.run.trials.filter(t=>t.phase==='train'), v=tr.map((t,i)=>{const s=tr.slice(Math.max(0,i-9),i+1);return s.filter(q=>+q.correct===1).length/s.length});
+  const cur=trial().phase==='train'?S.ti:-1;
+  lineChart($('cAcc'),[{v,col:COL.acc}],{n:v.length,lo:0,hi:1,ticks:[0,.5,1],ref:.5,fmt:v=>(v*100|0)+'%',cur});
+  $('accNow').textContent=cur>=0?`${(v[cur]*100).toFixed(0)}% at trial ${cur}`:'eval trial (frozen copy)';
+}
+function drawW(){
+  const W=S.run.weights, c=$('cW');
+  if(!W.length){const [x,w,h]=fit(c);x.clearRect(0,0,w,h);x.fillStyle=COL.dim;x.font='10px JetBrains Mono';x.fillText('Frozen synapses: this condition has no plasticity.',8,h/2);$('wTxt').textContent='n/a';return}
+  const v=W.map(r=>+r.mean_abs_dW_since_start), mx=Math.max(...v,1e-9);
+  const cur=trial().phase==='train'?S.ti:-1;
+  lineChart(c,[{v,col:COL.fb}],{n:v.length,lo:0,hi:mx,ticks:[0,mx/2,mx],fmt:v=>v.toExponential(1).replace('e','e'),cur});
+  const k=cur>=0?cur:v.length-1;
+  $('wTxt').textContent=`|ΔW| ${v[k].toExponential(2)} · W→DEP ${(+W[k].mean_W_sens_to_deploy).toFixed(3)} · W→HOLD ${(+W[k].mean_W_sens_to_hold).toFixed(3)}`;
+}
+function drawStatic(){cultureKey='';onTrial()}
+
+// ---------- header
+const rateBuf=[];
+function header(){
+  const tr=trial(), len=trialLen(tr), t=S.t;
+  $('hTrial').textContent=`${S.ti+1}/${S.run.trials.length}`;
+  let ph = tr.phase==='eval' ? (t<STIM_MS?'STIM':t<RESP_MS?'RESPONSE':'REST') : (t<STIM_MS?'STIM':t<RESP_MS?'RESPONSE':t<FB0?'DECIDE':t<FB1?'FEEDBACK':'REST');
+  $('hPhase').textContent=`${tr.phase.toUpperCase()} · ${ph}`;
+  const base=S.run.trials.slice(0,S.ti).reduce((a,q)=>a+trialLen(q),0);
+  $('hTime').textContent=((base+t)/1000).toFixed(3)+' s';
+  const d=decoded(tr); let n=0; for(const [st] of d.sp){if(st>t)break;if(st>t-50)n++}
+  $('hRate').textContent=`${Math.round(n/0.05).toLocaleString()} spk/s`;
+}
+
+// ---------- loop
+let lastNow=performance.now(), lastT=0;
+function tick(now){
+  const dtReal=Math.min(0.1,(now-lastNow)/1000); lastNow=now;
+  if(S.run){
+    const tr=trial(), len=trialLen(tr), prevT=S.t;
+    if(S.playing){S.t+=dtReal*S.speed; if(S.t>=len){if(S.ti<S.run.trials.length-1){S.ti++;S.t=0;onTrial()}else{S.t=len;S.playing=false;updPlay()}}}
+    const t1=S.t, t0=S.t<prevT?-1:prevT, dSim=Math.max(0,t1-t0);
+    const dec=Math.exp(-dSim/(reduce?4:10)); for(let i=0;i<64;i++){S.glow[i]*=dec;S.ring[i]*=Math.exp(-dSim/6)}
+    const d=decoded(trial());
+    for(const [t,ch] of d.sp){if(t>t1)break;if(t>t0)S.glow[ch]+=0.35}
+    for(const [t,ch] of d.st){if(t>t0&&t<=t1)S.ring[ch]=1}
+    drawMEA(); drawTraces(); drawRaster(); header();
+  }
+  requestAnimationFrame(tick);
+}
+
+// ---------- controls
+function updPlay(){$('bPlay').textContent=S.playing?'❚❚ Pause':'▶ Play';$('bPlay').classList.toggle('on',S.playing)}
+$('bPlay').onclick=()=>{if(!S.playing&&S.ti===S.run.trials.length-1&&S.t>=trialLen(trial()))jump(0);S.playing=!S.playing;updPlay()};
+$('bNext').onclick=()=>jump(S.ti+1); $('bPrev').onclick=()=>jump(S.ti-1);
+$('speed').onchange=e=>S.speed=+e.target.value;
+$('gain').oninput=e=>S.gain=+e.target.value;
+$('runSel').onchange=e=>loadRun(e.target.value);
+document.addEventListener('keydown',e=>{if(e.target.tagName==='SELECT')return;if(e.code==='Space'){e.preventDefault();$('bPlay').click()}if(e.key==='ArrowRight')jump(S.ti+1);if(e.key==='ArrowLeft')jump(S.ti-1)});
+const pick=$('chpick'), cg=$('chgrid');
+for(let ch=0;ch<64;ch++){const b=document.createElement('button');b.textContent=ch;b.style.color=zoneColor(ch);b.onclick=()=>{const i=S.chans.indexOf(ch);if(i>=0){if(S.chans.length>1)S.chans.splice(i,1)}else if(S.chans.length<16){S.chans.push(ch);S.chans.sort((a,b)=>a-b)}syncPick()};cg.appendChild(b)}
+function syncPick(){[...cg.children].forEach((b,i)=>b.classList.toggle('on',S.chans.includes(i)));$('chcount').textContent=S.chans.length+'/16'}
+$('bCh').onclick=e=>{e.stopPropagation();pick.classList.toggle('show');syncPick()};
+document.addEventListener('click',e=>{if(!pick.contains(e.target)&&e.target!==$('bCh'))pick.classList.remove('show')});
+$('cMea').addEventListener('click',e=>{const r=e.target.getBoundingClientRect(),G=meaGrid(r.width,r.height);const cc=Math.floor((e.clientX-r.left-G.x0)/G.pitch),rr=Math.floor((e.clientY-r.top-G.y0)/G.pitch);if(cc<0||cc>7||rr<0||rr>7)return;const ch=rr*8+cc,i=S.chans.indexOf(ch);if(i>=0){if(S.chans.length>1)S.chans.splice(i,1)}else{if(S.chans.length>=16)S.chans.shift();S.chans.push(ch);S.chans.sort((a,b)=>a-b)}syncPick()});
+window.addEventListener('resize',()=>{cultureKey='';onTrial()});
+updPlay();
+loadIndex().then(()=>requestAnimationFrame(tick)).catch(err=>{document.querySelector('main').insertAdjacentHTML('afterbegin',`<div style="grid-column:1/-1;color:#ff6b8a;font-family:var(--mono)">Could not load lab/index.json. Run: .venv/Scripts/python demo/build_lab_data.py (${err})</div>`)});
+})();
+</script>
+</body>
+</html>

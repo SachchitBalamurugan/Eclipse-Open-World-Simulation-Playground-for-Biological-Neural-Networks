@@ -1,0 +1,10 @@
+{
+  "condition": "culture_reservoir",
+  "seed": 0,
+  "budget": 50,
+  "eval": 60,
+  "final_auc": 0.8222222222222222,
+  "n_spikes": 226761,
+  "n_stims": 2842,
+  "wall_s": 4.2
+}

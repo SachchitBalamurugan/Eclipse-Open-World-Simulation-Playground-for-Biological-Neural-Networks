@@ -25,11 +25,11 @@ from .env.frost import FrostTask, auc
 from .interface import codec
 
 BUDGETS = [25, 50, 100, 200]
-CULTURE_CONDS = ["culture_frozen", "culture_fep", "culture_rstdp", "culture_reservoir"]
+CULTURE_CONDS = ["culture_frozen", "culture_fep", "culture_rstdp", "culture_reservoir", "culture_teach"]
 BASELINE_CONDS = ["random", "heuristic_tmin", "logistic", "mlp", "logistic_rawfeat"]
 ALL = CULTURE_CONDS + BASELINE_CONDS
 RULE = {"culture_frozen": "frozen", "culture_fep": "fep", "culture_rstdp": "rstdp",
-        "culture_reservoir": "frozen"}
+        "culture_reservoir": "frozen", "culture_teach": "teach"}
 OUT = pathlib.Path(__file__).resolve().parent / "results"
 
 
@@ -59,7 +59,7 @@ def run_trial(c: Culture, levels, rng, label=None, rule="frozen", total_ms=None)
             action = int(score > 0) if score != 0 else int(rng.random() < 0.5)
             if label is not None:
                 correct = action == label
-                fb = codec.feedback(rule, correct, rng)
+                fb = codec.feedback(rule, correct, rng, levels=levels, label=label)
     return counts, score, action, correct
 
 
