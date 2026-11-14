@@ -6,3 +6,4 @@ __pycache__/
 bench_local.log
 .env
 sweep/node_modules/
+neurorover/recordings/
