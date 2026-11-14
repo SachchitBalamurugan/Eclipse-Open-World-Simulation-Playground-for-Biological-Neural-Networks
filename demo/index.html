@@ -201,7 +201,7 @@
       </div>
       <div class="sim-warning">Simulated culture — no living neurons</div>
     </header>
-    <div id="load-error" class="error" role="alert">Could not load demo_data.json. Serve this folder with <code>python -m http.server</code> and open <code>http://localhost:8000</code>.</div>
+    <div id="load-error" class="error" role="alert">Could not load demo_data.json. Serve this folder with <code>python -m http.server 8765 -d demo</code> from the repo root and open <code>http://localhost:8765</code>.</div>
     <main class="layout" id="app" hidden>
       <section class="panel" aria-labelledby="mea-title">
         <div class="panel-head"><div><h2 id="mea-title">64-electrode culture</h2><p class="eyebrow">spikes play across the 8 × 8 simulated array</p></div><span class="tag" id="sim-time">250 ms / night</span></div>
