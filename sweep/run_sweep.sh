@@ -18,9 +18,9 @@ DATA=resources/challenges/freeze-preparation/09-freeze/data.json.gz
 vm_id_from_json() {  # read create --output json on stdin, print the VM id
   python -c 'import json,sys
 d=json.load(sys.stdin)
-for k in ("vmId","id"):
-    if isinstance(d,dict) and k in d: print(d[k]); break
-    if isinstance(d,dict) and "vm" in d and k in d["vm"]: print(d["vm"][k]); break'
+for src in (d, d.get("vm") or {}):
+    v=src.get("id") or src.get("vmId")
+    if v: print(v); break'
 }
 
 launch() {
@@ -36,9 +36,9 @@ launch() {
       id=$($FS vm create --slug "nr-sweep-$i" --replace-slug --no-ssh --idle-timeout-seconds 7200 \
             --metadata project=neurorover --output json | vm_id_from_json)
       echo "$i $id" >> "$STATE"
-      $FS vm scp "$TARBALL" "$id:/root/payload.tar.gz" >/dev/null
+      $FS vm scp "$TARBALL" "$id:/home/ubuntu/payload.tar.gz" >/dev/null
       $FS vm exec "$id" --timeout-ms 280000 -- bash -lc "
-        set -e; mkdir -p /root/nr && cd /root/nr && tar -xzf /root/payload.tar.gz
+        set -e; mkdir -p /home/ubuntu/nr && cd /home/ubuntu/nr && tar -xzf /home/ubuntu/payload.tar.gz
         (command -v python3 && python3 -m pip --version) >/dev/null 2>&1 || (apt-get update -qq && apt-get install -y -qq python3 python3-pip python3-venv >/dev/null)
         python3 -m venv .venv && .venv/bin/pip -q install numpy
         nohup .venv/bin/python -m neurorover.bench --all --seeds $seeds --procs \$(nproc) \
@@ -53,7 +53,7 @@ launch() {
 
 status() {
   while read -r i id; do
-    n=$($FS vm exec "$id" -- bash -lc "ls /root/nr/neurorover/results 2>/dev/null | wc -l; pgrep -f neurorover.bench >/dev/null && echo running || echo done" | tr '\n' ' ')
+    n=$($FS vm exec "$id" -- bash -lc "ls /home/ubuntu/nr/neurorover/results 2>/dev/null | wc -l; pgrep -f neurorover.bench >/dev/null && echo running || echo done" | tr '\n' ' ')
     echo "shard $i ($id): $n"
   done < "$STATE"
 }
@@ -61,8 +61,8 @@ status() {
 collect() {
   mkdir -p neurorover/results
   while read -r i id; do
-    $FS vm exec "$id" -- bash -lc "cd /root/nr/neurorover && tar -czf /root/results.tgz results" >/dev/null
-    $FS vm scp "$id:/root/results.tgz" "sweep/results_$i.tgz" >/dev/null
+    $FS vm exec "$id" -- bash -lc "cd /home/ubuntu/nr/neurorover && tar -czf /home/ubuntu/results.tgz results" >/dev/null
+    $FS vm scp "$id:/home/ubuntu/results.tgz" "sweep/results_$i.tgz" >/dev/null
     tar -xzf "sweep/results_$i.tgz" -C neurorover/
   done < "$STATE"
   echo "results now: $(ls neurorover/results | wc -l) files"
