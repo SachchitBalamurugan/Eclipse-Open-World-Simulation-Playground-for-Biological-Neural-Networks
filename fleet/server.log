@@ -1,0 +1,62 @@
+11:50:28 info fleet server on http://127.0.0.1:8770 (cli: C:\Program Files\nodejs\npx.CMD)
+11:50:33 info launch: 10 VMs, condition=culture_teach, seeds=50
+11:50:34 info payload built from working tree: 59 files, 20.1 MB
+11:50:41 info nr-fleet-5 created (vm-544d111906984db487933aef36bccfaa), uploading payload
+11:50:41 info nr-fleet-0 created (vm-2606f1e8707540c89c8ecd8b274731f8), uploading payload
+11:50:41 info nr-fleet-9 created (vm-de6e9deb5fb44b8c84e90c44bcd4beef), uploading payload
+11:50:41 info nr-fleet-3 created (vm-92887219eb44476db7dd30394f2dceaa), uploading payload
+11:50:41 info nr-fleet-1 created (vm-90b9e210f8834f83a2328bdd536045d2), uploading payload
+11:50:41 info nr-fleet-2 created (vm-a0a003175b1a4fe0b56aac994940efe4), uploading payload
+11:50:41 info nr-fleet-4 created (vm-9eff8971fae94fe9bba0940841dda598), uploading payload
+11:50:41 info nr-fleet-7 created (vm-8a955ca4258349eb9fa66b08f5297993), uploading payload
+11:50:42 info nr-fleet-6 created (vm-adbabb8f943b479eb9c70a883dc19ecd), uploading payload
+11:50:46 info nr-fleet-8 created (vm-5d034a22d7dc40939407577842ea3678), uploading payload
+11:51:44 error nr-fleet-9: start failed: Error: argument.replaceAll is not a function
+11:54:03 error nr-fleet-7: start failed: Error: argument.replaceAll is not a function
+11:54:15 error nr-fleet-8: start failed: Error: argument.replaceAll is not a function
+11:54:23 error nr-fleet-3: start failed: Error: argument.replaceAll is not a function
+11:54:25 error nr-fleet-2: start failed: Error: argument.replaceAll is not a function
+11:54:26 error nr-fleet-6: start failed: Error: argument.replaceAll is not a function
+11:54:32 error nr-fleet-4: start failed: Error: argument.replaceAll is not a function
+11:54:34 error nr-fleet-1: start failed: Error: argument.replaceAll is not a function
+11:54:41 error nr-fleet-5: start failed: Error: argument.replaceAll is not a function
+11:54:45 error nr-fleet-0: start failed: Error: argument.replaceAll is not a function
+11:54:45 warn launch finished: 0/10 shards running
+11:55:10 info fleet server on http://127.0.0.1:8770 (cli: C:\Program Files\nodejs\npx.CMD)
+11:55:19 info launch: 10 VMs, condition=culture_teach, seeds=50
+11:55:24 info reusing 10 existing VMs
+11:55:24 info nr-fleet-0 created (vm-2606f1e8707540c89c8ecd8b274731f8), uploading payload
+11:55:24 info nr-fleet-1 created (vm-90b9e210f8834f83a2328bdd536045d2), uploading payload
+11:55:24 info nr-fleet-2 created (vm-a0a003175b1a4fe0b56aac994940efe4), uploading payload
+11:55:24 info nr-fleet-3 created (vm-92887219eb44476db7dd30394f2dceaa), uploading payload
+11:55:24 info nr-fleet-4 created (vm-9eff8971fae94fe9bba0940841dda598), uploading payload
+11:55:24 info nr-fleet-5 created (vm-544d111906984db487933aef36bccfaa), uploading payload
+11:55:2411:55:24  infoinfo  nr-fleet-6 created (vm-adbabb8f943b479eb9c70a883dc19ecd), uploading payloadnr-fleet-7 created (vm-8a955ca4258349eb9fa66b08f5297993), uploading payload
+
+11:55:24 info nr-fleet-8 created (vm-5d034a22d7dc40939407577842ea3678), uploading payload
+11:55:24 info nr-fleet-9 created (vm-de6e9deb5fb44b8c84e90c44bcd4beef), uploading payload
+11:56:04 ok nr-fleet-7: started shard 7/10 on 4 cpus
+11:56:05 ok nr-fleet-2: started shard 2/10 on 4 cpus
+11:56:06 ok nr-fleet-9: started shard 9/10 on 4 cpus
+11:56:07 ok nr-fleet-6: started shard 6/10 on 4 cpus
+11:56:08 ok nr-fleet-8: started shard 8/10 on 4 cpus
+11:56:08 ok nr-fleet-1: started shard 1/10 on 4 cpus
+11:56:09 ok nr-fleet-0: started shard 0/10 on 4 cpus
+11:56:09 ok nr-fleet-3: started shard 3/10 on 4 cpus
+11:56:13 ok nr-fleet-5: started shard 5/10 on 4 cpus
+11:56:15 ok nr-fleet-4: started shard 4/10 on 4 cpus
+11:56:15 ok launch finished: 10/10 shards running
+11:59:53 info collect: 10 VMs
+11:59:55 warn teardown: deleting 10 VMs
+12:00:12 ok nr-fleet-6 deleted
+12:00:14 ok nr-fleet-8 deleted
+12:00:18 ok nr-fleet-9: collected 4 new result files
+12:00:18 ok nr-fleet-0: collected 4 new result files
+12:00:19 ok nr-fleet-7 deleted
+12:00:23 ok nr-fleet-4 deleted
+12:00:24 ok nr-fleet-2: collected 4 new result files
+12:00:24 ok nr-fleet-1: collected 4 new result files
+12:00:24 ok nr-fleet-3: collected 4 new result files
+12:00:25 ok nr-fleet-5: collected 4 new result files
+12:00:27 ok nr-fleet-3 deleted
+12:00:29 ok nr-fleet-1 deleted

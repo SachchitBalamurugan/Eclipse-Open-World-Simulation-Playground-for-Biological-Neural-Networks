@@ -1,0 +1,100 @@
+{
+ "fit": {
+  "split": "train only",
+  "n_stations": 31,
+  "n_reconstructed_station_days": 99024,
+  "A": [
+   [
+    0.6456,
+    0.1097
+   ],
+   [
+    -0.0068,
+    0.7049
+   ]
+  ],
+  "mean_resid_sd_tmin_tmax": [
+   2.211,
+   2.739
+  ]
+ },
+ "validation": {
+  "1_step": {
+   "n_pairs": 32884,
+   "rmse_model_tmin_tmax": [
+    2.273,
+    2.615
+   ],
+   "rmse_persistence_tmin_tmax": [
+    2.509,
+    2.804
+   ],
+   "rmse_climatology_tmin_tmax": [
+    3.351,
+    3.889
+   ]
+  },
+  "3_step": {
+   "n_pairs": 32408,
+   "rmse_model_tmin_tmax": [
+    3.062,
+    3.596
+   ],
+   "rmse_persistence_tmin_tmax": [
+    3.752,
+    4.383
+   ],
+   "rmse_climatology_tmin_tmax": [
+    3.355,
+    3.867
+   ]
+  }
+ },
+ "freeze_base_rate": {
+  "real_train": 0.0592,
+  "real_validation": 0.0433,
+  "imagined_20000_nights": 0.0556
+ },
+ "feature_marginals_first8": {
+  "imagined_mean": [
+   6.49,
+   6.49,
+   6.6,
+   6.57,
+   18.4,
+   18.42,
+   18.53,
+   18.48
+  ],
+  "train_mean": [
+   6.48,
+   6.5,
+   6.55,
+   6.53,
+   18.32,
+   18.35,
+   18.44,
+   18.41
+  ],
+  "imagined_sd": [
+   4.11,
+   4.12,
+   4.17,
+   3.53,
+   5.62,
+   5.64,
+   5.74,
+   5.04
+  ],
+  "train_sd": [
+   4.09,
+   4.11,
+   4.16,
+   3.54,
+   5.53,
+   5.56,
+   5.67,
+   4.93
+  ]
+ }
+}
