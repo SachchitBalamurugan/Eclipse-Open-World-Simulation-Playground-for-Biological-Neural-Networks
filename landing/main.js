@@ -32,7 +32,7 @@
       $("dl-sha").textContent = sha || "–";
       $("dl-req").textContent = req;
       meta.hidden = false;
-      btn.href = "downloads/" + encodeURIComponent(file).replace(/%2F/g, "/");
+      btn.href = (typeof m.url === "string" && /^https:\/\//.test(m.url)) ? m.url : "downloads/" + encodeURIComponent(file).replace(/%2F/g, "/");
       btn.setAttribute("download", "");
       btn.textContent = "Download for Windows" + (m.version ? " · v" + String(m.version).replace(/^v/, "") : "");
       const built = m.built_at || m.built || m.date;

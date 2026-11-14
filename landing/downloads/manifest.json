@@ -4,5 +4,6 @@
   "bytes": 172181703,
   "sha256": "8ed0486b975159dc331517577da1d6cff75ca5fe49db22ee56455cc797347ca3",
   "built": "2026-11-14T23:28:12.033Z",
-  "requirements": "Windows 10/11 x64. Python 3.12 (64-bit, from python.org; 3.10+ works) must be installed and reachable as `py` or `python`. Unzip and run Eclipse.exe (unsigned - SmartScreen may ask you to confirm). On first run Eclipse creates a private Python environment in %LOCALAPPDATA%\\Eclipse\\venv and pip-installs numpy, mujoco, gymnasium and cl-sdk (internet required, a few hundred MB, a few minutes; progress is shown in the Studio log). Your runs and imported robots are stored in %LOCALAPPDATA%\\Eclipse\\data. If Python is missing, Eclipse shows a dialog linking to python.org."
+  "requirements": "Windows 10/11 x64. Python 3.12 (64-bit, from python.org; 3.10+ works) must be installed and reachable as `py` or `python`. Unzip and run Eclipse.exe (unsigned - SmartScreen may ask you to confirm). On first run Eclipse creates a private Python environment in %LOCALAPPDATA%\\Eclipse\\venv and pip-installs numpy, mujoco, gymnasium and cl-sdk (internet required, a few hundred MB, a few minutes; progress is shown in the Studio log). Your runs and imported robots are stored in %LOCALAPPDATA%\\Eclipse\\data. If Python is missing, Eclipse shows a dialog linking to python.org.",
+  "url": "https://sr6t0xysfmhdyfpp.public.blob.vercel-storage.com/downloads/Eclipse-0.1.0-win-x64.zip"
 }
