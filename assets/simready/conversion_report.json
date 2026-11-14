@@ -1,0 +1,249 @@
+[
+ {
+  "name": "barrier_fence_metal_a02",
+  "usd": "hf\\barrier_fence_metal_a02\\simready_usd\\sm_barrier_fence_metal_a02_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "bbox_min": [
+   -0.1149,
+   -0.115,
+   0.0001
+  ],
+  "bbox_max": [
+   1.1149,
+   0.115,
+   1.0719
+  ],
+  "mass_kg": 45.41,
+  "parts": [
+   {
+    "part": "sm_barrier_fence_a02_mesh_00",
+    "verts": 1892,
+    "tris": 3388,
+    "mass_kg": 45.41035842895508,
+    "material": "opaque__metal__painted_a"
+   }
+  ],
+  "box_colliders": [
+   [
+    [
+     0.4999637305736542,
+     0,
+     0.5959260828081465
+    ],
+    [
+     0.6149000227451324,
+     0.02,
+     0.4759260828081466
+    ]
+   ],
+   [
+    [
+     -0.054936292171478274,
+     0,
+     0.06
+    ],
+    [
+     0.06,
+     0.11499999463558197,
+     0.06
+    ]
+   ],
+   [
+    [
+     1.0548637533187866,
+     0,
+     0.06
+    ],
+    [
+     0.06,
+     0.11499999463558197,
+     0.06
+    ]
+   ]
+  ],
+  "n_parts": 1
+ },
+ {
+  "name": "construction_wheelbarrow_metal_a01",
+  "usd": "hf\\construction_wheelbarrow_metal_a01\\simready_usd\\sm_construction_wheelbarrow_metal_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "bbox_min": [
+   -0.327,
+   -0.9725,
+   0.0061
+  ],
+  "bbox_max": [
+   0.3209,
+   0.7435,
+   0.7284
+  ],
+  "mass_kg": 24.286,
+  "parts": [
+   {
+    "part": "wheel_01_mesh_00",
+    "verts": 6208,
+    "tris": 12416,
+    "mass_kg": 9.285725593566895,
+    "material": "m_opaque__rubber__glossy_black_a01"
+   },
+   {
+    "part": "body_01_mesh_00",
+    "verts": 27802,
+    "tris": 55504,
+    "mass_kg": 15.0,
+    "material": "m_opaque__metal__paintedworn_gray_a01"
+   }
+  ],
+  "box_colliders": null,
+  "n_parts": 2
+ },
+ {
+  "name": "drum_steel_a01",
+  "usd": "hf\\drum_steel_a01\\simready_usd\\sm_drum_steel_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "bbox_min": [
+   -0.3209,
+   -0.3361,
+   -0.0
+  ],
+  "bbox_max": [
+   0.3209,
+   0.3209,
+   0.8683
+  ],
+  "mass_kg": 102.3,
+  "parts": [
+   {
+    "part": "sm_lid_a01_mesh_00",
+    "verts": 38936,
+    "tris": 77852,
+    "mass_kg": 16.26923942565918,
+    "material": "opaque__metal__steel_a"
+   },
+   {
+    "part": "sm_drum_a01_mesh_00",
+    "verts": 11302,
+    "tris": 22600,
+    "mass_kg": 86.03114318847656,
+    "material": "opaque__metal__painted_steel_black_a"
+   }
+  ],
+  "box_colliders": null,
+  "n_parts": 2
+ },
+ {
+  "name": "drum_plastic_blue_a01",
+  "usd": "hf\\drum_plastic_blue_a01\\simready_usd\\sm_drum_plastic_blue_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "bbox_min": [
+   -0.1414,
+   -0.1421,
+   0.0003
+  ],
+  "bbox_max": [
+   0.1414,
+   0.1421,
+   0.3869
+  ],
+  "mass_kg": 0.175,
+  "parts": [
+   {
+    "part": "sm_drum_a01_mesh_00",
+    "verts": 13976,
+    "tris": 27858,
+    "mass_kg": 0.17525853216648102,
+    "material": "opaque__plastic__blue_a"
+   }
+  ],
+  "box_colliders": null,
+  "n_parts": 1
+ },
+ {
+  "name": "crate_plywood_b01",
+  "usd": "hf\\crate_plywood_b01\\simready_usd\\sm_crate_plywood_b01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "bbox_min": [
+   -0.5011,
+   -0.5043,
+   0.0
+  ],
+  "bbox_max": [
+   0.5011,
+   0.5043,
+   1.0165
+  ],
+  "mass_kg": 94.629,
+  "parts": [
+   {
+    "part": "sm_crate_b01_mesh_00",
+    "verts": 12802,
+    "tris": 25110,
+    "mass_kg": 94.6291275024414,
+    "material": "opaque__metal__unique_crate_plywood_b"
+   }
+  ],
+  "box_colliders": null,
+  "n_parts": 1
+ },
+ {
+  "name": "pallet_a01",
+  "usd": "hf\\pallet_a01\\simready_usd\\sm_pallet_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "bbox_min": [
+   -0.6021,
+   -0.4002,
+   0.0
+  ],
+  "bbox_max": [
+   0.6021,
+   0.4002,
+   0.2086
+  ],
+  "mass_kg": 50.732,
+  "parts": [
+   {
+    "part": "sm_pallet_a01_mesh_00",
+    "verts": 1064,
+    "tris": 2052,
+    "mass_kg": 50.73172378540039,
+    "material": "opaque__wood__unique_pallet_a"
+   }
+  ],
+  "box_colliders": null,
+  "n_parts": 1
+ },
+ {
+  "name": "food_produce_corn_b01",
+  "usd": "hf\\food_produce_corn_b01\\simready_usd\\sm_food_produce_corn_b01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "bbox_min": [
+   -0.0168,
+   -0.0903,
+   0.0012
+  ],
+  "bbox_max": [
+   0.0186,
+   0.0894,
+   0.0369
+  ],
+  "mass_kg": 0.1,
+  "parts": [
+   {
+    "part": "sm_food_produce_corn_b01_mesh_00",
+    "verts": 12675,
+    "tris": 23787,
+    "mass_kg": 0.10000000149011612,
+    "material": "m_opaque__organic__corn_b01"
+   }
+  ],
+  "box_colliders": null,
+  "n_parts": 1
+ }
+]

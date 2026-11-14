@@ -1,0 +1,23 @@
+<!-- Standalone check for props.xml: ground plane + all SimReady props + a box dropped onto crate sr_crate_0. -->
+<mujoco model="simready_props_test">
+  <compiler angle="degree"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+  <visual><global offwidth="1280" offheight="720"/><quality shadowsize="4096"/></visual>
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.35 0.28 0.18" rgb2="0.30 0.24 0.15" width="512" height="512"/>
+    <material name="soil" texture="grid" texrepeat="30 30"/>
+    <texture name="sky" type="skybox" builtin="gradient" rgb1="0.6 0.75 0.95" rgb2="0.95 0.95 1" width="256" height="256"/>
+  </asset>
+  <include file="props.xml"/>
+  <worldbody>
+    <light pos="0 0 30" dir="0 0 -1" directional="true" diffuse="0.8 0.8 0.8"/>
+    <geom name="ground" type="plane" size="20 20 0.1" material="soil"/>
+    <body name="drop_box" pos="-11.5 -6 2.0">
+      <freejoint/>
+      <geom type="box" size="0.15 0.15 0.15" mass="5" rgba="0.9 0.1 0.1 1"/>
+    </body>
+    <camera name="overview" pos="-20 -20 14" xyaxes="1 -1 0 0.35 0.35 0.87"/>
+    <camera name="crates" pos="-6.5 -11 3.5" xyaxes="0.9 -0.43 0 0.15 0.33 0.93"/>
+    <camera name="yard" pos="6.5 7 3" xyaxes="-0.7 0.7 0 -0.3 -0.3 0.9"/>
+  </worldbody>
+</mujoco>
