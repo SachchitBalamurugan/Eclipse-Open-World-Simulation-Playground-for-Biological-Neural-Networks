@@ -29,7 +29,7 @@ The robot's job: every station-night, decide whether to deploy frost protection 
 6. **Held-out submission** (`neurorover/submit_heldout.py`). The reservoir culture and a matched logistic model each produce a full freeze-challenge submission (37,842 rows). Both pass the challenge's `check_submission.py` (outputs in `neurorover/submissions/`).
 7. **Demo page** (`demo/index.html`). It plays back real recorded trials: the electrode grid lights up with spikes, the robot deploys or holds, and a scoreboard keeps count.
 
-What's incomplete: we never ran on real neurons. The Freestyle cloud sweep for more seeds is written (`sweep/run_sweep.sh`) but didn't run, because the account needed billing set up. Everything else ran locally.
+What's incomplete: we never ran on real neurons. Seeds 10 to 49 and the learning-rate runs ran on 10 Freestyle VMs (`sweep/run_sweep.sh`, `sweep/run_sens.sh`); everything else ran locally.
 
 ## Run or view the demo
 
@@ -58,24 +58,25 @@ CL_SDK_ACCELERATED_TIME=1 CL_SDK_VISUALISATION=0 \
 
 ## Evidence and limitations
 
-Validation AUC, mean over 10 seeds with 95% bootstrap CI (full table in `neurorover/analysis/summary.md`):
+Validation AUC, mean over 50 seeds (10 local, 40 on Freestyle cloud VMs), 95% bootstrap CIs (full table in `neurorover/analysis/summary.md`):
 
 | Condition | 25 | 50 | 100 | 200 |
 |---|---:|---:|---:|---:|
-| culture_frozen | 0.52 | 0.51 | 0.53 | 0.52 |
-| culture_fep | 0.54 | 0.53 | 0.52 | 0.56 |
-| culture_rstdp | 0.52 | 0.51 | 0.52 | 0.52 |
-| culture_reservoir | 0.84 | 0.86 | 0.87 | 0.86 |
+| culture_frozen | 0.49 | 0.48 | 0.49 | 0.49 |
+| culture_fep | 0.49 | 0.49 | 0.50 | 0.53 |
+| culture_rstdp | 0.49 | 0.49 | 0.49 | 0.49 |
+| culture_reservoir | 0.83 | 0.86 | 0.87 | 0.87 |
 | logistic (same quantized input) | 0.84 | 0.86 | 0.88 | 0.89 |
-| MLP (same quantized input) | 0.81 | 0.84 | 0.86 | 0.86 |
+| MLP (same quantized input) | 0.81 | 0.84 | 0.85 | 0.86 |
 | logistic (raw features) | 0.87 | 0.89 | 0.90 | 0.91 |
 | rule: low 3 days ago | 0.86 | 0.86 | 0.86 | 0.86 |
-| random | 0.51 | 0.50 | 0.48 | 0.50 |
+| random | 0.50 | 0.50 | 0.50 | 0.50 |
 
 What we found:
 
-- **The plastic cultures didn't learn.** Neither DishBrain-style feedback nor R-STDP got far from chance at any budget. FEP beat the frozen control only at 200 samples (+0.04, 95% CI [+0.0002, +0.083]), which is barely over the line and isn't corrected for multiple comparisons. Two public DishBrain replications on GitHub (dishbrain-playground and dishbrain-snn-rstdp) hit the same wall (plain STDP, and reward-modulated STDP that changed weights without playing better). TUNING_RESULT_HERE
-- **The reservoir culture works, but it's no better than logistic regression.** It ties logistic at 25 samples, falls significantly behind at 100 and 200, and beats a small MLP only at 25 samples. In this model the culture is a decent random feature map, and the learning comes from the silicon readout.
+- **The plastic cultures didn't learn.** Neither DishBrain-style feedback nor R-STDP got far from chance at any budget. Over 50 seeds, FEP beat the frozen control only at 200 samples (+0.04), and that isn't corrected for multiple comparisons. Two public DishBrain replications on GitHub (dishbrain-playground and dishbrain-snn-rstdp) hit the same wall (plain STDP, and reward-modulated STDP that changed weights without playing better).
+- **Turning up the R-STDP learning rate is the one place we saw a learning trend.** At the default rate (0.02) the weight changes per trial are tiny. At lr=5 (10 seeds), AUC climbs from 0.52 at 25 samples to 0.59 at 200, against 0.52 for the frozen culture on the same seeds. That's still far below the reservoir or logistic regression, and we only tried three rates. The FEP condition doesn't use the lr setting at all (its STDP step size is fixed), so the FEP rows in `neurorover/analysis/sensitivity.md` are identical on purpose. Every setting we ran is in that file; none was picked by looking at the evaluation set.
+- **The reservoir culture works, but it's no better than logistic regression.** It's level with logistic at 25 samples, significantly behind at 50 and up, and significantly ahead of a small MLP at 25 to 100 samples. A one-feature rule (the low 3 days earlier) gets 0.86 with no training at all, so this task is easy and the interesting part is the low-sample end. In this model the culture is a decent random feature map, and the learning comes from the silicon readout.
 - **The CL API path matches the fast harness.** On the same 100 validation rows, reservoir AUC was 0.89 through the CL API and 0.87 through the direct harness (one seed; a 40-row run gave 0.84, so the gap is noise). Stimulating electrode 5 through the API gave 14.3 spikes per 20 ms window against 1.6 for sham, with the first evoked spike about 1.9 ms (simulated) after the pulse. Accelerated mode ran 2 to 12x faster than real time.
 
 What this doesn't answer:
