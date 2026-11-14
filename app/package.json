@@ -87,6 +87,15 @@
     "portable": {
       "artifactName": "Eclipse-${version}-win-x64-portable.${ext}"
     },
-    "forceCodeSigning": false
+    "forceCodeSigning": false,
+    "extraFiles": [
+      {
+        "from": "node_modules/three/examples/jsm",
+        "to": "resources/app/node_modules/three/examples/jsm",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   }
 }
