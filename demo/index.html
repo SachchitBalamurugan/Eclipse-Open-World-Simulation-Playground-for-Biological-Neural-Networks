@@ -179,7 +179,22 @@
     .error { display: none; padding: 12px; color: #8b2b17; background: #ffebe5; border: 1px solid #ebb0a1; border-radius: 10px; margin: 12px 0; }
     .error.show { display: block; }
     .loading { padding: 24px; text-align: center; color: var(--muted); }
-    .layout[hidden], .loading[hidden] { display: none; }
+    .layout[hidden], .loading[hidden], [hidden] { display: none !important; }
+    .mode-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: var(--panel-2); box-shadow: var(--shadow); }
+    .mode-toggle button { border: 0; border-radius: 0; padding: 9px 14px; font-size: 12px; background: transparent; }
+    .mode-toggle button[aria-pressed="true"] { background: var(--accent); color: #071719; }
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .phase { margin: 0 0 8px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-size: 11px; font-weight: 800; display: flex; justify-content: space-between; gap: 8px; }
+    .phase.fb-good { background: #c9f5dd; color: #145b3a; border-color: #7fcfa6; }
+    .phase.fb-bad { background: #ffddd5; color: #883927; border-color: #e7a594; }
+    @media (prefers-color-scheme: dark) { .phase.fb-good { background: #245d45; color: #d1ffe7; } .phase.fb-bad { background: #632f2a; color: #ffddd5; } }
+    .electrode.stim-sens { stroke: var(--blue); stroke-width: 5; }
+    .electrode.stim-fb-good { fill: var(--deploy) !important; stroke: #fff; stroke-width: 5; }
+    .electrode.stim-fb-bad { fill: #df6b57 !important; stroke: #fff; stroke-width: 5; }
+    .train-chart { display: block; width: 100%; height: 110px; overflow: visible; }
+    .heat { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; margin-top: 4px; }
+    .heat div { aspect-ratio: 1.6; border-radius: 4px; font: 8px ui-monospace, monospace; display: grid; place-items: center; color: #fff; text-shadow: 0 0 2px #000; }
+    .heat-scale { display: flex; justify-content: space-between; color: var(--muted); font-size: 9px; margin-top: 3px; }
     @media (max-width: 1060px) { .layout { grid-template-columns: 1fr 1fr; } .panel.score-panel { grid-column: 1 / -1; } }
     @media (max-width: 720px) {
       body { padding: 11px; } header { align-items: flex-start; flex-direction: column; }
@@ -199,7 +214,10 @@
         <div class="mark" aria-hidden="true">❄</div>
         <div><h1>Frost Guard · station-night trials</h1><div class="subtitle">Closed-loop demo · NOAA-derived historical weather · encoded inputs → simulated MEA → robot decision</div></div>
       </div>
-      <div class="sim-warning">Simulated culture — no living neurons</div>
+      <div class="header-right">
+        <div class="mode-toggle" role="group" aria-label="Playback mode"><button type="button" id="mode-training" aria-pressed="false">Training</button><button type="button" id="mode-eval" aria-pressed="true">Evaluation</button></div>
+        <div class="sim-warning">Simulated culture — no living neurons</div>
+      </div>
     </header>
     <div id="load-error" class="error" role="alert">Could not load demo_data.json. Serve this folder with <code>python -m http.server 8765 -d demo</code> from the repo root and open <code>http://localhost:8765</code>.</div>
     <main class="layout" id="app" hidden>
@@ -210,6 +228,7 @@
           <span class="key"><i class="swatch hold"></i>HOLD</span><span class="key"><i class="swatch feedback"></i>Feedback</span>
           <span class="key"><i class="swatch reward"></i>Reward</span>
         </div>
+        <div class="phase" id="phase" hidden><span id="phase-text">—</span><span id="phase-sub"></span></div>
         <div class="mea-wrap"><svg id="mea" viewBox="0 0 510 440" role="img" aria-label="Live playback of spikes across the 64 electrode grid"></svg></div>
         <div class="timebar" aria-hidden="true"><div class="timebar-fill" id="timebar-fill"></div></div>
         <div class="time-meta"><span>trial <span id="sim-ms">0</span> ms</span><span id="event-count">0 spikes</span></div>
@@ -282,10 +301,24 @@
           <div class="truth-row"><span>Robot decision</span><strong id="score-action">—</strong></div>
           <div class="truth-row"><span>Night result</span><strong id="night-result">Pending</strong></div>
         </div>
+        <div id="eval-extras">
         <div class="chart-head"><h3>Learning curve · AUC by training samples</h3><span>mean across untagged runs</span></div>
         <svg id="auc-chart" viewBox="0 0 380 155" role="img" aria-label="Benchmark mean AUC by training samples"></svg>
         <div class="legend" id="chart-legend"></div>
         <div class="footer-note" id="summary-note">Benchmark summary</div>
+        </div>
+        <div id="train-extras" hidden>
+          <div class="chart-head"><h3>Training accuracy · rolling 10 trials</h3><span id="train-acc-now">—</span></div>
+          <svg id="train-acc" class="train-chart" viewBox="0 0 380 110" role="img" aria-label="Rolling training accuracy"></svg>
+          <div id="weight-block">
+            <div class="chart-head"><h3>Plastic weight drift · sensory → motor</h3><span><span style="color:var(--deploy)">■</span> DEPLOY <span style="color:var(--hold)">■</span> HOLD</span></div>
+            <svg id="weight-chart" class="train-chart" viewBox="0 0 380 110" role="img" aria-label="Mean sensory to DEPLOY and HOLD plastic weight per trial"></svg>
+          </div>
+          <div class="chart-head"><h3>Which electrodes are firing</h3><span>cumulative spikes this run</span></div>
+          <div class="heat" id="heatmap" aria-label="8 by 8 electrode firing heatmap"></div>
+          <div class="heat-scale"><span>quiet</span><span id="heat-max">max 0</span></div>
+          <div class="footer-note" id="train-note"></div>
+        </div>
       </section>
     </main>
     <div class="loading" id="loading">Loading pre-recorded station-night trials…</div>
@@ -308,6 +341,10 @@
       let data, condition, trials = [], current = 0, isPlaying = false, raf = 0, timer = 0;
       let startedAt = 0, startSimMs = 0, spikePtr = 0, lastSpike = new Array(64).fill(-9999);
       let completed = new Set(), liveMs = 0;
+      let mode = "eval", stimPtr = 0, lastStim = new Array(64).fill(-9999), lastStimKind = new Array(64).fill("");
+      let heatBase = new Array(64).fill(0), heatLive = new Array(64).fill(0);
+      const dur = () => mode === "train" ? (data.training_trial_duration_ms || 400) : data.trial_duration_ms;
+      const TL = () => data.training_timeline_ms || {feedback:[60,160], response:[0,50], stim:[0,40]};
       const byId = id => document.getElementById(id);
       const svgEl = (name, attrs = {}) => { const e = document.createElementNS(NS, name); for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v); return e; };
       const fmtC = v => `${Number(v).toFixed(1)} °C`;
@@ -348,7 +385,14 @@
       function showTrial() {
         const trial = trials[current];
         if (!trial) return;
-        liveMs = 0; spikePtr = 0; lastSpike.fill(-9999);
+        liveMs = 0; spikePtr = 0; lastSpike.fill(-9999); stimPtr = 0; lastStim.fill(-9999); heatLive.fill(0);
+        if (mode === "train") {
+          byId("night-counter").textContent = `Training trial ${current+1} / ${trials.length}`;
+          byId("station-name").textContent = `Labelled training sample #${trial.index+1}`;
+          byId("station-date").textContent = `${dur()} ms trial · answer, then feedback`;
+          const tm = trial.tmin_c || [];
+          ["temp-l3","temp-l4","temp-l7","temp-mean"].forEach((id,k) => byId(id).textContent = tm[k] != null ? fmtC(tm[k]) : "—");
+        } else {
         byId("night-counter").textContent = `Night ${current+1} / ${trials.length}`;
         byId("station-name").textContent = `Station ${trial.station_id}`;
         byId("station-date").textContent = `${trial.date} · inputs through ${trial.last_input_date || "—"}`;
@@ -356,6 +400,7 @@
         byId("temp-l4").textContent = fmtC(trial.weather.tmin_lag4_c);
         byId("temp-l7").textContent = fmtC(trial.weather.tmin_lag7_c);
         byId("temp-mean").textContent = fmtC(trial.weather.tmin_7d_mean_c);
+        }
         const deploy = trial.action === 1;
         byId("cover-shape").classList.toggle("on", deploy);
         byId("action-banner").textContent = deploy ? "DEPLOY COVER" : "HOLD COVER";
@@ -365,25 +410,34 @@
         byId("readout-score").textContent = Number(trial.readout_score).toFixed(2);
         byId("freeze-truth").textContent = trial.target ? "FREEZE · below 0 °C" : "NO FREEZE · 0 °C or warmer";
         byId("score-action").textContent = trial.action_label;
-        byId("night-result").innerHTML = completed.has(current)
-          ? `<span class="verdict ${trial.correct ? "yes" : "no"}">${trial.correct ? "CORRECT" : "INCORRECT"}</span>` : "Pending";
-        updateScore(); drawAt(0);
+        updateScore(); drawAt(0); if (mode === "train") drawTraining();
       }
       function drawAt(ms) {
         const trial = trials[current]; if (!trial) return;
-        liveMs = Math.max(0, Math.min(data.trial_duration_ms, ms));
+        liveMs = Math.max(0, Math.min(dur(), ms));
         const spikes = trial.spikes || [];
+        const scale = mode === "train" && spikes.length ? (trial.spikes_total || spikes.length) / spikes.length : 1;
         while (spikePtr < spikes.length && spikes[spikePtr][0] <= liveMs) {
-          const [t,ch] = spikes[spikePtr++]; lastSpike[ch] = t;
+          const [t,ch] = spikes[spikePtr++]; lastSpike[ch] = t; heatLive[ch] += scale;
+        }
+        const stims = mode === "train" ? (trial.stims || []) : [];
+        while (stimPtr < stims.length && stims[stimPtr][0] <= liveMs) {
+          const [t,ch,kind] = stims[stimPtr++]; lastStim[ch] = t; lastStimKind[ch] = kind;
         }
         let lit = 0;
         for (let ch=0; ch<64; ch++) {
           const active = liveMs - lastSpike[ch] <= 18;
           const circle = byId(`electrode-${ch}`), label = byId(`electrode-label-${ch}`);
-          circle.classList.toggle("lit", active); label.classList.toggle("lit", active);
-          if (active) { circle.setAttribute("r", 18); lit++; } else circle.setAttribute("r", 16);
+          const stimOn = mode === "train" && liveMs - lastStim[ch] <= 12;
+          const fb = stimOn && lastStimKind[ch] === "feedback";
+          circle.classList.toggle("stim-sens", stimOn && !fb);
+          circle.classList.toggle("stim-fb-good", fb && !!trial.correct);
+          circle.classList.toggle("stim-fb-bad", fb && !trial.correct);
+          circle.classList.toggle("lit", active && !fb); label.classList.toggle("lit", active && !fb);
+          if (active || fb) { circle.setAttribute("r", 18); lit++; } else circle.setAttribute("r", 16);
         }
-        byId("timebar-fill").style.width = `${(liveMs / data.trial_duration_ms)*100}%`;
+        if (mode === "train") { updatePhase(trial); drawHeat(); }
+        byId("timebar-fill").style.width = `${(liveMs / dur())*100}%`;
         byId("sim-ms").textContent = Math.floor(liveMs);
         byId("event-count").textContent = `${spikePtr.toLocaleString()} / ${spikes.length.toLocaleString()} spikes`;
       }
@@ -394,8 +448,65 @@
         byId("incorrect-count").textContent = bad;
         byId("accuracy").textContent = finished.length ? `${Math.round(100*good/finished.length)}%` : "—";
         const trial = trials[current];
-        if (trial) byId("night-result").innerHTML = completed.has(current)
-          ? `<span class="verdict ${trial.correct ? "yes" : "no"}">${trial.correct ? "CORRECT" : "INCORRECT"}</span>` : "Pending";
+        if (trial) byId("night-result").innerHTML = completed.has(current) || (mode === "train" && liveMs >= TL().response[1])
+          ? `<span class="verdict ${trial.correct ? "yes" : "no"}">${trial.correct ? "CORRECT" : "INCORRECT"}</span>${mode === "train" && isFep() ? (trial.correct ? " → predictable feedback" : " → random noise") : ""}` : "Pending";
+      }
+      const isFep = () => condition === "culture_fep";
+      let lastPhase = "";
+      function updatePhase(trial) {
+        const tl = TL(), t = liveMs; let txt, sub = "", cls = "phase";
+        if (t < tl.stim[1]) { txt = "1 · Sensory stimulation: weather levels → electrodes 0–15"; }
+        else if (t < tl.response[1]) { txt = "2 · Response window: counting DEPLOY vs HOLD spikes"; }
+        else if (t < tl.feedback[0]) { txt = `Decision: ${trial.action_label} · ${trial.correct ? "correct" : "wrong"}`; }
+        else if (t < tl.feedback[1]) {
+          if (isFep()) {
+            txt = trial.correct ? "3 · correct: predictable feedback" : "3 · wrong: random noise";
+            sub = trial.correct ? "synchronous 100 Hz on F1–F4 (56–59)" : "40 scattered pulses, random sites/times";
+            cls = trial.correct ? "phase fb-good" : "phase fb-bad";
+          } else { txt = "3 · No feedback (frozen reservoir)"; sub = "readout learns offline"; }
+        } else { txt = "4 · Rest"; sub = isFep() ? "STDP keeps adapting" : ""; }
+        const key = txt + cls;
+        if (key !== lastPhase) { lastPhase = key; byId("phase-text").textContent = txt; byId("phase-sub").textContent = sub; byId("phase").className = cls; updateScore(); }
+      }
+      function drawHeat() {
+        const el = byId("heatmap"); if (!el.children.length) for (let ch=0; ch<64; ch++) { const d=document.createElement("div"); d.title=`Electrode ${ch} · ${role(ch)}`; d.textContent = roleShort(ch); el.append(d); }
+        let max = 1; const v = heatBase.map((b,ch) => b + heatLive[ch]); for (const x of v) max = Math.max(max, x);
+        v.forEach((x,ch) => {
+          const f = Math.sqrt(x/max);
+          el.children[ch].style.background = `hsl(${250 - 200*f} 75% ${18 + 42*f}%)`;
+          el.children[ch].title = `Electrode ${ch} · ${role(ch)} · ${Math.round(x)} spikes`;
+        });
+        byId("heat-max").textContent = `max ${Math.round(max).toLocaleString()} spikes`;
+      }
+      function lineChart(svg, series, ymin, ymax, fmt, n) {
+        svg.replaceChildren();
+        const x0=34, x1=372, y0=8, y1=92;
+        const x = i => x0 + (i/(Math.max(1,n-1)))*(x1-x0), y = v => y1 - (v-ymin)/((ymax-ymin)||1)*(y1-y0);
+        for (const v of [ymin, (ymin+ymax)/2, ymax]) { svg.appendChild(svgEl("line",{x1:x0,y1:y(v),x2:x1,y2:y(v),class:"chart-grid"})); const t=svgEl("text",{x:0,y:y(v)+3,class:"axis-text"}); t.textContent=fmt(v); svg.appendChild(t); }
+        const t=svgEl("text",{x:(x0+x1)/2,y:107,class:"axis-text","text-anchor":"middle"}); t.textContent=`training trial (1–${n})`; svg.appendChild(t);
+        for (const s of series) if (s.pts.length) {
+          svg.appendChild(svgEl("polyline",{points:s.pts.map(([i,v])=>`${x(i)},${y(v)}`).join(" "),fill:"none",stroke:s.color,"stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"}));
+          const [li,lv] = s.pts[s.pts.length-1]; svg.appendChild(svgEl("circle",{cx:x(li),cy:y(lv),r:3,fill:s.color}));
+        }
+      }
+      function drawTraining() {
+        const done = [...completed].sort((a,b)=>a-b), n = trials.length;
+        const acc = [];
+        for (const i of done) { const w = done.filter(j => j<=i && j>i-10); acc.push([i, w.reduce((m,j)=>m+trials[j].correct,0)/w.length]); }
+        lineChart(byId("train-acc"), [{pts:acc,color:COLORS[condition]||"#338bd2"}], 0, 1, v=>`${Math.round(v*100)}%`, n);
+        byId("train-acc-now").textContent = acc.length ? `now ${Math.round(acc[acc.length-1][1]*100)}% · chance 50%` : "chance 50%";
+        const tr = (data.training || []).find(t => t.condition === condition) || {};
+        byId("weight-block").hidden = !isFep();
+        if (isFep() && trials.length) {
+          const w0 = tr.w_initial || {deploy: trials[0].w_deploy, hold: trials[0].w_hold};
+          const d = [[0, w0.deploy]].concat(done.map(i=>[i, trials[i].w_deploy]));
+          const h = [[0, w0.hold]].concat(done.map(i=>[i, trials[i].w_hold]));
+          const all = trials.flatMap(t=>[t.w_deploy,t.w_hold]).concat([w0.deploy,w0.hold]);
+          const lo = Math.min(...all), hi = Math.max(...all), pad = (hi-lo)*0.1 || 0.01;
+          lineChart(byId("weight-chart"), [{pts:d,color:"var(--deploy)"},{pts:h,color:"var(--hold)"}], lo-pad, hi+pad, v=>v.toFixed(3), n);
+        }
+        byId("train-note").textContent = (tr.feedback || "") + " · seed " + (tr.seed ?? 0) + ". Simulated Izhikevich culture, no living cells.";
+        drawHeat();
       }
       function stopPlayback() {
         isPlaying = false;
@@ -405,7 +516,8 @@
         byId("play-state").textContent = "Paused";
       }
       function finishTrial(continuePlaying) {
-        completed.add(current); updateScore();
+        if (mode === "train" && !completed.has(current)) { const sc = trials[current].spike_counts || []; for (let ch=0; ch<64; ch++) heatBase[ch] += sc[ch] || 0; heatLive.fill(0); }
+        completed.add(current); updateScore(); if (mode === "train") drawTraining();
         if (current >= trials.length-1) {
           stopPlayback(); byId("play-state").textContent = "Complete";
           byId("step-button").disabled = true;
@@ -421,7 +533,7 @@
         const speed = Number(byId("speed").value);
         const elapsed = startSimMs + (now-startedAt)*speed/12;
         drawAt(elapsed);
-        if (elapsed >= data.trial_duration_ms) { finishTrial(true); return; }
+        if (elapsed >= dur()) { finishTrial(true); return; }
         if (reducedMotion) timer = setTimeout(() => tick(performance.now()), 100);
         else raf = requestAnimationFrame(tick);
       }
@@ -434,15 +546,15 @@
       }
       function stepNight() {
         if (isPlaying) stopPlayback();
-        completed.add(current);
         finishTrial(false);
       }
       function selectCondition() {
         stopPlayback(); condition = byId("culture-select").value;
-        const found = data.conditions.find(c => c.condition === condition);
-        trials = found ? found.trials : []; current = 0; completed = new Set();
+        const found = (mode === "train" ? data.training || [] : data.conditions).find(c => c.condition === condition);
+        trials = found ? found.trials : []; current = 0; completed = new Set(); heatBase.fill(0); heatLive.fill(0);
+        byId("sim-time").textContent = `${dur()} ms / ${mode === "train" ? "trial" : "night"}`;
         byId("step-button").disabled = false; byId("play-button").disabled = false;
-        byId("play-state").textContent = "Ready"; showTrial(); drawChart();
+        byId("play-state").textContent = "Ready"; showTrial(); if (mode === "eval") drawChart();
       }
       function drawChart() {
         const svg = byId("auc-chart"), legend = byId("chart-legend");
@@ -476,19 +588,36 @@
         const total = names.length ? Math.max(...names.map(n => Object.values(summary[n]).reduce((m,p)=>Math.max(m,p.n||0),0))) : 0;
         byId("summary-note").textContent = names.length ? `${names.length} conditions · up to ${total} untagged runs per point. Higher AUC ranks freeze nights above non-freeze nights.` : "No neurorover/results/*.json summary files were found.";
       }
+      function fillOptions() {
+        const sel = byId("culture-select"), list = mode === "train" ? data.training || [] : data.conditions;
+        sel.replaceChildren();
+        for (const item of list) { const o=document.createElement("option"); o.value=item.condition; o.textContent=(SHORT[item.condition]||item.condition)+(mode==="train"&&item.condition==="culture_fep"?" · DishBrain feedback":""); sel.append(o); }
+        const pref = mode === "train" ? "culture_fep" : "culture_reservoir";
+        sel.value = list.some(c=>c.condition===pref) ? pref : list[0].condition;
+      }
+      function setMode(m) {
+        if (m === mode) return; stopPlayback(); mode = m; lastPhase = "";
+        byId("mode-training").setAttribute("aria-pressed", String(m==="train")); byId("mode-eval").setAttribute("aria-pressed", String(m==="eval"));
+        byId("phase").hidden = m !== "train"; byId("train-extras").hidden = m !== "train"; byId("eval-extras").hidden = m !== "eval";
+        byId("step-button").textContent = m === "train" ? "Step trial →" : "Step night →";
+        byId("score-title").textContent = m === "train" ? "Training scoreboard" : "Running scoreboard";
+        byId("mea-title").textContent = m === "train" ? "64-electrode culture · training" : "64-electrode culture";
+        if (m === "eval") { for (let ch=0; ch<64; ch++) byId(`electrode-${ch}`).classList.remove("stim-sens","stim-fb-good","stim-fb-bad"); }
+        fillOptions(); selectCondition();
+      }
       function init() {
         buildMEA();
         fetch("./demo_data.json", {cache:"no-store"}).then(r => { if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); }).then(json => {
           data=json; byId("loading").hidden=true; byId("app").hidden=false;
           byId("sim-time").textContent=`${data.trial_duration_ms} ms / night`;
-          for (const item of data.conditions) {
-            const option=document.createElement("option"); option.value=item.condition; option.textContent=SHORT[item.condition]||item.condition; byId("culture-select").append(option);
-          }
-          byId("culture-select").value=data.conditions.some(c=>c.condition==="culture_reservoir")?"culture_reservoir":data.conditions[0].condition;
+          fillOptions();
           byId("culture-select").addEventListener("change",selectCondition);
           byId("play-button").addEventListener("click",()=>isPlaying?stopPlayback():beginPlayback());
           byId("step-button").addEventListener("click",stepNight);
           byId("speed").addEventListener("input",e=>byId("speed-value").textContent=`${e.target.value}×`);
+          byId("mode-training").addEventListener("click",()=>setMode("train"));
+          byId("mode-eval").addEventListener("click",()=>setMode("eval"));
+          if (!(data.training||[]).length) byId("mode-training").disabled = true;
           selectCondition();
         }).catch(err=>{ byId("loading").hidden=true; byId("load-error").classList.add("show"); console.error(err); });
       }

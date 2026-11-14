@@ -27,7 +27,8 @@ The robot's job: every station-night, decide whether to deploy frost protection 
 4. **Real CL API path** (`neurorover/culture/izh_source.py`, `neurorover/run_cl.py`). The culture is a `cl.sim.SimulatorDataSource`, so the loop uses `cl.open()`, `neurons.loop()`, stim plans and `tick.analysis.spikes`, the same calls you'd make on a CL1. Pass `--hardware` and it registers no simulated source.
 5. **Benchmark** (`neurorover/bench.py`). There are 9 conditions, 10 seeds, and training budgets of 25, 50, 100 and 200 class-balanced samples. Every condition is scored by AUC on the same fixed validation subset (150 freeze nights, 150 non-freeze).
 6. **Held-out submission** (`neurorover/submit_heldout.py`). The reservoir culture and a matched logistic model each produce a full freeze-challenge submission (37,842 rows). Both pass the challenge's `check_submission.py` (outputs in `neurorover/submissions/`).
-7. **Demo page** (`demo/index.html`). It plays back real recorded trials: the electrode grid lights up with spikes, the robot deploys or holds, and a scoreboard keeps count.
+7. **Demo page** (`demo/index.html`). Evaluation mode plays back recorded trials: the electrode grid lights up with spikes, the robot deploys or holds, and a scoreboard keeps count. Training mode shows the first 40 training trials with the feedback phase, a rolling accuracy line, weight drift, and a heatmap of which electrodes fire.
+8. **Per-run signal logs** (`neurorover/record_run.py`). One command saves every spike and stim of a run as CSV under `runs/<condition>_s<seed>/`, plus per-trial results, per-electrode counts for each trial window, and weight drift for the plastic conditions. Two example runs are committed (about 5 MB each, roughly 350k spikes).
 
 What's incomplete: we never ran on real neurons. Seeds 10 to 49 and the learning-rate runs ran on 10 Freestyle VMs (`sweep/run_sweep.sh`, `sweep/run_sens.sh`); everything else ran locally.
 
@@ -51,6 +52,9 @@ python -m venv .venv
 CL_SDK_ACCELERATED_TIME=1 CL_SDK_VISUALISATION=0 \
   .venv/Scripts/python -m neurorover.run_cl --condition culture_reservoir --seed 0 --budget 25 --eval 100   # about 10 s with --eval 40
 .venv/Scripts/python -m neurorover.scripts.verify_cl_source   # reactivity + latency check
+
+# log every spike and stim of one run to runs/culture_fep_s0/
+.venv/Scripts/python -m neurorover.record_run --condition culture_fep --seed 0
 
 # demo page (opening index.html as a file won't work; it fetches demo_data.json)
 .venv/Scripts/python -m http.server 8765 -d demo   # open http://localhost:8765

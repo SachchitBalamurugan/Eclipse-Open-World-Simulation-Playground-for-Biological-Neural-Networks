@@ -22,14 +22,17 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from neurorover import bench
-from neurorover.culture.core import Culture, MOTOR_DEPLOY, MOTOR_HOLD
+from neurorover.culture.core import Culture, FEEDBACK, MOTOR_DEPLOY, MOTOR_HOLD, REWARD, SENSORY
+from neurorover.interface import codec
 from neurorover.env.frost import FrostTask
 
 OUT = pathlib.Path(__file__).resolve().parent / "demo_data.json"
 SEED = 0
 TRAIN_N = 100
 PLAYBACK_N = 40
-MAX_JSON_BYTES = 4_800_000
+MAX_JSON_BYTES = 5_800_000
+TRAINING_PLAYBACK_N = 40
+SPIKES_PER_TRAINING_TRIAL = 2500
 
 
 def _summary_numbers() -> dict:
@@ -178,6 +181,88 @@ def _run_culture(condition: str, task: FrostTask, train_x: np.ndarray,
     }
 
 
+def _plastic_means(c: Culture, mask_d: np.ndarray, mask_h: np.ndarray) -> tuple[float, float]:
+    return float(c.W[mask_d].mean()), float(c.W[mask_h].mean())
+
+
+def _record_training(condition: str, task: FrostTask, train_x: np.ndarray, train_y: np.ndarray) -> dict:
+    """Replay bench.run_job's first training trials, capturing spikes, stims and weights."""
+    rule = bench.RULE[condition]
+    rng = np.random.default_rng(SEED)
+    c = Culture(seed=SEED, rule="stdp" if rule == "fep" else rule)
+    c.run(1000)
+    levels = task.levels(train_x)
+    sens_rows = np.isin(c.ch, SENSORY)[:, None]
+    mask_d = c.plastic & sens_rows & np.isin(c.ch, MOTOR_DEPLOY)[None, :]
+    mask_h = c.plastic & sens_rows & np.isin(c.ch, MOTOR_HOLD)[None, :]
+    track_w = condition == "culture_fep"
+    w0 = _plastic_means(c, mask_d, mask_h) if track_w else None
+    original_step, original_stim = c.step, c.stim
+    trials = []
+    for i in range(TRAINING_PLAYBACK_N):
+        spikes: list[list[int]] = []
+        stims: list[list] = []
+        local_t = 0
+
+        def recording_step():
+            nonlocal local_t
+            fired = original_step()
+            if fired.size:
+                spikes.extend([[local_t, int(ch)] for ch in c.ch[fired]])
+            local_t += 1
+            return fired
+
+        def recording_stim(channel, current_uA=1.0):
+            if channel in REWARD:
+                kind = "reward"
+            elif local_t >= codec.FB_START:
+                kind = "feedback"
+            else:
+                kind = "sensory"
+            stims.append([local_t, int(channel), kind])
+            return original_stim(channel, current_uA)
+
+        c.step, c.stim = recording_step, recording_stim  # type: ignore[method-assign]
+        try:
+            counts, score, action, ok = bench.run_trial(c, levels[i], rng, label=int(train_y[i]), rule=rule)
+        finally:
+            c.step, c.stim = original_step, original_stim  # type: ignore[method-assign]
+        all_counts = np.bincount([ch for _, ch in spikes], minlength=64).astype(int) if spikes else np.zeros(64, int)
+        if len(spikes) > SPIKES_PER_TRAINING_TRIAL:
+            keep = np.linspace(0, len(spikes) - 1, SPIKES_PER_TRAINING_TRIAL).astype(int)
+            spikes_out = [spikes[k] for k in keep]
+        else:
+            spikes_out = spikes
+        rec = {
+            "index": i,
+            "feature_levels": np.asarray(levels[i], dtype=int).tolist(),
+            "tmin_c": [round(float(v), 2) for v in train_x[i, :4]],
+            "spikes": spikes_out,
+            "spikes_total": len(spikes),
+            "spike_counts": all_counts.tolist(),
+            "stims": stims,
+            "readout_score": float(score),
+            "action": int(action),
+            "action_label": "DEPLOY" if action else "HOLD",
+            "target": int(train_y[i]),
+            "correct": int(bool(ok)),
+            "motor_counts": {"deploy_total": int(counts[MOTOR_DEPLOY].sum()), "hold_total": int(counts[MOTOR_HOLD].sum())},
+        }
+        if track_w:
+            wd, wh = _plastic_means(c, mask_d, mask_h)
+            rec["w_deploy"], rec["w_hold"] = wd, wh
+        trials.append(rec)
+    return {
+        "condition": condition,
+        "rule": rule,
+        "seed": SEED,
+        "feedback": "DishBrain-style: correct = predictable 100 Hz train on electrodes 56-59; wrong = 40 random pulses on sensory+feedback electrodes"
+        if rule == "fep" else "none (frozen reservoir; readout trained offline)",
+        "w_initial": {"deploy": w0[0], "hold": w0[1]} if w0 else None,
+        "trials": trials,
+    }
+
+
 def main() -> None:
     task = FrostTask(seed=SEED)
     train_x, train_y = task.train_stream(TRAIN_N)
@@ -201,6 +286,13 @@ def main() -> None:
         "conditions": [
             _run_culture("culture_reservoir", task, train_x, train_y, validation_rows, eval_indices),
             _run_culture("culture_frozen", task, train_x, train_y, validation_rows, eval_indices),
+        ],
+        "training_trial_duration_ms": codec.TRIAL_MS,
+        "training_timeline_ms": {"stim": [0, codec.STIM_MS], "response": [0, codec.RESP_MS],
+                                 "feedback": [codec.FB_START, codec.FB_START + codec.FB_MS], "rest": [codec.FB_START + codec.FB_MS, codec.TRIAL_MS]},
+        "training": [
+            _record_training("culture_fep", task, train_x, train_y),
+            _record_training("culture_reservoir", task, train_x, train_y),
         ],
         "summary": _summary_numbers(),
     }
