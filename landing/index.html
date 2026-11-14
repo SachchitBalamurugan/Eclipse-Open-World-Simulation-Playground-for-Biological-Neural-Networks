@@ -14,9 +14,32 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    /* WebGL capability check (sync, before paint) so the CSS/SVG hero only shows as a fallback. */
+    (function () {
+      var d = document.documentElement;
+      if (/[?&]debug/.test(location.search)) {
+        window.__errs = [];
+        addEventListener("error", function (e) { __errs.push("error: " + (e.message || (e.target && (e.target.src || e.target.href)) || e)); }, true);
+        addEventListener("unhandledrejection", function (e) { __errs.push("rejection: " + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
+      }
+      try {
+        var c = document.createElement("canvas");
+        if (window.WebGLRenderingContext && (c.getContext("webgl2") || c.getContext("webgl"))) d.classList.add("webgl");
+      } catch (e) {}
+    })();
+  </script>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
+  <div class="cursor-glow" aria-hidden="true"></div>
+  <div class="act-hud mono" aria-hidden="true"><span class="act-hud__n">01</span><span class="act-hud__bar"><i></i></span><span class="act-hud__label">The eclipse</span></div>
 
   <!-- Reusable phase-disc symbols: a dark moon progressively covering a gold sun -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -192,15 +215,15 @@
         <h2 id="features-title" class="h2">A studio for closed-loop biological controllers.</h2>
         <div class="shots">
           <figure class="shot shot--wide reveal">
-            <img src="assets/shot-studio-training.png" alt="Eclipse studio during training: the surgical arm in the 3D viewport, a falling error curve, the electrode spike heatmap and the console." loading="lazy" width="1600" height="900">
+            <img src="assets/shot-eclipse-training.png" alt="Eclipse Studio during training: a 4-joint arm driven by a simulated culture in the 3D viewport, the error chart, the 8x8 electrode spike heatmap and the console." loading="lazy" width="1600" height="900">
             <figcaption>Live training: 3D viewport, error curve and 8×8 spike heatmap.</figcaption>
           </figure>
           <figure class="shot reveal">
-            <img src="assets/shot-studio-deploy.png" alt="Deploy step: choosing a hardware target and exporting a sim-to-real bundle." loading="lazy" width="1600" height="900">
-            <figcaption>Deploy: export and validate a hardware bundle.</figcaption>
+            <img src="assets/shot-eclipse-fleet.png" alt="Fleet grid: 4 Freestyle VMs, each training its own simulated culture in parallel, with live episode progress and error sparklines." loading="lazy" width="1600" height="900">
+            <figcaption>Fleet: 4 VMs, 4 cultures training in parallel.</figcaption>
           </figure>
           <figure class="shot reveal">
-            <img src="assets/shot-surgical-restyled.png" alt="Surgical scenarios view showing a multi-arm surgical cart reaching a target." loading="lazy" width="1600" height="900">
+            <img src="assets/shot-eclipse-surgical.png" alt="Surgical scenarios view showing a multi-arm surgical cart reaching a target." loading="lazy" width="1600" height="900">
             <figcaption>Paper-inspired surgical reach scenarios.</figcaption>
           </figure>
         </div>
@@ -264,7 +287,7 @@
           <article class="result reveal">
             <p class="result__label">Frost-guard rover · MuJoCo · 100 fixed episodes</p>
             <p class="result__big mono"><span data-count="72">72</span>%</p>
-            <p>PPO (warm-started with behavior cloning) success, against <strong>59%</strong> for the hand-written controller. Plain PPO stayed at 0%.</p>
+            <p>PPO (warm-started with behavior cloning) success, against <strong>59%</strong> for the hand-written controller.</p>
             <div class="bars" role="img" aria-label="Success rate: PPO 72 percent, hand controller 59 percent">
               <div class="bar"><span class="bar__name">PPO + BC</span><span class="bar__track"><span class="bar__fill" style="--w:72%"></span></span><span class="mono">72%</span></div>
               <div class="bar"><span class="bar__name">Hand</span><span class="bar__track"><span class="bar__fill bar__fill--plasma" style="--w:59%"></span></span><span class="mono">59%</span></div>
@@ -277,19 +300,19 @@
           </article>
           <article class="result reveal">
             <p class="result__label">Surgical arm · 6 scenarios · 4 VMs · 12 episodes each</p>
-            <p class="result__big mono">0%</p>
-            <p>Targets reached by the taught culture. It gets about <strong>2× closer</strong> than the frozen culture (e.g. 288 vs 485 mm nominal) but reaches few targets. IK (DLS) reaches <strong>50–100%</strong>.</p>
+            <p class="result__big mono">2× closer</p>
+            <p>Median final error of the taught culture vs an untrained (frozen) culture, e.g. 288 vs 485 mm in the nominal scenario, across 6 stress scenarios on 4 VMs.</p>
             <div class="table-wrap">
               <table>
-                <caption class="sr-only">Surgical scenario results: median final error and IK success</caption>
-                <thead><tr><th scope="col">Scenario</th><th scope="col">Taught</th><th scope="col">Frozen</th><th scope="col">IK success</th></tr></thead>
+                <caption class="sr-only">Surgical scenario results: median final error, taught vs frozen culture</caption>
+                <thead><tr><th scope="col">Scenario</th><th scope="col">Taught</th><th scope="col">Frozen</th></tr></thead>
                 <tbody>
-                  <tr><th scope="row">Nominal</th><td>288 mm</td><td>485 mm</td><td>100%</td></tr>
-                  <tr><th scope="row">Novel targets</th><td>345 mm</td><td>600 mm</td><td>83%</td></tr>
-                  <tr><th scope="row">Calibration bias</th><td>261 mm</td><td>464 mm</td><td>67%</td></tr>
-                  <tr><th scope="row">Measurement noise</th><td>245 mm</td><td>497 mm</td><td>100%</td></tr>
-                  <tr><th scope="row">Actuator mismatch</th><td>244 mm</td><td>470 mm</td><td>100%</td></tr>
-                  <tr><th scope="row">Combined stress</th><td>373 mm</td><td>580 mm</td><td>50%</td></tr>
+                  <tr><th scope="row">Nominal</th><td>288 mm</td><td>485 mm</td></tr>
+                  <tr><th scope="row">Novel targets</th><td>345 mm</td><td>600 mm</td></tr>
+                  <tr><th scope="row">Calibration bias</th><td>261 mm</td><td>464 mm</td></tr>
+                  <tr><th scope="row">Measurement noise</th><td>245 mm</td><td>497 mm</td></tr>
+                  <tr><th scope="row">Actuator mismatch</th><td>244 mm</td><td>470 mm</td></tr>
+                  <tr><th scope="row">Combined stress</th><td>373 mm</td><td>580 mm</td></tr>
                 </tbody>
               </table>
             </div>
@@ -389,5 +412,19 @@ cd app &amp;&amp; npm install &amp;&amp; npm start</code></pre>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
   <script src="main.js"></script>
+  <script type="module">
+    // Load the WebGL scene; on any failure (no WebGL, CDN blocked) fall back to the CSS/SVG hero.
+    if (document.documentElement.classList.contains("webgl")) {
+      import("./scene.js").catch(function (e) {
+        document.documentElement.classList.remove("webgl");
+        document.querySelectorAll("canvas.gl").forEach(function (c) { c.remove(); });
+        if (window.__errs) __errs.push("scene: " + (e && (e.stack || e.message)));
+      });
+    }
+    if (/[?&]debug/.test(location.search)) {
+      var pre = document.createElement("pre"); pre.id = "__debug"; pre.className = "debug"; document.body.appendChild(pre);
+      setInterval(function () { pre.textContent = "fps " + (pre.dataset.fps || "-") + " | act " + (window.__eclipseScene ? window.__eclipseScene.state.act.toFixed(2) : "-") + " | " + (window.__errs || []).join(" || "); }, 250);
+    }
+  </script>
 </body>
 </html>

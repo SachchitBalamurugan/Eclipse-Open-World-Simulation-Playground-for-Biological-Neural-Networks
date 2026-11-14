@@ -61,6 +61,37 @@
   /* ---------- Animation ---------- */
   if (!window.gsap) return; // page is fully readable without GSAP
   gsap.registerPlugin(ScrollTrigger);
+  const SETTLE = /[?&](settle|scene)/.test(location.search);
+  const WEBGL = document.documentElement.classList.contains("webgl");
+
+  /* Split the hero headline into words (real text stays in the DOM; no paid plugins). */
+  const title = document.querySelector(".hero__title");
+  if (title) {
+    title.setAttribute("aria-label", title.textContent.replace(/\s+/g, " ").trim());
+    const parts = [];
+    title.childNodes.forEach((n) => {
+      if (n.nodeType === 3) n.textContent.split(/(\s+)/).forEach((t) => t && parts.push(t));
+      else parts.push(n);
+    });
+    title.textContent = "";
+    parts.forEach((p) => {
+      if (typeof p === "string" && /^\s+$/.test(p)) { title.appendChild(document.createTextNode(" ")); return; }
+      const w = document.createElement("span"); w.className = "w"; w.setAttribute("aria-hidden", "true");
+      const inner = document.createElement("span");
+      if (typeof p === "string") inner.textContent = p; else inner.appendChild(p);
+      w.appendChild(inner); title.appendChild(w);
+    });
+  }
+
+  /* Act HUD (driven by scene.js) */
+  const ACTS = ["The eclipse", "The culture", "Train any robot", "Fleet", "Totality"];
+  const hudN = document.querySelector(".act-hud__n"), hudL = document.querySelector(".act-hud__label"), hudBar = document.querySelector(".act-hud__bar i");
+  window.addEventListener("eclipse:act", (e) => {
+    const i = e.detail;
+    if (hudN) hudN.textContent = String(i + 1).padStart(2, "0");
+    if (hudL) hudL.textContent = ACTS[i] || "";
+    if (hudBar) hudBar.style.transform = "scaleX(" + (0.2 + 0.2 * i) + ")";
+  });
   gsap.defaults({ ease: "power2.out", duration: 0.8 });
 
   const phaseLabels = ["First contact", "Partial", "Partial, deeper", "Totality", "Diamond ring", "Third contact"];
@@ -91,12 +122,20 @@
       const { reduce } = ctx.conditions;
 
       /* Hero eclipse */
-      if (reduce) {
+      if (WEBGL || reduce) {
+        if (!WEBGL) {
         // Static totality with a visible diamond-ring point; no movement.
         gsap.set(".e-moon, .e-rim", { x: 0, y: 0 });
         gsap.set(".e-halo", { opacity: 0.12 });
         gsap.set(".e-diamond", { scale: 0.45, opacity: 0.9 });
         gsap.set(".e-corona", { opacity: 1, scale: 1 });
+        }
+        if (WEBGL && !reduce && !SETTLE) {
+          const htl0 = gsap.timeline({ delay: 0.35, defaults: { ease: "power3.out" } });
+          htl0.from(".hero__title .w > span", { yPercent: 110, rotation: 4, duration: 1.1, stagger: 0.07 }, 0)
+              .from(".eyebrow", { autoAlpha: 0, y: 12, duration: 0.8 }, 0.1)
+              .from(".hero__sub, .hero__ctas, .hero__note", { autoAlpha: 0, y: 22, duration: 0.9, stagger: 0.12 }, 0.6);
+        }
       } else {
         const tl = gsap.timeline({ defaults: { ease: "sine.inOut" }, delay: 0.2 });
         tl.set(".e-moon, .e-rim", { x: -330, y: 230 })
@@ -120,7 +159,7 @@
             gsap.to(".e-ring", { opacity: 0.65, duration: 2.1, ease: "sine.inOut", yoyo: true, repeat: -1 });
           });
         // ?settle jumps the intro to totality (used for headless screenshots).
-        if (/[?&]settle/.test(location.search)) { tl.delay(0).pause(); tl.progress(1); }
+        if (SETTLE) { tl.delay(0).pause(); tl.progress(1); }
       }
 
       /* How it works: moon progresses across the sun as you scroll */
@@ -160,27 +199,56 @@
         });
 
         /* Reveals (skipped in ?settle screenshot mode) */
-        if (!/[?&]settle/.test(location.search)) gsap.set(".reveal", { autoAlpha: 0, y: 28 });
+        document.querySelectorAll(".section .kicker, .section .h2, .section .lede, .step, .video").forEach((el) => el.classList.add("reveal"));
+        if (!SETTLE) gsap.set(".reveal", { autoAlpha: 0, y: 36 });
         ScrollTrigger.batch(".reveal", {
           start: "top 88%",
           once: true,
-          onEnter: (els) => gsap.to(els, { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.08, overwrite: true }),
+          onEnter: (els) => gsap.to(els, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.08, ease: "power3.out", overwrite: true }),
         });
 
         /* Result counters and bars */
-        if (!/[?&]settle/.test(location.search)) gsap.utils.toArray("[data-count]").forEach((el) => {
+        if (!SETTLE) gsap.utils.toArray("[data-count]").forEach((el) => {
                     gsap.from(el, {
             textContent: el.dataset.from ? +el.dataset.from : 0,
             duration: 1.6, ease: "power2.out", snap: { textContent: 1 },
             scrollTrigger: { trigger: el, start: "top 85%", once: true },
           });
         });
-        if (!/[?&]settle/.test(location.search)) gsap.from(".bar__fill", {
+        if (!SETTLE) gsap.from(".bar__fill", {
           scaleX: 0, duration: 1.2, stagger: 0.15, ease: "power2.out",
           scrollTrigger: { trigger: ".bars", start: "top 85%", once: true },
         });
       }
       setPhase(0);
+
+      /* Desktop-only: magnetic CTAs and a soft cursor glow */
+      if (!reduce && matchMedia("(pointer: fine)").matches) {
+        const cleanups = [];
+        document.querySelectorAll(".hero__ctas .btn--primary, #dl-btn").forEach((btn) => {
+          btn.setAttribute("data-magnetic", "");
+          const xTo = gsap.quickTo(btn, "x", { duration: 0.5, ease: "power3.out" });
+          const yTo = gsap.quickTo(btn, "y", { duration: 0.5, ease: "power3.out" });
+          const move = (e) => {
+            const r = btn.getBoundingClientRect();
+            const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+            const reach = Math.max(r.width, r.height) * 0.9;
+            if (Math.abs(dx) < r.width / 2 + reach && Math.abs(dy) < r.height / 2 + reach) { xTo(dx * 0.28); yTo(dy * 0.36); }
+            else { xTo(0); yTo(0); }
+          };
+          window.addEventListener("pointermove", move, { passive: true });
+          cleanups.push(() => { window.removeEventListener("pointermove", move); gsap.set(btn, { x: 0, y: 0 }); });
+        });
+        const glow = document.querySelector(".cursor-glow");
+        if (glow) {
+          const gx = gsap.quickTo(glow, "x", { duration: 0.7, ease: "power3.out" });
+          const gy = gsap.quickTo(glow, "y", { duration: 0.7, ease: "power3.out" });
+          const mv = (e) => { document.documentElement.classList.add("has-cursor"); gx(e.clientX); gy(e.clientY); };
+          window.addEventListener("pointermove", mv, { passive: true });
+          cleanups.push(() => { window.removeEventListener("pointermove", mv); document.documentElement.classList.remove("has-cursor"); });
+        }
+        return () => cleanups.forEach((f) => f());
+      }
     }
   );
 

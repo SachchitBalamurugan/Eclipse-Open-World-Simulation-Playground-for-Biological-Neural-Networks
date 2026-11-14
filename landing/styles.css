@@ -160,7 +160,7 @@ th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--li
 thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-dim); font-weight: 500; }
 tbody th { font-weight: 500; color: var(--text); }
 td { font-family: var(--mono); color: #C9C6D3; }
-td:last-child { color: var(--ok); }
+td:last-child { color: var(--text-dim); }
 .results__note { margin-top: 22px; max-width: 80ch; }
 @media (max-width: 800px) { .results { grid-template-columns: minmax(0, 1fr); } }
 
@@ -201,3 +201,70 @@ p code { font-size: 13px; color: var(--corona-hi); }
 .footer__links a:hover { color: var(--corona); }
 @media (max-width: 600px) { .footer__honesty { max-width: none; } }
 @media (max-width: 480px) { .targets li { grid-template-columns: minmax(0, 1fr); } .targets .pill { grid-row: auto; justify-self: start; max-width: none; } }
+
+/* ===================== WebGL layer (scene.js) ===================== */
+canvas.gl { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; display: block; pointer-events: none; }
+main, .footer { position: relative; z-index: 1; }
+.webgl .hero__stage, .webgl .hero__glow, .webgl .hero::after { display: none; }
+.webgl body, body { background: var(--void); }
+.webgl .hero { min-height: 100svh; }
+.webgl .hero__copy { max-width: var(--maxw); }
+.webgl .section { border-top-color: transparent; }
+.webgl .section::before { content: ""; position: absolute; top: 0; left: 50%; width: min(100% - 40px, var(--maxw)); transform: translateX(-50%); height: 1px; background: linear-gradient(90deg, transparent, rgba(242,180,90,.28), rgba(143,166,255,.14), transparent); }
+.webgl .footer { background: linear-gradient(180deg, rgba(5,5,7,.0), rgba(5,5,7,.85) 40%); border-top-color: rgba(242,180,90,.14); }
+
+/* hero typography over the eclipse */
+.webgl .hero__title { font-size: clamp(44px, 7vw, 104px); max-width: 12.5ch; letter-spacing: -0.045em; line-height: .98; }
+.hero__title .w { display: inline-block; overflow: clip; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.hero__title .w > span { display: inline-block; will-change: transform; }
+.webgl .era { background: linear-gradient(180deg, #FFF3D6 0%, #FFD48A 40%, #F2B45A 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; }
+.webgl .hero__sub { color: #D3D0DC; text-shadow: 0 2px 24px rgba(5,5,7,.9); }
+.webgl .eyebrow { color: #A9A6B6; }
+.webgl .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(70% 70% at 18% 55%, rgba(5,5,7,.55), transparent 70%); }
+
+/* glass surfaces over the canvas */
+.webgl .panel, .webgl .step, .webgl .result, .webgl .shot, .webgl .targets li, .webgl .faq, .webgl .video video {
+  background: linear-gradient(180deg, rgba(18,18,26,.58), rgba(11,11,16,.66));
+  border-color: rgba(237,234,242,.08);
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255,243,214,.06), 0 30px 80px -40px rgba(0,0,0,.8);
+  border-radius: 10px;
+}
+.webgl .features { background: rgba(237,234,242,.07); border-color: rgba(237,234,242,.08); border-radius: 10px; -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); }
+.webgl .feature { background: rgba(11,11,16,.62); }
+.webgl .feature:hover { background: rgba(26,22,18,.7); }
+.webgl .faq { padding: 4px 24px; border: 1px solid rgba(237,234,242,.08); }
+.webgl .faq details:last-child { border-bottom: 0; }
+.webgl .step.is-active { border-color: rgba(242,180,90,.5); background: linear-gradient(180deg, rgba(242,180,90,.10), rgba(11,11,16,.66)); box-shadow: inset 0 1px 0 rgba(255,212,138,.18), 0 0 60px -20px rgba(242,180,90,.35); }
+.webgl .code { background: rgba(5,5,7,.7); }
+.webgl .h2 { font-size: clamp(30px, 4.2vw, 56px); letter-spacing: -0.035em; max-width: 20ch; }
+.webgl .kicker { color: var(--corona); }
+.webgl .kicker::before { content: ""; display: inline-block; width: 22px; height: 1px; margin-right: 10px; vertical-align: middle; background: currentColor; opacity: .7; }
+.gl-low .panel, .gl-low .step, .gl-low .result, .gl-low .shot, .gl-low .targets li, .gl-low .faq, .gl-low .features, .gl-low .video video { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(11,11,16,.86) !important; }
+
+/* primary button sheen + magnetic */
+.webgl .btn--primary { background: linear-gradient(180deg, #FFD48A, #F2B45A 60%, #E3A04A); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 10px 40px -10px rgba(242,180,90,.75), 0 0 0 1px rgba(255,212,138,.4); }
+.webgl .btn--primary:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 0 6px var(--corona-glow), 0 14px 60px -10px rgba(242,180,90,.95); }
+.btn[data-magnetic] { will-change: transform; }
+.btn[data-magnetic] .btn__inner { display: inline-flex; align-items: center; gap: 10px; pointer-events: none; }
+.webgl .btn--ghost { background: rgba(18,18,26,.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+/* cursor glow (desktop fine pointers only; toggled by main.js) */
+.cursor-glow { position: fixed; left: 0; top: 0; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; pointer-events: none; z-index: 2; opacity: 0; mix-blend-mode: screen; background: radial-gradient(circle, rgba(242,180,90,.10), rgba(242,180,90,.035) 35%, transparent 65%); will-change: transform; transition: opacity .6s; }
+.has-cursor .cursor-glow { opacity: 1; }
+
+/* act HUD */
+.act-hud { display: none; }
+.webgl .act-hud { position: fixed; left: 24px; bottom: 22px; z-index: 40; display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim); pointer-events: none; padding: 8px 14px; border-radius: 999px; background: rgba(11,11,16,.5); border: 1px solid rgba(237,234,242,.07); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.act-hud__n { color: var(--corona); }
+.act-hud__bar { width: 56px; height: 1px; background: var(--line-strong); position: relative; overflow: hidden; }
+.act-hud__bar i { position: absolute; inset: 0; background: var(--corona); transform-origin: left; transform: scaleX(.2); transition: transform .8s cubic-bezier(.2,.7,.2,1); }
+@media (max-width: 700px) { .webgl .act-hud { display: none; } }
+
+/* mobile: let the eclipse sit above the copy */
+@media (max-width: 900px) {
+  .webgl .hero { align-items: end; padding: 46svh 0 64px; }
+  .webgl .hero::before { background: linear-gradient(180deg, transparent 30%, rgba(5,5,7,.75) 70%); }
+}
+
+.debug { position: fixed; right: 8px; bottom: 8px; z-index: 999; max-width: 60vw; max-height: 40vh; overflow: auto; margin: 0; padding: 8px 10px; font: 11px/1.4 var(--mono); color: #6FD3A8; background: rgba(0,0,0,.8); border: 1px solid #33333F; white-space: pre-wrap; }
