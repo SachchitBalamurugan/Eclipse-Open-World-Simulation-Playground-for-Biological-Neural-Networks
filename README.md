@@ -19,10 +19,11 @@ The robot's job: every station-night, decide whether to deploy frost protection 
 
 1. **Simulated culture** (`neurorover/culture/core.py`). 1,024 Izhikevich neurons (80% excitatory, 20% inhibitory) on an 8x8 grid of electrodes, 16 neurons per electrode, with distance-dependent local wiring plus a sparse projection from the sensory rows to the motor rows. We tuned it so the spontaneous activity looks culture-like: about 5 Hz per neuron and a network burst every 2.5 s or so. Stimulating an electrode raises its own firing about 9x over sham (14.3 vs 1.6 spikes per 20 ms), much less on its neighbours, then there's a short post-stimulus suppression.
 2. **Electrode map and codec** (`neurorover/interface/codec.py`). Electrodes 0 to 13 are sensory: each feature becomes 0 to 4 pulses at 100 Hz on its own electrode. Electrodes 40 to 47 vote DEPLOY and 48 to 55 vote HOLD (spike counts in a 50 ms window). 56 to 59 carry feedback and 60 to 63 carry the reward signal for R-STDP.
-3. **Four ways for the culture to learn:**
+3. **Five ways for the culture to learn:**
    - `culture_frozen`: no plasticity, fixed motor readout. This is the control.
    - `culture_fep`: DishBrain-style feedback. A correct decision gets a predictable synchronous burst; a wrong one gets random pulses. The culture never sees a reward number, and STDP runs underneath.
    - `culture_rstdp`: reward-modulated STDP with eligibility traces on the sensory-to-motor synapses. The "dopamine electrode" is a modelling assumption; a real dish doesn't have one.
+   - `culture_teach`: paired-stimulation teaching. After every trial we replay the sensory pattern and stimulate the correct motor region 3 ms after each sensory pulse (and the other region 3 ms before), so spike-timing plasticity strengthens the sensory-to-correct-motor pathway. It needs the label but only uses stimulation, so the same protocol could run on a real MEA.
    - `culture_reservoir`: the culture stays frozen and a logistic readout is trained on its 64-electrode spike counts (the Brainoware approach). Here the learning happens in silicon.
 4. **Real CL API path** (`neurorover/culture/izh_source.py`, `neurorover/run_cl.py`). The culture is a `cl.sim.SimulatorDataSource`, so the loop uses `cl.open()`, `neurons.loop()`, stim plans and `tick.analysis.spikes`, the same calls you'd make on a CL1. Pass `--hardware` and it registers no simulated source.
 5. **Benchmark** (`neurorover/bench.py`). There are 9 conditions, 10 seeds, and training budgets of 25, 50, 100 and 200 class-balanced samples. Every condition is scored by AUC on the same fixed validation subset (150 freeze nights, 150 non-freeze).
@@ -69,6 +70,7 @@ Validation AUC, mean over 50 seeds (10 local, 40 on Freestyle cloud VMs), 95% bo
 | culture_frozen | 0.49 | 0.48 | 0.49 | 0.49 |
 | culture_fep | 0.49 | 0.49 | 0.50 | 0.53 |
 | culture_rstdp | 0.49 | 0.49 | 0.49 | 0.49 |
+| culture_teach (10 seeds) | 0.58 | 0.62 | 0.70 | 0.74 |
 | culture_reservoir | 0.83 | 0.86 | 0.87 | 0.87 |
 | logistic (same quantized input) | 0.84 | 0.86 | 0.88 | 0.89 |
 | MLP (same quantized input) | 0.81 | 0.84 | 0.85 | 0.86 |
@@ -78,7 +80,8 @@ Validation AUC, mean over 50 seeds (10 local, 40 on Freestyle cloud VMs), 95% bo
 
 What we found:
 
-- **The plastic cultures didn't learn.** Neither DishBrain-style feedback nor R-STDP got far from chance at any budget. Over 50 seeds, FEP beat the frozen control only at 200 samples (+0.04), and that isn't corrected for multiple comparisons. Two public DishBrain replications on GitHub (dishbrain-playground and dishbrain-snn-rstdp) hit the same wall (plain STDP, and reward-modulated STDP that changed weights without playing better).
+- **Paired-stimulation teaching is the one rule where the simulated neurons learn by themselves.** `culture_teach` goes from 0.58 AUC at 25 samples to 0.74 at 200 (10 seeds), and beats the frozen control at every budget (+0.06 at 25, +0.22 at 200, paired bootstrap CIs exclude zero). It varies a lot by seed (0.61 to 0.84 at 200) and it's still below logistic regression, so it is slower to learn, not faster.
+- **The reward-only cultures didn't learn.** Neither DishBrain-style feedback nor R-STDP got far from chance at any budget. Over 50 seeds, FEP beat the frozen control only at 200 samples (+0.04), and that isn't corrected for multiple comparisons. Two public DishBrain replications on GitHub (dishbrain-playground and dishbrain-snn-rstdp) hit the same wall (plain STDP, and reward-modulated STDP that changed weights without playing better).
 - **Turning up the R-STDP learning rate is the one place we saw a learning trend.** At the default rate (0.02) the weight changes per trial are tiny. At lr=5 (10 seeds), AUC climbs from 0.52 at 25 samples to 0.59 at 200, against 0.52 for the frozen culture on the same seeds. That's still far below the reservoir or logistic regression, and we only tried three rates. The FEP condition doesn't use the lr setting at all (its STDP step size is fixed), so the FEP rows in `neurorover/analysis/sensitivity.md` are identical on purpose. Every setting we ran is in that file; none was picked by looking at the evaluation set.
 - **The reservoir culture works, but it's no better than logistic regression.** It's level with logistic at 25 samples, significantly behind at 50 and up, and significantly ahead of a small MLP at 25 to 100 samples. A one-feature rule (the low 3 days earlier) gets 0.86 with no training at all, so this task is easy and the interesting part is the low-sample end. In this model the culture is a decent random feature map, and the learning comes from the silicon readout.
 - **The CL API path matches the fast harness.** On the same 100 validation rows, reservoir AUC was 0.89 through the CL API and 0.87 through the direct harness (one seed; a 40-row run gave 0.84, so the gap is noise). Stimulating electrode 5 through the API gave 14.3 spikes per 20 ms window against 1.6 for sham, with the first evoked spike about 1.9 ms (simulated) after the pulse. Accelerated mode ran 2 to 12x faster than real time.

@@ -4,15 +4,22 @@
    "id": "culture_fep_s0",
    "condition": "culture_fep",
    "seed": 0,
-   "n_trials": 110,
+   "n_trials": 170,
    "plastic": true
   },
   {
    "id": "culture_reservoir_s0",
    "condition": "culture_reservoir",
    "seed": 0,
-   "n_trials": 110,
+   "n_trials": 170,
    "plastic": false
+  },
+  {
+   "id": "culture_teach_s0",
+   "condition": "culture_teach",
+   "seed": 0,
+   "n_trials": 280,
+   "plastic": true
   }
  ],
  "benchmark": {

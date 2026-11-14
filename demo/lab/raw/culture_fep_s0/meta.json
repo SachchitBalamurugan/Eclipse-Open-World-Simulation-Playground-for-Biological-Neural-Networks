@@ -3,8 +3,8 @@
   "seed": 0,
   "budget": 50,
   "eval": 60,
-  "final_auc": 0.4716666666666667,
-  "n_spikes": 253690,
-  "n_stims": 4842,
-  "wall_s": 9.5
+  "final_auc": 0.5377777777777778,
+  "n_spikes": 356895,
+  "n_stims": 6424,
+  "wall_s": 21.9
 }

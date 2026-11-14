@@ -30,12 +30,14 @@ CULTURE_CONDS = (
     "culture_fep",
     "culture_rstdp",
     "culture_reservoir",
+    "culture_teach",
 )
 PALETTE = {
     "culture_frozen": "#0072B2",
     "culture_fep": "#D55E00",
     "culture_rstdp": "#009E73",
     "culture_reservoir": "#CC79A7",
+    "culture_teach": "#F0E442",
     "heuristic_tmin": "#E69F00",
     "logistic": "#56B4E9",
     "mlp": "#6B6B6B",

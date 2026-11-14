@@ -25,6 +25,7 @@ CONDITIONS = (
     "culture_frozen",
     "culture_fep",
     "culture_rstdp",
+    "culture_teach",
     "culture_reservoir",
     "random",
     "heuristic_tmin",
@@ -196,7 +197,7 @@ def build_report(data, skipped: int) -> str:
             "",
         ]
     )
-    for condition in ("culture_fep", "culture_rstdp"):
+    for condition in ("culture_fep", "culture_rstdp", "culture_teach"):
         for budget in BUDGETS:
             lines.append(
                 paired_test_line(data, condition, "culture_frozen", budget)
