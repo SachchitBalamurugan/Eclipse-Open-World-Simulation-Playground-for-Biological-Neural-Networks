@@ -27,7 +27,7 @@ const rnd = mulberry(1024);
 // ---------- zones ----------
 const ZC = { sens: 0x4da3ff, dep: 0xffb03a, hold: 0x36d6c3, fb: 0xff5fa8, rew: 0xa47bff, inter: 0x7f93b3 };
 const zoneOf = (ch) => ch < 16 ? 'sens' : ch >= 40 && ch < 48 ? 'dep' : ch >= 48 && ch < 56 ? 'hold' : ch >= 56 && ch < 60 ? 'fb' : ch >= 60 ? 'rew' : 'inter';
-const STIM_COL = [0x4da3ff, 0xff5fa8, 0xa47bff, 0x5dff8a];
+const STIM_COL = [0x4da3ff, 0xff5fa8, 0xa47bff, 0x6fd3a8];
 const ex = (ch) => (ch % 8) - 3.5, ez = (ch) => (ch >> 3) - 3.5;
 
 // ---------- three setup ----------
@@ -35,8 +35,8 @@ const canvas = $('gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x030303);
-scene.fog = new THREE.Fog(0x030303, 55, 120);
+scene.background = new THREE.Color(0x050507);
+scene.fog = new THREE.Fog(0x050507, 55, 120);
 const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 300);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 3; controls.maxDistance = 80;
@@ -392,12 +392,12 @@ const simRows = new THREE.Group(); simRows.visible = false; field.add(simRows);
     const r = new THREE.Mesh(new THREE.BoxGeometry(6, 0.25, 0.3), rowMat); r.position.set(4, 0.125, -y); simRows.add(r);
   }
 }
-const goalMark = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.3, 32), new THREE.MeshBasicMaterial({ color: 0x76b900, side: THREE.DoubleSide, toneMapped: false }));
+const goalMark = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.3, 32), new THREE.MeshBasicMaterial({ color: 0xf2b45a, side: THREE.DoubleSide, toneMapped: false }));
 goalMark.rotation.x = -Math.PI / 2; goalMark.position.y = 0.02; simRows.add(goalMark);
 const panelGeo = new THREE.BoxGeometry(0.012, 0.2, 0.6); panelGeo.translate(0, -0.1, 0); // MuJoCo panel: 0.6 m along y, hangs 0.2 m along -z
 const panels = [];
 for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(panelGeo, new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.45, side: THREE.DoubleSide, roughness: 0.6, depthWrite: false })); m.visible = false; field.add(m); panels.push(m); }
-const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x76b900, transparent: true, opacity: 0.8 }));
+const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffd48a, transparent: true, opacity: 0.8 }));
 trail.visible = false; field.add(trail);
 function demoRoverTraj() { // clearly labelled fallback: a synthetic drive-to-row + deploy, same schema as sim/render.py
   const steps = [], dt = 0.05;
@@ -494,7 +494,7 @@ function decide(tr) {
   world.frostTarget = tr.label === 1 && tr.action === 0 ? 1 : 0;
   const ok = tr.correct === 1;
   const what = tr.label === 1 ? (tr.action === 1 ? 'crop protected' : 'crop frosted') : (tr.action === 1 ? 'cover wasted' : 'no cover needed');
-  setSign((tr.label === 1 ? 'FREEZE' : 'MILD') + ' · ' + actName(tr.action) + ' · ' + what, ok ? '#5dff8a' : '#ff5f6e');
+  setSign((tr.label === 1 ? 'FREEZE' : 'MILD') + ' · ' + actName(tr.action) + ' · ' + what, ok ? '#6FD3A8' : '#FF6A4D');
   if (!logged) { logged = true; logEv(`trial ${tr.trial} ${tr.phase}${tr.phase === 'eval' ? '@' + tr.ckpt : ''}: ${actName(tr.action)}, ${ok ? 'correct' : 'WRONG'} (${tr.label === 1 ? 'freeze' : 'mild'} night), deploy ${tr.deploy} hold ${tr.hold}`, ok ? 'out' : 'err'); }
   updateInfo();
 }
@@ -517,7 +517,7 @@ function updateBars() {
 }
 
 // ---------- charts ----------
-const PAL = ['#5ad1ff', '#ffb03a', '#5dff8a', '#ff5fa8', '#a47bff', '#36d6c3', '#f3e56b', '#ff8a5c', '#9aa7ba', '#c0f', '#7fa'];
+const PAL = ['#F2B45A', '#8FA6FF', '#6FD3A8', '#FF6A4D', '#a47bff', '#36d6c3', '#f3e56b', '#ff8a5c', '#9aa7ba', '#c0f', '#7fa'];
 function prep(cv) {
   const dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 290, h = Number(cv.getAttribute('height'));
   if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + 'px'; }
@@ -525,7 +525,7 @@ function prep(cv) {
 }
 function axes(g, w, h, y0, y1, ticks, fmt) {
   const L = 34, R = 8, T = 8, B = 16;
-  g.strokeStyle = '#1c2534'; g.fillStyle = '#7b8aa3'; g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
+  g.strokeStyle = '#1c1c25'; g.fillStyle = '#8C8A99'; g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
   for (const v of ticks) { const y = T + (h - T - B) * (1 - (v - y0) / (y1 - y0)); g.beginPath(); g.moveTo(L, y); g.lineTo(w - R, y); g.stroke(); g.fillText(fmt(v), L - 4, y); }
   return { X: (f) => L + (w - L - R) * f, Y: (v) => T + (h - T - B) * (1 - (v - y0) / (y1 - y0)), L, R, T, B };
 }
@@ -538,10 +538,10 @@ function drawAcc() {
   const n = tr.length, pts = [], cum = [];
   let s = 0;
   for (let k = 0; k < n; k++) { let c = 0, m = 0; for (let j = Math.max(0, k - 9); j <= k; j++) { c += tr[j].t.correct; m++; } s += tr[k].t.correct; pts.push([a.X(n > 1 ? k / (n - 1) : 0), a.Y(c / m)]); cum.push([a.X(n > 1 ? k / (n - 1) : 0), a.Y(s / (k + 1))]); }
-  line(g, cum, '#4a5d7a', 1); line(g, pts, '#5dff8a', 1.6);
+  line(g, cum, '#4a4858', 1); line(g, pts, '#F2B45A', 1.6);
   const cur = tr.findIndex((o) => o.i >= seg); const k = cur < 0 ? n - 1 : cur;
-  g.strokeStyle = '#5ad1ff'; g.lineWidth = 1; g.beginPath(); g.moveTo(pts[k][0], a.T); g.lineTo(pts[k][0], h - a.B); g.stroke();
-  g.fillStyle = '#7b8aa3'; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText('trial 0', a.L, h - 3); g.textAlign = 'right'; g.fillText(String(n - 1) + '   green: window, grey: cumulative', w - a.R, h - 3);
+  g.strokeStyle = '#8FA6FF'; g.lineWidth = 1; g.beginPath(); g.moveTo(pts[k][0], a.T); g.lineTo(pts[k][0], h - a.B); g.stroke();
+  g.fillStyle = '#7b8aa3'; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText('trial 0', a.L, h - 3); g.textAlign = 'right'; g.fillText(String(n - 1) + '   gold: window, grey: cumulative', w - a.R, h - 3);
 }
 function drawW() {
   const { g, w, h } = prep($('cW')); const wt = run && run.weights;
@@ -807,7 +807,7 @@ function renderHardware() {
     if (QS.get('replay') === '1') { setRoverReplay(true); if (START_TAB === 'surgical' && surgUI) surgUI.startReplay(); }
     if (START_CAM === 'robot') setTimeout(demoTip, 6500);
     const first = DEFAULT_RUNS.find((n) => runs.some((r) => r.name === n)) || (runs[0] && runs[0].name);
-    if (QS.get('demo') === '1' && studioUI) import('./demo.js').then((m) => m.runDemo(studioUI, lab, { dryFleet: QS.get('dryfleet') === '1' }));
+    if (QS.get('demo') === '1' && studioUI) import('./demo.js').then((m) => (QS.get('demoshort') === '1' ? m.runDemoShort(studioUI, lab, { fleetRun: QS.get('fleetrun') || null, fakeFleet: QS.get('fakefleet') === '1' }) : m.runDemo(studioUI, lab, { dryFleet: QS.get('dryfleet') === '1' })));
     const demo = QS.get('studiodemo');
     if (QS.get('studiosec') && studioUI) studioUI.ready().then(() => setTimeout(() => studioUI.focus(QS.get('studiosec')), 2500));
     if (demo && studioUI) { // screenshot helper: --studio-demo=ROBOT trains that robot locally for a few episodes

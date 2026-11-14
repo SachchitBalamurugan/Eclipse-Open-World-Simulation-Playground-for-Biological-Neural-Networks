@@ -1,0 +1,8 @@
+# Minimal runtime deps for the packaged Eclipse app (python -m bnn_platform studio / bnn_platform.transfer).
+# numpy: everywhere; mujoco: robot import/scene/training; cl-sdk (import name `cl`): neurorover.culture
+# simulated culture; gymnasium: surgical.reach_env (surgical robot / transfer runtime).
+# Optional, not installed: pynwb (NWB export falls back to .npz without it).
+numpy>=2.0
+mujoco==4.0.1
+gymnasium==1.4.0
+cl-sdk==1.0.0

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eclipse | A New ERA of training Biological Neural Networks</title>
+  <meta name="description" content="Eclipse is a biological neural network robot studio. Train any robot with biological neural network controllers in simulation, across a fleet of VMs, then export the protocol to a living culture.">
+  <meta name="theme-color" content="#050507">
+  <meta property="og:title" content="Eclipse | Biological neural network robot studio">
+  <meta property="og:description" content="Train any robot with biological neural network controllers in simulation, across a fleet of VMs, then export the protocol to a living culture.">
+  <meta property="og:image" content="assets/eclipse-demo-poster.jpg">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- Reusable phase-disc symbols: a dark moon progressively covering a gold sun -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <radialGradient id="sunfill" cx="50%" cy="45%" r="55%">
+        <stop offset="0%" stop-color="#FFE2A8"/><stop offset="60%" stop-color="#F2B45A"/><stop offset="100%" stop-color="#C9822E"/>
+      </radialGradient>
+      <radialGradient id="ringglow" cx="50%" cy="50%" r="50%">
+        <stop offset="62%" stop-color="#F2B45A" stop-opacity="0"/><stop offset="78%" stop-color="#F2B45A" stop-opacity=".55"/><stop offset="100%" stop-color="#F2B45A" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <header class="nav" id="top">
+    <nav class="nav__inner wrap" aria-label="Primary">
+      <a class="brand" href="#top" aria-label="Eclipse home">
+        <img src="assets/logo.svg" alt="" width="28" height="28">
+        <span class="brand__word">ECLIPSE</span>
+      </a>
+      <ul class="nav__links">
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#sim-to-real">Sim to real</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <a class="btn btn--primary btn--sm" href="#download">Download</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="hero__stage" aria-hidden="true">
+        <svg class="eclipse" viewBox="0 0 600 600" focusable="false">
+          <defs>
+            <radialGradient id="corona" cx="50%" cy="50%" r="50%">
+              <stop offset="34%" stop-color="#FFE7B8" stop-opacity=".95"/>
+              <stop offset="40%" stop-color="#F2B45A" stop-opacity=".55"/>
+              <stop offset="58%" stop-color="#F2B45A" stop-opacity=".14"/>
+              <stop offset="100%" stop-color="#F2B45A" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="sun" cx="50%" cy="46%" r="55%">
+              <stop offset="0%" stop-color="#FFF3D6"/><stop offset="55%" stop-color="#FFD48A"/><stop offset="100%" stop-color="#F2B45A"/>
+            </radialGradient>
+            <radialGradient id="moonshade" cx="38%" cy="34%" r="70%">
+              <stop offset="0%" stop-color="#14141C"/><stop offset="100%" stop-color="#050507"/>
+            </radialGradient>
+            <radialGradient id="sparkle" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FFFFFF"/><stop offset="25%" stop-color="#FFF3D6" stop-opacity=".95"/><stop offset="100%" stop-color="#FFD48A" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+            <filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+          </defs>
+          <g class="e-corona">
+            <circle cx="300" cy="300" r="290" fill="url(#corona)"/>
+            <g class="e-rays" stroke="#F2B45A" stroke-linecap="round" fill="none" filter="url(#softer)" opacity=".5">
+              <path d="M300 160 L300 40" stroke-width="3"/><path d="M300 440 L300 548" stroke-width="2"/>
+              <path d="M160 300 L52 300" stroke-width="2"/><path d="M440 300 L560 300" stroke-width="3"/>
+              <path d="M400 200 L486 112" stroke-width="2"/><path d="M200 400 L118 486" stroke-width="2"/>
+              <path d="M200 200 L128 128" stroke-width="1.5"/><path d="M400 400 L470 470" stroke-width="1.5"/>
+            </g>
+            <circle class="e-ring" cx="300" cy="300" r="122" fill="none" stroke="#FFD48A" stroke-width="5" filter="url(#softer)"/>
+          </g>
+          <circle class="e-halo" cx="300" cy="300" r="140" fill="#F2B45A" opacity=".35" filter="url(#soft)"/>
+          <circle class="e-sun" cx="300" cy="300" r="120" fill="url(#sun)"/>
+          <circle class="e-moon" cx="300" cy="300" r="123" fill="url(#moonshade)"/>
+          <circle class="e-rim" cx="300" cy="300" r="123" fill="none" stroke="#33333F" stroke-width="1" opacity=".6"/>
+          <g class="e-diamond" transform="translate(361 196)">
+            <circle r="46" fill="url(#sparkle)"/>
+            <path d="M0 -60 L3 -3 L60 0 L3 3 L0 60 L-3 3 L-60 0 L-3 -3 Z" fill="#FFF8EA"/>
+            <circle r="7" fill="#FFFFFF"/>
+          </g>
+        </svg>
+      </div>
+      <div class="hero__copy wrap">
+        <p class="eyebrow">Eclipse · Biological neural network robot studio</p>
+        <h1 id="hero-title" class="hero__title">A New <span class="era">ERA</span> of training Biological Neural Networks</h1>
+        <p class="hero__sub">Train any robot with biological neural network controllers — in simulation, across a fleet of VMs, then export the protocol to a living culture.</p>
+        <div class="hero__ctas">
+          <a class="btn btn--primary btn--lg" href="#download">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.5 10.5 4.4v7.1H3V5.5Zm0 13 7.5 1.1v-7H3v5.9Zm8.4 1.3L21 21v-8.4h-9.6v7.2Zm0-15.6v7.3H21V3l-9.6 1.2Z"/></svg>
+            Download for Windows
+          </a>
+          <a class="btn btn--ghost btn--lg" href="#demo">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+            Watch demo
+          </a>
+        </div>
+        <p class="hero__note"><span class="badge badge--plasma">Simulated</span> Controllers are simulated Izhikevich neuron cultures — no living neurons are used in simulation.</p>
+      </div>
+    </section>
+
+    <!-- DEMO -->
+    <section class="section" id="demo" aria-labelledby="demo-title">
+      <div class="wrap">
+        <p class="kicker">Demo</p>
+        <h2 id="demo-title" class="h2">From robot file to trained controller in one window.</h2>
+        <!-- To swap the video: replace assets/eclipse-demo.mp4 and assets/eclipse-demo-poster.jpg
+             (keep the names), or edit the data-src / poster attributes below. -->
+        <figure class="video">
+          <video id="demo-video" controls preload="metadata" playsinline
+                 poster="assets/eclipse-demo-poster.jpg" width="1920" height="1080"
+                 aria-describedby="demo-cap">
+            <source src="assets/eclipse-demo.mp4" type="video/mp4">
+            Your browser can't play this video. <a href="assets/eclipse-demo.mp4">Download the demo (MP4)</a>.
+          </video>
+          <figcaption id="demo-cap">30-second screen recording of Eclipse: a simulated culture learning to drive a 4-joint arm live, then 4 Freestyle VMs training 4 cultures in parallel (real VMs, live status).</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section how" id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <p class="kicker">How it works</p>
+        <h2 id="how-title" class="h2">Six phases, from first contact to the sun returning.</h2>
+        <div class="how__grid">
+          <div class="how__sticky" aria-hidden="true">
+            <svg class="how__disc" viewBox="0 0 400 400" focusable="false">
+              <circle class="h-corona" cx="200" cy="200" r="190" fill="url(#corona)" opacity="0"/>
+              <circle class="h-ring" cx="200" cy="200" r="104" fill="none" stroke="#FFD48A" stroke-width="4" opacity="0" filter="url(#softer)"/>
+              <circle cx="200" cy="200" r="100" fill="url(#sun)"/>
+              <circle class="h-moon" cx="200" cy="200" r="102" fill="url(#moonshade)"/>
+              <g class="h-diamond" transform="translate(252 112)" opacity="0">
+                <circle r="34" fill="url(#sparkle)"/><circle r="5" fill="#fff"/>
+              </g>
+            </svg>
+            <p class="how__phase mono"><span class="how__num">01</span> / 06 · <span class="how__label">First contact</span></p>
+          </div>
+          <ol class="steps">
+            <li class="step" data-step="0">
+              <svg class="phase" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12" fill="url(#sunfill)"/><circle cx="1" cy="17" r="12.4" fill="#0B0B10"/></svg>
+              <div><p class="step__meta mono">01 · First contact</p><h3>Import</h3>
+              <p>Drop in an MJCF or URDF file, or a zip with meshes. Eclipse parses bodies, joints and actuators and shows the robot in a live 3D viewport.</p></div>
+            </li>
+            <li class="step" data-step="1">
+              <svg class="phase" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12" fill="url(#sunfill)"/><circle cx="9" cy="17" r="12.4" fill="#0B0B10"/></svg>
+              <div><p class="step__meta mono">02 · Partial</p><h3>Configure BNN</h3>
+              <p>Set up the simulated culture: 1,024 Izhikevich neurons on a 64-electrode MEA, the learning rule (teach or frozen), learning rate and seed.</p></div>
+            </li>
+            <li class="step" data-step="2">
+              <svg class="phase" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12" fill="url(#sunfill)"/><circle cx="15" cy="18.5" r="12.4" fill="#0B0B10"/></svg>
+              <div><p class="step__meta mono">03 · Partial, deeper</p><h3>Choose platform</h3>
+              <p>Train on your own CPU with a live viewport, or fan seeds out across a Freestyle VM fleet, one job per VM.</p></div>
+            </li>
+            <li class="step" data-step="3">
+              <svg class="phase" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="url(#ringglow)"/><circle cx="20" cy="20" r="12.6" fill="none" stroke="#F2B45A" stroke-width="1.6"/><circle cx="20" cy="20" r="12" fill="#0B0B10"/></svg>
+              <div><p class="step__meta mono">04 · Totality</p><h3>Train</h3>
+              <p>Watch the arm move as the culture fires: a live error curve, an 8×8 electrode spike heatmap and a streaming console.</p></div>
+            </li>
+            <li class="step" data-step="4">
+              <svg class="phase" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12.6" fill="none" stroke="#F2B45A" stroke-width="1.6"/><circle cx="21" cy="19" r="12" fill="#0B0B10"/><circle cx="28.5" cy="9" r="3.4" fill="#FFF3D6"/></svg>
+              <div><p class="step__meta mono">05 · Diamond ring</p><h3>Evaluate</h3>
+              <p>Score held-out targets before and after training, replay any run, and compare against IK and frozen-culture baselines.</p></div>
+            </li>
+            <li class="step" data-step="5">
+              <svg class="phase" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12" fill="url(#sunfill)"/><circle cx="35" cy="22" r="12.4" fill="#0B0B10"/></svg>
+              <div><p class="step__meta mono">06 · Third contact</p><h3>Deploy</h3>
+              <p>Export a validated hardware bundle: electrode map, encoder, decoder, teaching protocol, calibration and safety limits for a real MEA.</p></div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="wrap">
+        <p class="kicker">Features</p>
+        <h2 id="features-title" class="h2">A studio for closed-loop biological controllers.</h2>
+        <div class="shots">
+          <figure class="shot shot--wide reveal">
+            <img src="assets/shot-studio-training.png" alt="Eclipse studio during training: the surgical arm in the 3D viewport, a falling error curve, the electrode spike heatmap and the console." loading="lazy" width="1600" height="900">
+            <figcaption>Live training: 3D viewport, error curve and 8×8 spike heatmap.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/shot-studio-deploy.png" alt="Deploy step: choosing a hardware target and exporting a sim-to-real bundle." loading="lazy" width="1600" height="900">
+            <figcaption>Deploy: export and validate a hardware bundle.</figcaption>
+          </figure>
+          <figure class="shot reveal">
+            <img src="assets/shot-surgical-restyled.png" alt="Surgical scenarios view showing a multi-arm surgical cart reaching a target." loading="lazy" width="1600" height="900">
+            <figcaption>Paper-inspired surgical reach scenarios.</figcaption>
+          </figure>
+        </div>
+        <ul class="features">
+          <li class="feature reveal"><span class="feature__icon" aria-hidden="true">⤓</span><h3>Import any robot</h3><p>MJCF, URDF or a zip with meshes. Bodies, joints and actuators are detected automatically.</p></li>
+          <li class="feature reveal"><span class="feature__icon" aria-hidden="true">◎</span><h3>Simulated neuron-culture controllers</h3><p>Izhikevich spiking networks on a 64-electrode MEA, with paired-stimulation teaching or a frozen culture.</p></li>
+          <li class="feature reveal"><span class="feature__icon" aria-hidden="true">▦</span><h3>Live 3D training</h3><p>See the robot move, the error fall and every electrode fire on a spike heatmap, in real time.</p></li>
+          <li class="feature reveal"><span class="feature__icon" aria-hidden="true">⇶</span><h3>Parallel training on a VM fleet</h3><p>Fan seeds and learning rates out across Freestyle VMs, one job per VM, and collect results back.</p></li>
+          <li class="feature reveal"><span class="feature__icon" aria-hidden="true">↺</span><h3>Run history</h3><p>Every run is saved with its curve and summary. Replay it in 3D or download the files.</p></li>
+          <li class="feature reveal"><span class="feature__icon" aria-hidden="true">✚</span><h3>Surgical scenarios suite</h3><p>Nominal, novel targets, calibration bias, noise, actuator mismatch and combined stress, inspired by ORBIT-Surgical and SuFIA.</p></li>
+          <li class="feature reveal"><span class="feature__icon" aria-hidden="true">⇢</span><h3>Sim-to-real export</h3><p>Bundles for generic MEAs, CL1, MCS and MaxWell, with a validator and a mock dry run.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SIM TO REAL -->
+    <section class="section" id="sim-to-real" aria-labelledby="s2r-title">
+      <div class="wrap">
+        <p class="kicker">Sim to real</p>
+        <h2 id="s2r-title" class="h2">What crosses over to a living culture, and what doesn't.</h2>
+        <p class="lede">A dish has its own connectivity, and nothing can write synaptic weights into it. So Eclipse exports the <em>closed-loop protocol</em>, not the trained network. A living culture starts untrained.</p>
+        <div class="s2r">
+          <div class="panel panel--ok reveal">
+            <h3><span class="dot dot--ok" aria-hidden="true"></span>Transfers</h3>
+            <ul class="ticks">
+              <li><strong>Electrode map</strong>: sensory, motor-pool and reward roles, remapped around grounds and references.</li>
+              <li><strong>Encoder and decoder</strong>: observation-to-pulse encoding and timing; decoder structure, with sim weights as an initial guess.</li>
+              <li><strong>Teaching protocol</strong>: the paired-stimulation (STDP) schedule, with sham and decoder-only controls.</li>
+              <li><strong>Calibration</strong>: baseline, probe sweep, role remap and a held-out decoder refit.</li>
+              <li><strong>Safety limits</strong>: amplitude, charge and rate caps, a watchdog, hold-on-missing-data and e-stop.</li>
+              <li><strong>Reference activity</strong>: a sim reference recording (NWB when pynwb is installed) to compare against.</li>
+            </ul>
+          </div>
+          <div class="panel panel--no reveal">
+            <h3><span class="dot dot--no" aria-hidden="true"></span>Does not transfer</h3>
+            <ul class="crosses">
+              <li><strong>Synaptic weights</strong> and connectivity of the simulated culture.</li>
+              <li>The trained performance itself.</li>
+              <li>Stimulation amplitude in physical units (the sim has none).</li>
+              <li>Any guarantee that a 3 ms pairing potentiates a real pathway.</li>
+            </ul>
+            <h3 class="targets-title">Hardware targets</h3>
+            <ul class="targets">
+              <li><span class="pill pill--ok">tested with mock</span><strong>Generic MEA</strong><span class="dim">8×8, current-mode defaults</span></li>
+              <li><span class="pill pill--warn">SDK integration untested</span><strong>Cortical Labs CL1</strong><span class="dim">written against the cl API, not yet run end to end</span></li>
+              <li><span class="pill pill--stub">stub</span><strong>MCS MEA2100</strong><span class="dim">needs vendor SDK</span></li>
+              <li><span class="pill pill--stub">stub</span><strong>MaxWell</strong><span class="dim">needs vendor SDK</span></li>
+            </ul>
+            <p class="small dim">All stimulation defaults must be validated against vendor and lab limits. A physical robot e-stop is still mandatory.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="section" id="results" aria-labelledby="results-title">
+      <div class="wrap">
+        <p class="kicker">Results · research preview</p>
+        <h2 id="results-title" class="h2">Honest numbers, including the ones that aren't flattering.</h2>
+        <div class="results">
+          <article class="result reveal">
+            <p class="result__label">Frost-guard rover · MuJoCo · 100 fixed episodes</p>
+            <p class="result__big mono"><span data-count="72">72</span>%</p>
+            <p>PPO (warm-started with behavior cloning) success, against <strong>59%</strong> for the hand-written controller. Plain PPO stayed at 0%.</p>
+            <div class="bars" role="img" aria-label="Success rate: PPO 72 percent, hand controller 59 percent">
+              <div class="bar"><span class="bar__name">PPO + BC</span><span class="bar__track"><span class="bar__fill" style="--w:72%"></span></span><span class="mono">72%</span></div>
+              <div class="bar"><span class="bar__name">Hand</span><span class="bar__track"><span class="bar__fill bar__fill--plasma" style="--w:59%"></span></span><span class="mono">59%</span></div>
+            </div>
+          </article>
+          <article class="result reveal">
+            <p class="result__label">Example arm · taught culture · held-out targets</p>
+            <p class="result__big mono">394 → <span data-count="91" data-from="394">91</span> mm</p>
+            <p>Median held-out error before vs after paired-stimulation teaching (one seed, 20 episodes; 10% of targets reached). The frozen culture on the same targets went from 394 to 419 mm.</p>
+          </article>
+          <article class="result reveal">
+            <p class="result__label">Surgical arm · 6 scenarios · 4 VMs · 12 episodes each</p>
+            <p class="result__big mono">0%</p>
+            <p>Targets reached by the taught culture. It gets about <strong>2× closer</strong> than the frozen culture (e.g. 288 vs 485 mm nominal) but reaches few targets. IK (DLS) reaches <strong>50–100%</strong>.</p>
+            <div class="table-wrap">
+              <table>
+                <caption class="sr-only">Surgical scenario results: median final error and IK success</caption>
+                <thead><tr><th scope="col">Scenario</th><th scope="col">Taught</th><th scope="col">Frozen</th><th scope="col">IK success</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Nominal</th><td>288 mm</td><td>485 mm</td><td>100%</td></tr>
+                  <tr><th scope="row">Novel targets</th><td>345 mm</td><td>600 mm</td><td>83%</td></tr>
+                  <tr><th scope="row">Calibration bias</th><td>261 mm</td><td>464 mm</td><td>67%</td></tr>
+                  <tr><th scope="row">Measurement noise</th><td>245 mm</td><td>497 mm</td><td>100%</td></tr>
+                  <tr><th scope="row">Actuator mismatch</th><td>244 mm</td><td>470 mm</td><td>100%</td></tr>
+                  <tr><th scope="row">Combined stress</th><td>373 mm</td><td>580 mm</td><td>50%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+        <p class="small dim results__note">Small episode counts; exploratory. All culture results are from a simulated Izhikevich culture. PPO and IK are engineering references, not biological controllers. The current learning method is not yet adequate for precise surgical reaching.</p>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section class="section" id="download" aria-labelledby="dl-title">
+      <div class="wrap">
+        <p class="kicker">Download</p>
+        <h2 id="dl-title" class="h2">Get Eclipse.</h2>
+        <div class="dl">
+          <div class="panel dl__card" id="dl-card" aria-live="polite">
+            <div class="dl__head">
+              <img src="assets/logo.svg" alt="" width="44" height="44">
+              <div>
+                <h3>Eclipse for Windows</h3>
+                <p class="dim small" id="dl-status">Checking for the latest build…</p>
+              </div>
+            </div>
+            <dl class="dl__meta" id="dl-meta" hidden>
+              <div><dt>Version</dt><dd class="mono" id="dl-version"></dd></div>
+              <div><dt>Size</dt><dd class="mono" id="dl-size"></dd></div>
+              <div class="dl__sha"><dt>SHA-256</dt><dd class="mono" id="dl-sha"></dd></div>
+              <div class="dl__req"><dt>Requirements</dt><dd id="dl-req"></dd></div>
+            </dl>
+            <a class="btn btn--primary btn--lg" id="dl-btn" href="https://github.com/SachchitBalamurugan/neurorover">Download for Windows</a>
+            <p class="small dim" id="dl-fallback" hidden>Build in progress. Meanwhile, see the <a href="https://github.com/SachchitBalamurugan/neurorover">GitHub repository</a> (private: request access).</p>
+          </div>
+          <div class="panel dl__src">
+            <h3>Run from source</h3>
+            <p class="small dim">Python 3.12, Node.js and Git. Commands shown for Windows (Git Bash); use <code>.venv/bin</code> on macOS/Linux.</p>
+            <pre class="code" tabindex="0"><code><span class="c"># 1. clone (private repo, access required)</span>
+git clone https://github.com/SachchitBalamurugan/neurorover
+cd neurorover
+
+<span class="c"># 2. Python environment</span>
+python -m venv .venv
+.venv/Scripts/pip install cl-sdk==1.0.0 numpy matplotlib
+
+<span class="c"># 3. desktop app</span>
+cd app &amp;&amp; npm install &amp;&amp; npm start</code></pre>
+            <button class="btn btn--ghost btn--sm copy" type="button" data-copy>Copy commands</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="wrap wrap--narrow">
+        <p class="kicker">FAQ</p>
+        <h2 id="faq-title" class="h2">Questions</h2>
+        <div class="faq">
+          <details>
+            <summary>Are real neurons used?</summary>
+            <p>No. Every controller in Eclipse is a simulated Izhikevich neuron culture (1,024 neurons on a virtual 64-electrode MEA). No living tissue is involved in simulation. The export bundle is <em>designed</em> for real MEAs, so a lab could run the same closed-loop protocol on a living culture, which would start untrained.</p>
+          </details>
+          <details>
+            <summary>What platforms are supported?</summary>
+            <p>The packaged desktop app is for Windows x64. From source, the Python platform and the Electron app run anywhere Python 3.12 and Node.js do (Windows, macOS, Linux), though Windows is what we've tested most. Parallel training uses Freestyle VMs.</p>
+          </details>
+          <details>
+            <summary>Is it free?</summary>
+            <p>Eclipse is an open research preview. There's no pricing; it's research software and the results above are exploratory.</p>
+          </details>
+          <details>
+            <summary>Can I export to a Cortical Labs CL1 today?</summary>
+            <p>You can export a CL1 bundle and validate it, but the CL1 SDK integration hasn't been run end to end yet. Only the generic target has been tested, and only against a mock backend.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <div class="footer__brand">
+        <a class="brand" href="#top"><img src="assets/logo.svg" alt="" width="24" height="24"><span class="brand__word">ECLIPSE</span></a>
+        <p class="small dim">A New ERA of training Biological Neural Networks</p>
+      </div>
+      <p class="footer__honesty">Controllers are simulated Izhikevich neuron cultures — no living neurons are used in simulation.</p>
+      <p class="small dim">The surgical cart model is adapted from "Robotic System A01" by NVIDIA (SimReady assets), licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; converted from USD to MuJoCo XML and OBJ meshes, with materials, some internal joints and per-asset friction not preserved.</p>
+      <nav aria-label="Footer"><ul class="footer__links">
+        <li><a href="https://github.com/SachchitBalamurugan/neurorover">GitHub (private)</a></li>
+        <li><a href="#download">Download</a></li>
+        <li><a href="#sim-to-real">Sim to real</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul></nav>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

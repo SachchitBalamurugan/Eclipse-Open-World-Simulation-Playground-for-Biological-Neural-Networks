@@ -39,7 +39,8 @@ export async function runDemo(ui, lab, opts = {}) {
   try {
     // 1. intro: surgical cart scene
     await ui.ready(); await ui.whenScene(60000);
-    await say('BNN Robot Studio: train robots with biological neural network controllers.', 3200);
+    await say('Eclipse · A New ERA of training Biological Neural Networks.', 3600);
+    await say('Train robots with biological neural network controllers.', 3000);
     await say('Every controller here is a simulated Izhikevich culture - no living neurons.', 3200);
 
     // 2. import
@@ -123,12 +124,63 @@ export async function runDemo(ui, lab, opts = {}) {
     await sleep(3000);
 
     // 9. outro
-    await say('BNN Robot Studio · import, train, scale, deploy. Simulated cultures - no living neurons.', 4500);
+    await say('Eclipse · import, train, scale, deploy. Simulated cultures - no living neurons.', 4000);
+    await say('Eclipse · A New ERA of training Biological Neural Networks.', 4500);
   } catch (e) {
     log('demo error: ' + (e && e.stack || e), 'err');
     await sleep(2000);
   }
   console.log('[demo] total ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s');
   await gsap.to(cap, { autoAlpha: 0, duration: 0.4 });
+  await lab.demoQuit();
+}
+
+// ~30 s cut for the video (`electron . --demo-short [--demo-fleet-run=<run_id>] [--demo-fake-fleet]`):
+// 0-3 s splash, 3-14 s local arm3 training mid-run, 14-27 s fleet grid on an ALREADY-RUNNING fleet run, 27-30 s outro.
+// No VM is created or deleted here; --demo-fake-fleet shows synthetic cards labelled "rehearsal" (testing only).
+export async function runDemoShort(ui, lab, opts = {}) {
+  const D = ui.demo, st = D.state(); let t0 = performance.now();
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const at = async (sec) => { const ms = sec * 1000 - (performance.now() - t0); if (ms > 0) await sleep(ms); };
+  const log = (m, l) => { D.log('[demo] ' + m, l || 'sys'); console.log('[demo] ' + m); };
+  const SLOGAN = 'A New <em>ERA</em> of training Biological Neural Networks';
+  const splash = document.createElement('div'); splash.id = 'demoSplash';
+  splash.innerHTML = `<img src="./assets/eclipse.svg" alt=""><b>ECLIPSE</b><span>${SLOGAN}</span><small>Simulated Izhikevich cultures — no living neurons</small>`;
+  document.body.appendChild(splash);
+  const cap = document.createElement('div'); cap.id = 'demoCap'; document.body.appendChild(cap); gsap.set(cap, { autoAlpha: 0 });
+  async function say(text) {
+    if (cap.textContent) await gsap.to(cap, { autoAlpha: 0, duration: reduce ? 0 : 0.2 });
+    cap.textContent = text; await gsap.fromTo(cap, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: reduce ? 0 : 0.35, ease: 'power2.out' });
+  }
+  if (!reduce) gsap.from(splash.children, { autoAlpha: 0, y: 12, duration: 0.8, stagger: 0.12, ease: 'power2.out' });
+  try {
+    // t=0: start local training of arm3 behind the splash so it is mid-run when revealed
+    let preJobs = null;
+    // prefetch VM status now: one fleet-status round trip over 4 busy VMs takes several seconds
+    const pre = opts.fakeFleet ? Promise.resolve() : lab.studioFleetStatus().then((r) => { if (r && Array.isArray(r.jobs)) preJobs = r.jobs; }).catch(() => {});
+    await ui.ready();
+    await D.select('arm3'); await sleep(300);
+    D.setRule('teach'); D.setPlatform('local'); D.setEpisodes(40);
+    await D.pressTrain(); D.setStep(4);
+    log('local training started');
+    // hold the splash until the culture is actually driving the arm (pre-training eval takes a few s), then start the clock
+    { const w = Date.now(); st.frameCount = 0; while (!(st.frameCount > 2) && Date.now() - w < 30000) await sleep(150); }
+    t0 = performance.now() - 1500; log('first frames; timeline starts');
+    await at(3);
+    gsap.to(splash, { autoAlpha: 0, duration: reduce ? 0 : 0.7, ease: 'sine.inOut' });
+    await say('Training a simulated BNN culture to control a 4-joint arm — live spikes, live error.');
+    await at(14);
+    await Promise.race([pre, sleep(2000)]);
+    if (preJobs && preJobs.length) st.jobs = preJobs;
+    D.showFleetGrid(opts.fleetRun || null, { fake: !!opts.fakeFleet });
+    await say('Same robot, 4 cultures, 4 VMs — training in parallel.');
+    await at(27);
+    gsap.to(cap, { autoAlpha: 0, duration: reduce ? 0 : 0.3 });
+    gsap.set(splash.querySelector('small'), { textContent: 'Train in simulation · scale across VMs · export the protocol' });
+    await gsap.to(splash, { autoAlpha: 1, duration: reduce ? 0 : 0.6, ease: 'sine.inOut' });
+    await at(30);
+  } catch (e) { log('demo error: ' + (e && e.stack || e), 'err'); }
+  try { if (st.running) await D.stop('main'); } catch (e) {}
+  console.log('[demo] total ' + ((performance.now() - t0) / 1000).toFixed(1) + ' s');
   await lab.demoQuit();
 }

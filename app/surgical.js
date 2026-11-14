@@ -29,7 +29,7 @@ export function initSurgical(root, lab, opts = {}) {
   const canvas = q('canvas');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050607);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050507);
   const camera = new THREE.PerspectiveCamera(40, 1, 0.02, 60);
   camera.position.set(2.4, 2.1, 2.9);
   const controls = new OrbitControls(camera, canvas); controls.target.set(0, 0.95, 0.3); controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.495;
@@ -40,7 +40,7 @@ export function initSurgical(root, lab, opts = {}) {
   // clinical bay: dark floor with faint grid, back walls
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.MeshStandardMaterial({ color: 0x0c0e11, roughness: 0.35, metalness: 0.2 }));
   floor.rotation.x = -Math.PI / 2; scene.add(floor);
-  const grid = new THREE.GridHelper(14, 28, 0x1c232b, 0x141a20); grid.position.y = 0.001; scene.add(grid);
+  const grid = new THREE.GridHelper(14, 28, 0x2a2418, 0x15151c); grid.position.y = 0.001; scene.add(grid);
   const wallM = new THREE.MeshStandardMaterial({ color: 0x0f1318, roughness: 0.9 });
   const w1 = new THREE.Mesh(new THREE.PlaneGeometry(14, 4), wallM); w1.position.set(0, 2, -5); scene.add(w1);
   const w2 = new THREE.Mesh(new THREE.PlaneGeometry(14, 4), wallM); w2.position.set(-5, 2, 0); w2.rotation.y = Math.PI / 2; scene.add(w2);
@@ -48,12 +48,12 @@ export function initSurgical(root, lab, opts = {}) {
 
   const st = { tree: null, nodes: {}, q: {}, loaded: 0, active: false, tipMJ: new THREE.Vector3(), replay: null, demo: false, k: 0, playing: false, ep: 0, err: null };
   const tipBall = new THREE.Mesh(new THREE.SphereGeometry(0.008, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffd23a, toneMapped: false }));
-  const target = new THREE.Mesh(new THREE.SphereGeometry(0.014, 16, 12), new THREE.MeshBasicMaterial({ color: 0x76b900, transparent: true, opacity: 0.9 }));
-  const targetRing = new THREE.Mesh(new THREE.RingGeometry(0.022, 0.028, 32), new THREE.MeshBasicMaterial({ color: 0x76b900, side: THREE.DoubleSide }));
+  const target = new THREE.Mesh(new THREE.SphereGeometry(0.014, 16, 12), new THREE.MeshBasicMaterial({ color: 0xf2b45a, transparent: true, opacity: 0.9 }));
+  const targetRing = new THREE.Mesh(new THREE.RingGeometry(0.022, 0.028, 32), new THREE.MeshBasicMaterial({ color: 0xffd48a, side: THREE.DoubleSide }));
   target.add(targetRing); mj.add(target);
   const TRAIL_N = 2000, trailPos = new Float32Array(TRAIL_N * 3);
   const trailGeo = new THREE.BufferGeometry(); trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3)); trailGeo.setDrawRange(0, 0);
-  const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: 0xffd23a })); trail.frustumCulled = false; mj.add(trail);
+  const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: 0x8fa6ff })); trail.frustumCulled = false; mj.add(trail);
 
   const matFor = (n) => {
     if (/^wheel/.test(n)) return new THREE.MeshStandardMaterial({ color: 0x1a1c1f, roughness: 0.8 });
@@ -186,13 +186,16 @@ export function initSurgical(root, lab, opts = {}) {
     if (s.tip && !quiet) st.tipErr = st.tipMJ.distanceTo(new THREE.Vector3(...s.tip)) * 1000; // FK vs recorded tip (mm)
     if (s.target) target.position.set(...s.target);
   }
+  // void -> #3A2A12 -> corona -> #FFF3D6 (docs/BRAND.md)
+  const HEAT = [[18, 16, 22], [58, 42, 18], [242, 180, 90], [255, 243, 214]];
+  const heat = (t) => { const x = Math.max(0, Math.min(1, t)) * 3, i = Math.min(2, Math.floor(x)), k = x - i; return 'rgb(' + HEAT[i].map((v, j) => Math.round(v + (HEAT[i + 1][j] - v) * k)).join(',') + ')'; };
   function drawHeat(sp) {
     const cv = q('.sheat'), g = cv.getContext('2d'), c = cv.width / 8;
-    g.fillStyle = '#050505'; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = '#050507'; g.fillRect(0, 0, cv.width, cv.height);
     const a = Array.isArray(sp) ? sp : [], mx = Math.max(1, ...a);
     for (let ch = 0; ch < 64; ch++) {
       const v = a[ch] ?? 0, f = Math.min(1, v / mx);
-      g.fillStyle = a.length > ch ? `rgb(${Math.round(20 + 235 * f)},${Math.round(30 + 180 * f * f)},${Math.round(40 + 40 * (1 - f))})` : '#101010';
+      g.fillStyle = a.length > ch ? heat(f) : '#0E0E14';
       g.fillRect((ch % 8) * c + 1, (ch >> 3) * c + 1, c - 2, c - 2);
       if (v) { g.fillStyle = f > 0.6 ? '#000' : '#bbb'; g.font = '10px Consolas'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(v), (ch % 8) * c + c / 2, (ch >> 3) * c + c / 2); }
     }

@@ -5,7 +5,8 @@ const fs = require('fs');
 const fsp = fs.promises;
 const { spawn, execFile } = require('child_process');
 
-const REPO = path.resolve(__dirname, '..');
+const backend = require('./backend'); // Eclipse: resolves backend root / python / data dir (dev vs packaged)
+const REPO = backend.root();
 const RUNS = path.join(REPO, 'runs');
 const RESULTS = path.join(REPO, 'neurorover', 'results');
 const SHOT = process.argv.includes('--screenshot');
@@ -16,9 +17,7 @@ let win = null;
 const children = new Set();
 
 function pythonExe() {
-  const cands = [path.join(REPO, '.venv', 'Scripts', 'python.exe'), path.join(REPO, '.venv', 'bin', 'python')];
-  for (const c of cands) if (fs.existsSync(c)) return c;
-  return 'python';
+  return backend.pythonExe();
 }
 const safeName = (s) => typeof s === 'string' && /^[A-Za-z0-9_.-]+$/.test(s) && !s.includes('..');
 async function readText(p) { try { return await fsp.readFile(p, 'utf8'); } catch (e) { return null; } }
@@ -378,14 +377,14 @@ handle('fleet-get', fleetGet);
 handle('fleet-post', fleetPost);
 handle('fleet-popout', fleetPopout);
 
-// ---------- BNN Robot Studio: thin wrapper over `python -m bnn_platform studio ...` (docs/STUDIO_CONTRACT.md) ----------
+// ---------- Eclipse Studio: thin wrapper over `python -m bnn_platform studio ...` (docs/STUDIO_CONTRACT.md) ----------
 // User strings only ever reach Python as separate argv entries (no shell), after validation.
 const ROBOT_RE = /^[a-z0-9_]{1,40}$/;
-const PY_ENV = () => Object.assign({}, process.env, { PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' });
+const PY_ENV = () => Object.assign({}, process.env, backend.env(), { PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' });
 let studioChild = null; // the 'main' slot (local train / replay / transfer run)
 let fleetLaunch = null;  // the 'fleet' slot: fleet launches run beside a replay
-const DEMO = process.argv.includes('--demo');
-const DEMO_TITLE = 'BNN Robot Studio Demo';
+const DEMO = process.argv.includes('--demo') || process.argv.includes('--demo-short');
+const DEMO_TITLE = 'Eclipse Demo';
 const demoVms = new Set(); // VMs created by fleet launches in this session (demo teardown only touches these)
 function lastJson(text) {
   const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
@@ -543,7 +542,7 @@ handle('studio-download', async (id) => {
 });
 
 // ---------- sim-to-real export (python -m bnn_platform.transfer, see contract) ----------
-const USER_RUNS = path.join(REPO, 'user_runs');
+const USER_RUNS = path.join(backend.dataDir(), 'user_runs');
 const TARGET_RE = /^[a-z0-9_]{1,40}$/;
 function insideRepoPath(p, base, what) {
   if (typeof p !== 'string' || !p || p.length > 1024 || p.includes('\u0000')) throw new Error('bad ' + what);
@@ -586,7 +585,7 @@ function createWindow() {
   const wh = sizeArg ? sizeArg.slice(7).split('x').map(Number) : [1500, 900];
   win = new BrowserWindow({
     width: wh[0] || 1500, height: wh[1] || 900, minWidth: 1100, minHeight: 640, useContentSize: true,
-    backgroundColor: '#0f0f0f', title: 'BNN Robot Studio - simulated culture model', autoHideMenuBar: true,
+    backgroundColor: '#050507', title: 'Eclipse - simulated culture model', icon: path.join(__dirname, 'assets', 'icon.png'), autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
   const debug = SHOT || SELFTEST;
@@ -601,7 +600,7 @@ function createWindow() {
   win.on('closed', () => app.quit());
 }
 
-app.whenReady().then(() => { ensureFleetServer().catch(() => {}); createWindow(); watchReplays(); });
+app.whenReady().then(() => { ensureFleetServer().catch(() => {}); createWindow(); watchReplays(); backend.ensureReady({ send, dialogParent: win }); });
 app.on('before-quit', () => { stopFleetServer(); watchers.forEach((w) => { try { w.close(); } catch (e) {} }); });
 function createDemoWindow() {
   // exactly 1920x1080 physical pixels at (0,0): divide by the display scale factor so gdigrab captures 1920x1080
@@ -609,7 +608,7 @@ function createDemoWindow() {
   const sf = screen.getPrimaryDisplay().scaleFactor || 1;
   win = new BrowserWindow({
     x: 0, y: 0, width: Math.round(1920 / sf), height: Math.round(1080 / sf), useContentSize: true, resizable: false, maximizable: false,
-    frame: false, alwaysOnTop: true, autoHideMenuBar: true, backgroundColor: '#0f0f0f', title: DEMO_TITLE,
+    frame: false, alwaysOnTop: true, autoHideMenuBar: true, backgroundColor: '#050507', title: DEMO_TITLE, icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
   win.setMenuBarVisibility(false);
@@ -617,7 +616,7 @@ function createDemoWindow() {
   const dlog = path.join(__dirname, 'demo.log'); fs.writeFileSync(dlog, '');
   win.webContents.on('console-message', (_e, level, message) => fs.appendFileSync(dlog, new Date().toISOString().slice(11, 19) + ' [' + level + '] ' + message + '\n'));
   if (process.argv.includes('--demo-shots')) { let k = 0; const t = setInterval(async () => { try { const img = await win.webContents.capturePage(); await fsp.writeFile(path.join(__dirname, 'demo_shot_' + String(++k).padStart(2, '0') + '.png'), img.toPNG()); } catch (e) { clearInterval(t); } }, 8000); }
-  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: '0', tab: 'studio', demo: '1', dryfleet: process.argv.includes('--demo-dry-fleet') ? '1' : '0' } });
+  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: '0', tab: 'studio', demo: '1', dryfleet: process.argv.includes('--demo-dry-fleet') ? '1' : '0', demoshort: process.argv.includes('--demo-short') ? '1' : '0', fakefleet: process.argv.includes('--demo-fake-fleet') ? '1' : '0', fleetrun: /^[A-Za-z0-9_.-]{1,160}$/.test(argVal('demo-fleet-run') || '') ? argVal('demo-fleet-run') : '' } });
   win.on('closed', () => app.quit());
 }
 app.on('window-all-closed', () => { if (studioChild) killTree(studioChild); if (fleetLaunch) killTree(fleetLaunch); for (const c of children) { try { c.kill(); } catch (e) {} } stopFleetServer(); app.quit(); });

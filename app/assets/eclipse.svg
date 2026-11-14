@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Eclipse">
+  <defs>
+    <radialGradient id="ecl-glow" cx="32" cy="32" r="31" gradientUnits="userSpaceOnUse">
+      <stop offset="0.6" stop-color="#F2B45A" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#F2B45A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ecl-sun" cx="32" cy="32" r="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0.8" stop-color="#F2B45A"/>
+      <stop offset="1" stop-color="#FFD48A"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="31" fill="url(#ecl-glow)"/>
+  <circle cx="32" cy="32" r="20" fill="url(#ecl-sun)"/>
+  <circle cx="33.4" cy="30.6" r="17.2" fill="#050507"/>
+  <circle cx="42" cy="14.7" r="5.5" fill="#FFF3D6" opacity="0.35"/>
+  <circle cx="42" cy="14.7" r="2.8" fill="#FFF3D6"/>
+</svg>

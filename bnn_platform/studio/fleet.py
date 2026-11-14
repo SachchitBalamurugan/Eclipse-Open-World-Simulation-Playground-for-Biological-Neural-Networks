@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import re
 import os
 import pathlib
 import shlex
@@ -106,7 +107,7 @@ STATUS_SH = "\n".join([
     H,
     "if [ -f $H/nr/JOB_DONE ]; then echo STATE=done; elif [ -f $H/nr/JOB_FAILED ]; then echo STATE=failed;"
     " else echo STATE=running; fi",
-    "grep '\"type\":\"episode\"' $H/nr/events.jsonl 2>/dev/null | tail -n 1",
+    "grep '\"type\":\"episode\"' $H/nr/events.jsonl 2>/dev/null | tail -n 400",  # history; last line = latest
     "grep '\"type\":\"error\"' $H/nr/events.jsonl 2>/dev/null | tail -n 1",
     "echo LOG=$(tail -n 1 $H/nr/train.log 2>/dev/null)", ""])
 
@@ -227,7 +228,7 @@ def _safe_extract(tgz: pathlib.Path, run_id: str) -> None:
             if p.is_absolute() or ".." in p.parts or not (mbr.isfile() or mbr.isdir()):
                 continue
             if p.parts[0] == "user_runs" and len(p.parts) > 1 and p.parts[1] == run_id:
-                tar.extract(mbr, ROOT)
+                tar.extract(mbr, USER_RUNS.parent)
             elif mbr.isfile() and p.name in ("train.log",):
                 tar.extract(mbr, USER_RUNS / run_id / "_vm")
 
@@ -240,6 +241,7 @@ def _poll(j: dict) -> None:
         j["poll_error"] = str(e)[-300:]
         return
     j.pop("poll_error", None)
+    hist = []
     for line in out.splitlines():
         line = line.strip()
         if line.startswith("STATE="):
@@ -251,10 +253,13 @@ def _poll(j: dict) -> None:
                 continue
             if o.get("type") == "episode":
                 j["last"] = o
+                hist.append({"episode": o.get("episode"), "final_err_mm": o.get("final_err_mm")})
             elif o.get("type") == "error":
                 j["error"] = o.get("message")
         elif line.startswith("LOG=") and len(line) > 4:
             j["log"] = line[4:][-300:]
+    if hist:
+        j["history"] = hist
     if j["state"] in ("done", "failed") and not j.get("collected"):
         dst = USER_RUNS / j["parent_run"] / f"{j['slug']}.tgz"
         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -282,5 +287,36 @@ def fleet_status(a) -> dict:
         if todo:
             save_state(todo)
     keys = ("slug", "vm", "state", "last", "run_id", "parent_run", "robot", "seed", "collected", "summary",
-            "error")
-    return {"jobs": [{k: j.get(k) for k in keys} for j in jobs]}
+            "error", "history", "created")
+    out = []
+    for j in jobs:
+        o = {k: j.get(k) for k in keys}
+        m = re.search(r"--lr\s+(\S+)", j.get("command") or "")
+        o["lr"] = float(m.group(1)) if m else None
+        m = re.search(r"--episodes\s+(\d+)", j.get("command") or "")
+        o["episodes"] = int(m.group(1)) if m else None
+        if not o["history"]:
+            o["history"] = _local_history(j.get("run_id"))
+        out.append(o)
+    return {"jobs": out}
+
+
+def _local_history(run_id) -> list:
+    """Per-episode error from a collected run's events.jsonl (for jobs polled before history existed)."""
+    if not run_id or not re.fullmatch(r"[A-Za-z0-9_.-]{1,160}", str(run_id)):
+        return []
+    p = USER_RUNS / run_id / "events.jsonl"
+    hist = []
+    try:
+        for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
+            if '"episode"' not in line:
+                continue
+            try:
+                o = json.loads(line)
+            except ValueError:
+                continue
+            if o.get("type") == "episode":
+                hist.append({"episode": o.get("episode"), "final_err_mm": o.get("final_err_mm")})
+    except OSError:
+        return []
+    return hist[-400:]

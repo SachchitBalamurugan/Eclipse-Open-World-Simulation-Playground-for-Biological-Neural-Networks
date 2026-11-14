@@ -41,3 +41,8 @@ app/demo.log
 app/demo_shot_*.png
 demo/video/electron.log
 demo/video/raw.mkv
+
+# Packaged builds (electron-builder)
+dist/
+landing/downloads/*.zip
+dist/

@@ -1,4 +1,4 @@
-// BNN Robot Studio tab: import a robot, configure a simulated BNN controller, pick a platform, train, evaluate.
+// Eclipse Studio tab: import a robot, configure a simulated BNN controller, pick a platform, train, evaluate.
 // Talks to the backend only through window.lab.studio* (main.js -> `python -m bnn_platform studio ...`, docs/STUDIO_CONTRACT.md).
 // All biology is the simulated Izhikevich culture: no living neurons.
 import * as THREE from 'three';
@@ -8,12 +8,21 @@ import { gsap } from 'gsap';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (v, d = 1) => (typeof v === 'number' && Number.isFinite(v) ? v.toFixed(d) : '-');
 const STEPS = ['Import robot', 'Configure BNN', 'Choose platform', 'Train', 'Evaluate', 'Deploy'];
-const ACC = 0x76b900;
+const ACC = 0xf2b45a; // --corona
+const CORONA = 0xf2b45a, CORONA_HI = 0xffd48a, PLASMA = 0x8fa6ff;
+// eclipse-phase disc icons for the 6 steps (docs/BRAND.md): a dark moon progressively covers a gold sun
+const PHASE_ICON = (() => {
+  const sun = '<circle class="ph-sun" cx="11" cy="11" r="7"/>', moon = (x, y) => `<circle class="ph-moon" cx="${x}" cy="${y}" r="7"/>`;
+  const cor = '<circle class="ph-cor" cx="11" cy="11" r="9"/>', dia = '<circle class="ph-dia" cx="15.2" cy="4.6" r="1.7"/>';
+  const svg = (inner) => `<svg viewBox="0 0 22 22" aria-hidden="true">${inner}</svg>`;
+  return [svg(sun + moon(20.5, 8.5)), svg(sun + moon(17, 9.2)), svg(sun + moon(14, 10)), svg(cor + sun + moon(11, 11)),
+    svg(cor + sun + moon(11.7, 10.3) + dia), svg(sun + moon(5.2, 12.2))];
+})();
 
 export function initStudio(root, lab, opts = {}) {
   root.innerHTML = `<div class="st">
   <div class="st-bar">
-    <ol class="st-steps">${STEPS.map((s, i) => `<li data-step="${i + 1}"><b>${i + 1}</b><span>${s}</span></li>`).join('')}<div class="st-prog"><i></i></div></ol>
+    <ol class="st-steps">${STEPS.map((s, i) => `<li data-step="${i + 1}" title="Step ${i + 1}"><b>${PHASE_ICON[i]}${i === 3 ? '<i class="ring"></i>' : ''}</b><span>${s}</span></li>`).join('')}<div class="st-prog"><i></i></div></ol>
     <div class="st-pill" data-state="idle"><i></i><span>Idle</span></div>
   </div>
   <div class="st-main">
@@ -26,7 +35,8 @@ export function initStudio(root, lab, opts = {}) {
     </aside>
     <section class="st-vp">
       <canvas></canvas>
-      <div class="st-vtools"><button data-v="fit" title="Frame robot">Frame</button><button data-v="grid" class="on">Grid</button><button data-v="trail" class="on">Trail</button><button data-v="box" class="on">Target zone</button></div>
+      <div class="st-vtools"><button data-v="fit" title="Frame robot">Frame</button><button data-v="grid" class="on">Grid</button><button data-v="trail" class="on">Trail</button><button data-v="box" class="on">Target zone</button><button data-v="fleet" title="Live grid of fleet VM jobs">Fleet grid</button></div>
+      <div class="st-fgrid" hidden></div>
       <div class="st-vinfo"></div>
       <div class="st-vhud mono"></div>
       <div class="st-vmsg"><div class="st-spin"></div><b></b><span></span></div>
@@ -74,7 +84,7 @@ export function initStudio(root, lab, opts = {}) {
       </section>
     </aside>
     <div class="st-dock">
-      <div class="st-pane st-pchart"><div class="st-ph"><span>Error · mm</span><span class="st-legend"><i style="background:#76b900"></i>final<i style="background:#8a8a8a"></i>median</span></div><canvas class="c-curve"></canvas></div>
+      <div class="st-pane st-pchart"><div class="st-ph"><span>Error · mm</span><span class="st-legend"><i style="background:#F2B45A"></i>final<i style="background:#8FA6FF"></i>median</span></div><canvas class="c-curve"></canvas></div>
       <div class="st-pane st-pheat"><div class="st-ph"><span>Electrode spikes</span><em class="mono st-spk"></em></div><canvas class="c-heat"></canvas></div>
       <div class="st-pane st-pcon"><div class="st-ph"><span>Console</span><button class="st-btn st-clear">Clear</button></div><div class="st-con mono"></div></div>
       <div class="st-pane st-pruns"><div class="st-ph"><span class="st-tabs"><button data-t="runs" class="on">Run history</button><button data-t="jobs">Fleet jobs</button></span><button class="st-btn st-refresh" title="Refresh">&#x21bb;</button></div>
@@ -97,6 +107,16 @@ export function initStudio(root, lab, opts = {}) {
   const mm = gsap.matchMedia();
   mm.add({ full: '(prefers-reduced-motion: no-preference)', reduce: '(prefers-reduced-motion: reduce)' }, (ctx) => { motion.reduce = !!ctx.conditions.reduce; });
   const D = (s) => (motion.reduce ? 0 : s);
+  // step 4 (Train = totality): the corona ring breathes only while a run is active; static glow under reduced motion
+  let breath = null;
+  function setBreathing(on) {
+    const ring = q('.st-steps li[data-step="4"] .ring'); if (!ring) return;
+    if (breath) { breath.kill(); breath = null; }
+    if (!on) { gsap.to(ring, { autoAlpha: 0, scale: 1, duration: D(0.4), ease: 'power2.out' }); return; }
+    if (motion.reduce) { gsap.set(ring, { autoAlpha: 0.7, scale: 1 }); return; }
+    gsap.set(ring, { autoAlpha: 0.35, scale: 0.92 });
+    breath = gsap.to(ring, { autoAlpha: 0.95, scale: 1.12, duration: 1.6, ease: 'sine.inOut', repeat: -1, yoyo: true });
+  }
   function enter() {
     if (st.entered) return; st.entered = true;
     if (motion.reduce) return;
@@ -109,7 +129,7 @@ export function initStudio(root, lab, opts = {}) {
   }
   function flash(el) {
     if (!el) return;
-    gsap.fromTo(el, { backgroundColor: 'rgba(118,185,0,0.16)' }, { backgroundColor: 'rgba(118,185,0,0)', duration: D(0.9) || 0.01, ease: 'power1.out', clearProps: 'backgroundColor' });
+    gsap.fromTo(el, { backgroundColor: 'rgba(242,180,90,0.16)' }, { backgroundColor: 'rgba(242,180,90,0)', duration: D(0.9) || 0.01, ease: 'power1.out', clearProps: 'backgroundColor' });
   }
 
   // ---------- console ----------
@@ -277,10 +297,10 @@ export function initStudio(root, lab, opts = {}) {
 
   // ---------- viewport ----------
   const canvas = q('.st-vp canvas');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1c1e20);
+  const scene = new THREE.Scene(); scene.background = null; renderer.setClearColor(0x000000, 0); // transparent: the CSS void + corona glow shows through
   const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 200);
   camera.position.set(1.6, 1.2, 1.9);
   const controls = new OrbitControls(camera, canvas); controls.enableDamping = true; controls.target.set(0, 0.3, 0);
@@ -290,8 +310,8 @@ export function initStudio(root, lab, opts = {}) {
   const gridG = new THREE.Group(); scene.add(gridG);
   function buildGrid(size) {
     gridG.clear();
-    const major = new THREE.GridHelper(size, 10, 0x4a4f55, 0x34383d); major.material.transparent = true; major.material.opacity = 0.9;
-    const minor = new THREE.GridHelper(size, 50, 0x2a2d31, 0x2a2d31); minor.position.y = -0.0005;
+    const major = new THREE.GridHelper(size, 10, 0x4a3f30, 0x2a2730); major.material.transparent = true; major.material.opacity = 0.9;
+    const minor = new THREE.GridHelper(size, 50, 0x18181f, 0x18181f); minor.position.y = -0.0005;
     const ax = new THREE.Group();
     const line = (a, b, c) => { const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]); return new THREE.Line(g, new THREE.LineBasicMaterial({ color: c })); };
     ax.add(line([-size / 2, 0.001, 0], [size / 2, 0.001, 0], 0x7a3a3a), line([0, 0.001, -size / 2], [0, 0.001, size / 2], 0x3a6a3a));
@@ -309,12 +329,13 @@ export function initStudio(root, lab, opts = {}) {
   tipBall.visible = false; mj.add(tipBall);
   const TRAIL_N = 4000, trailPos = new Float32Array(TRAIL_N * 3); let trailN = 0;
   const trailGeo = new THREE.BufferGeometry(); trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3)); trailGeo.setDrawRange(0, 0);
-  const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.85 })); trail.frustumCulled = false; mj.add(trail);
+  const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ color: CORONA_HI, transparent: true, opacity: 0.85 })); trail.frustumCulled = false; mj.add(trail);
   let boxHelper = null, sceneScale = 0.5;
   const view = { grid: true, trail: true, box: true };
   qa('.st-vtools button').forEach((b) => b.onclick = () => {
     const v = b.dataset.v;
     if (v === 'fit') { fit(true); return; }
+    if (v === 'fleet') { if (fgrid.on) fgrid.hide(); else fgrid.show(); return; }
     view[v] = !view[v]; b.classList.toggle('on', view[v]);
     gridG.visible = view.grid; trail.visible = view.trail; if (boxHelper) boxHelper.visible = view.box;
   });
@@ -340,7 +361,7 @@ export function initStudio(root, lab, opts = {}) {
     }
     const plane = g.type === 'plane';
     const col = new THREE.Color().setRGB(c[0], c[1], c[2], THREE.SRGBColorSpace);
-    const mat = plane ? new THREE.MeshStandardMaterial({ color: 0x232629, roughness: 0.95, transparent: true, opacity: 0.55, depthWrite: false })
+    const mat = plane ? new THREE.MeshStandardMaterial({ color: 0x14141b, roughness: 0.95, transparent: true, opacity: 0.6, depthWrite: false })
       : new THREE.MeshStandardMaterial({ color: col, roughness: 0.45, metalness: 0.15, transparent: c[3] < 1, opacity: c[3] ?? 1, side: g.type === 'mesh' ? THREE.DoubleSide : THREE.FrontSide });
     const m = new THREE.Mesh(geo, mat);
     if (g.pos) m.position.set(...g.pos);
@@ -366,7 +387,7 @@ export function initStudio(root, lab, opts = {}) {
     let n = 0;
     for (const gm of sc.geoms || []) { const m = geomMesh(gm); const parent = bodyGroups[gm.body] || robotG; if (m) { parent.add(m); n++; } }
     if (sc.target_box && sc.target_box.min && sc.target_box.max) {
-      boxHelper = new THREE.Box3Helper(new THREE.Box3(new THREE.Vector3(...sc.target_box.min), new THREE.Vector3(...sc.target_box.max)), new THREE.Color(0x4f7a10));
+      boxHelper = new THREE.Box3Helper(new THREE.Box3(new THREE.Vector3(...sc.target_box.min), new THREE.Vector3(...sc.target_box.max)), new THREE.Color(PLASMA));
       boxHelper.visible = view.box; mj.add(boxHelper);
     }
     resetTrail(); target.visible = false; tipBall.visible = false;
@@ -467,8 +488,73 @@ export function initStudio(root, lab, opts = {}) {
     } finally { st.sceneLoading = false; }
   }
 
+  // ---------- fleet grid: one live card per VM job (studio fleet-status, polled ~3 s) ----------
+  const fgrid = (() => {
+    const el = q('.st-fgrid'), btn = q('.st-vtools [data-v="fleet"]');
+    const g = { on: false, run: null, fake: false, timer: 0, jobs: [], t0: 0 };
+    const errOf = (h) => (h || []).map((e) => e && e.final_err_mm).filter((v) => typeof v === 'number' && Number.isFinite(v));
+    function spark(vals) {
+      if (vals.length < 2) return '<svg class="fg-spark" viewBox="0 0 100 30" preserveAspectRatio="none"><line x1="0" y1="29" x2="100" y2="29" class="fg-base"/></svg>';
+      const mn = Math.min(...vals), mx = Math.max(...vals), r = mx - mn || 1;
+      const pts = vals.map((v, i) => [(100 * i / (vals.length - 1)).toFixed(1), (3 + 24 * (1 - (v - mn) / r)).toFixed(1)]);
+      const d = pts.map((p) => p.join(',')).join(' ');
+      return `<svg class="fg-spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polygon points="0,30 ${d} 100,30" class="fg-area"/><polyline points="${d}" class="fg-line"/><circle cx="${pts[pts.length - 1][0]}" cy="${pts[pts.length - 1][1]}" r="1.8" class="fg-dot"/></svg>`;
+    }
+    function pickRun(jobs) {
+      if (g.run && jobs.some((j) => j.parent_run === g.run)) return g.run;
+      const runs = [...new Set(jobs.map((j) => j.parent_run).filter(Boolean))];
+      runs.sort((a, b) => { const ca = jobs.filter((j) => j.parent_run === a).map((j) => j.created || '').sort().pop() || a, cb = jobs.filter((j) => j.parent_run === b).map((j) => j.created || '').sort().pop() || b; return ca < cb ? -1 : ca > cb ? 1 : 0; });
+      return runs.pop() || null;
+    }
+    function render() {
+      const run = g.fake ? 'rehearsal' : pickRun(g.jobs), jobs = g.fake ? g.jobs : g.jobs.filter((j) => j.parent_run === run);
+      const nRun = jobs.filter((j) => j.state === 'running' || j.state === 'starting').length;
+      const head = `<div class="fg-head"><div><b>${jobs.length} VM${jobs.length === 1 ? '' : 's'} · ${jobs.length} BNN culture${jobs.length === 1 ? '' : 's'} ${nRun ? 'training in parallel' : 'trained in parallel'}</b>
+        <span class="mono">${g.fake ? '<i class="fg-rehearsal">REHEARSAL · synthetic data, no VMs</i>' : esc(run || 'no fleet runs yet')}</span></div>
+        <em class="mono">${nRun} running · polled every 3 s · simulated cultures, no living neurons</em></div>`;
+      if (!jobs.length) { el.innerHTML = head + '<div class="st-empty">No fleet jobs yet. Choose the Freestyle VM fleet platform and train.</div>'; return; }
+      const cards = jobs.map((j) => {
+        const h = errOf(j.history), last = j.last || {}, M = j.episodes || last.episodes || 0, N = last.episode || h.length || 0;
+        const latest = typeof last.final_err_mm === 'number' ? last.final_err_mm : h[h.length - 1];
+        const st8 = esc(j.state || 'unknown'), vm = String(j.vm || '-').replace(/^vm-/, '').slice(0, 8);
+        return `<div class="fg-card" data-state="${st8}"><header><b class="mono">${esc(j.slug || '-')}</b><i class="fg-pill">${st8}</i></header>
+          <div class="fg-meta mono"><span>vm ${esc(vm)}</span><span>seed ${esc(j.seed ?? '-')}</span><span>lr ${esc(j.lr ?? '-')}</span></div>
+          <div class="fg-prog"><div><i style="transform:scaleX(${M ? Math.min(1, N / M) : 0})"></i></div><span class="mono">ep ${N}/${M || '?'}</span></div>
+          ${spark(h)}
+          <div class="fg-err"><span>latest error</span><b class="mono">${fmt(latest, 0)}<small>mm</small></b></div></div>`;
+      }).join('');
+      el.innerHTML = head + `<div class="fg-cards n${Math.min(jobs.length, 6)}">${cards}</div>`;
+    }
+    function fakeTick() {
+      const t = (performance.now() - g.t0) / 1000, M = 30;
+      g.jobs = [7, 8, 9, 10].map((seed, k) => {
+        const N = Math.max(1, Math.min(M, Math.floor(6 + t * 0.9 + k * 1.7))), hist = [];
+        for (let e = 1; e <= N; e++) hist.push({ episode: e, final_err_mm: 60 + 260 * Math.exp(-e / (7 + k * 1.5)) + 18 * Math.sin(e * 1.7 + k * 2.1) + 10 * Math.cos(e * 0.9 + seed) });
+        return { slug: 'rehearsal-arm3-s' + seed, vm: 'vm-rh' + k + 'demo', state: N >= M ? 'done' : 'running', seed, lr: 0.02, episodes: M, history: hist, last: { episode: N, episodes: M, final_err_mm: hist[hist.length - 1].final_err_mm } };
+      });
+    }
+    async function poll() {
+      if (!g.on) return;
+      if (g.fake) fakeTick();
+      else { try { const r = await lab.studioFleetStatus(); if (r && Array.isArray(r.jobs)) { g.jobs = r.jobs; st.jobs = r.jobs; renderJobs(); } } catch (e) { log('fleet-status: ' + e.message, 'err'); } }
+      if (!g.on) return;
+      render(); g.timer = setTimeout(poll, g.fake ? 1000 : 3000);
+    }
+    return {
+      get on() { return g.on; },
+      show(run, o = {}) {
+        g.run = run || g.run; g.fake = !!o.fake; g.t0 = performance.now(); g.on = true; if (!g.fake && st.jobs.length) g.jobs = st.jobs;
+        btn.classList.add('on'); el.hidden = false; render(); clearTimeout(g.timer); poll();
+        if (!motion.reduce) gsap.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: 'power2.out' });
+        if (!motion.reduce && el.querySelector('.fg-card')) gsap.from(el.querySelectorAll('.fg-card'), { y: 10, autoAlpha: 0, duration: 0.5, stagger: 0.07, ease: 'power2.out', clearProps: 'transform,opacity,visibility' });
+      },
+      hide() { g.on = false; clearTimeout(g.timer); btn.classList.remove('on'); el.hidden = true; },
+    };
+  })();
+
   // ---------- training ----------
   function syncButtons() {
+    if (!!st.running !== !!syncButtons.wasRunning) { syncButtons.wasRunning = !!st.running; setBreathing(!!st.running); }
     const can = !!st.sel && st.sel.trainable !== false;
     q('.st-train').disabled = st.running || !can || (st.platform === 'fleet' && !!st.fleetRunning);
     q('.st-train').textContent = st.running ? 'Training...' : (st.platform === 'fleet' ? (q('.f-dry').checked ? 'Plan fleet run' : 'Launch on fleet') : 'Train');
@@ -518,8 +604,8 @@ export function initStudio(root, lab, opts = {}) {
     tl.fromTo(q('.st-train'), { scale: 0.96 }, { scale: 1, duration: 0.3, clearProps: 'transform' }, 0)
       .fromTo(b, { autoAlpha: 0, y: -12 }, { autoAlpha: 1, y: 0, duration: 0.4 }, 0.05)
       .fromTo(b.querySelector('span'), { letterSpacing: '0.4em' }, { letterSpacing: '0.16em', duration: 0.6 }, 0.05)
-      .fromTo(qa('.st-dock .st-pane'), { boxShadow: 'inset 0 2px 0 rgba(118,185,0,0)' }, { boxShadow: 'inset 0 2px 0 rgba(118,185,0,1)', duration: 0.25, stagger: 0.07 }, 0.2)
-      .to(qa('.st-dock .st-pane'), { boxShadow: 'inset 0 2px 0 rgba(118,185,0,0)', duration: 0.6, stagger: 0.07, clearProps: 'boxShadow' }, 0.65)
+      .fromTo(qa('.st-dock .st-pane'), { boxShadow: 'inset 0 2px 0 rgba(242,180,90,0)' }, { boxShadow: 'inset 0 2px 0 rgba(242,180,90,1)', duration: 0.25, stagger: 0.07 }, 0.2)
+      .to(qa('.st-dock .st-pane'), { boxShadow: 'inset 0 2px 0 rgba(242,180,90,0)', duration: 0.6, stagger: 0.07, clearProps: 'boxShadow' }, 0.65)
       .to(b, { autoAlpha: 0, y: -8, duration: 0.4, ease: 'power2.in' }, 2.4);
   }
   async function stop() {
@@ -569,7 +655,7 @@ export function initStudio(root, lab, opts = {}) {
         if (st.mode !== 'deploy') st.runId = o.run_id;
         log(`run ${o.run_id} started (${o.biology === 'simulated' ? 'simulated culture' : 'biology: ' + o.biology})`, 'ok');
         break;
-      case 'frame': applyFrame(o); break;
+      case 'frame': st.frameCount = (st.frameCount || 0) + 1; applyFrame(o); break;
       case 'episode': {
         st.episodes.push(o); if (o.episodes) st.nEp = o.episodes;
         setProgress(st.episodes.length, st.nEp);
@@ -658,14 +744,15 @@ export function initStudio(root, lab, opts = {}) {
     // fill under final-error line
     g.beginPath(); eps.forEach((e, i) => { const v = Number.isFinite(e.final_err_mm) ? e.final_err_mm : 0; i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)); });
     g.lineTo(X(eps.length - 1), Y(0)); g.lineTo(X(0), Y(0)); g.closePath();
-    const grd = g.createLinearGradient(0, T, 0, h - B); grd.addColorStop(0, 'rgba(118,185,0,0.22)'); grd.addColorStop(1, 'rgba(118,185,0,0)'); g.fillStyle = grd; g.fill();
-    line('median_err_mm', '#8a8a8a', 1.2); line('final_err_mm', '#76b900', 1.8);
-    eps.forEach((e, i) => { if (!Number.isFinite(e.final_err_mm)) return; g.fillStyle = e.success ? '#76b900' : '#1a1a1a'; g.strokeStyle = '#76b900'; g.lineWidth = 1.2 * dpr; g.beginPath(); g.arc(X(i), Y(e.final_err_mm), 2.6 * dpr, 0, Math.PI * 2); g.fill(); g.stroke(); });
+    const grd = g.createLinearGradient(0, T, 0, h - B); grd.addColorStop(0, 'rgba(242,180,90,0.22)'); grd.addColorStop(1, 'rgba(242,180,90,0)'); g.fillStyle = grd; g.fill();
+    line('median_err_mm', '#8FA6FF', 1.2); line('final_err_mm', '#F2B45A', 1.8);
+    eps.forEach((e, i) => { if (!Number.isFinite(e.final_err_mm)) return; g.fillStyle = e.success ? '#F2B45A' : '#0B0B10'; g.strokeStyle = '#F2B45A'; g.lineWidth = 1.2 * dpr; g.beginPath(); g.arc(X(i), Y(e.final_err_mm), 2.6 * dpr, 0, Math.PI * 2); g.fill(); g.stroke(); });
   }
   function heatColor(t) {
     t = Math.max(0, Math.min(1, t));
-    if (t < 0.6) { const k = t / 0.6; return [Math.round(24 + (118 - 24) * k), Math.round(26 + (185 - 26) * k), Math.round(28 * (1 - k))]; }
-    const k = (t - 0.6) / 0.4; return [Math.round(118 + 137 * k), Math.round(185 + 70 * k), Math.round(255 * k)];
+    // void -> #3A2A12 -> corona -> #FFF3D6 (docs/BRAND.md spike heatmap)
+    const S = [[18, 16, 22], [58, 42, 18], [242, 180, 90], [255, 243, 214]], x = t * 3, i = Math.min(2, Math.floor(x)), k = x - i;
+    return S[i].map((v, j) => Math.round(v + (S[i + 1][j] - v) * k));
   }
   function drawHeat() {
     const c = q('.c-heat'); if (!c.isConnected || !c.clientWidth) return;
@@ -677,7 +764,7 @@ export function initStudio(root, lab, opts = {}) {
     let tot = 0;
     for (let i = 0; i < side * side; i++) {
       const v = st.spikes && i < n ? st.spikes[i] : 0; tot += v;
-      const [r, gg, b] = i < n ? heatColor(v / mx) : [16, 16, 16];
+      const [r, gg, b] = i < n ? heatColor(v / mx) : [14, 14, 19];
       g.fillStyle = `rgb(${r},${gg},${b})`;
       g.fillRect(x0 + (i % side) * cell + gap / 2, y0 + Math.floor(i / side) * cell + gap / 2, cell - gap, cell - gap);
     }
@@ -744,7 +831,7 @@ export function initStudio(root, lab, opts = {}) {
     const el = q('.st-targets');
     if (err) { el.innerHTML = `<div class="st-err"><b>Targets unavailable</b><span>${esc(err)}</span><button class="st-btn st-tretry">Retry</button></div>`; q('.st-tretry').onclick = loadTargets; return; }
     if (!st.targets.length) { el.innerHTML = '<div class="st-empty">Loading targets...</div>'; return; }
-    el.innerHTML = st.targets.map((t) => `<button class="st-target${t.id === st.target ? ' on' : ''}" data-id="${esc(t.id)}" title="${esc((t.vendor ? t.vendor + ' · ' : '') + (t.n_electrodes ? t.n_electrodes + ' electrodes · ' : '') + 'SDK: ' + (t.sdk || '-'))}"><i class="radio"></i><b>${esc(t.name || t.id)}</b><i class="tag ${t.status === 'tested-mock' ? 'ok' : t.status === 'sdk-untested' ? 'warn' : 'grey'}">${esc(t.status || 'unknown')}</i></button>`).join('');
+    el.innerHTML = st.targets.map((t) => `<button class="st-target${t.id === st.target ? ' on' : ''}" data-id="${esc(t.id)}" title="${esc((t.vendor ? t.vendor + ' · ' : '') + (t.n_electrodes ? t.n_electrodes + ' electrodes · ' : '') + 'SDK: ' + (t.sdk || '-'))}"><i class="radio"></i><b>${esc(t.name || t.id)}</b><i class="tag ${t.status === 'tested-mock' ? 'ok' : t.status === 'sdk-untested' ? 'warn' : t.status === 'stub' ? 'stub' : 'grey'}">${esc(t.status || 'unknown')}</i></button>`).join('');
     qa('.st-target').forEach((b) => b.onclick = () => { st.target = b.dataset.id; qa('.st-target').forEach((x) => x.classList.toggle('on', x === b)); if (!st.running) setStep(6); });
   }
   async function loadTargets() {
@@ -796,7 +883,7 @@ export function initStudio(root, lab, opts = {}) {
 
   // ---------- boot ----------
   renderLib(); renderRobotProps(); setStep(1); setStatus('idle', 'Idle'); drawCurve(); drawHeat(); renderJobs(); syncButtons();
-  log('BNN Robot Studio ready - controllers are simulated Izhikevich cultures (no living neurons).', 'sys');
+  log('Eclipse ready - A New ERA of training Biological Neural Networks. Controllers are simulated Izhikevich cultures (no living neurons).', 'sys');
   const ready = Promise.all([refreshList(), refreshRuns()]);
 
   return {
@@ -826,7 +913,7 @@ export function initStudio(root, lab, opts = {}) {
     importFile,
     demo: {
       el: (s) => q(s),
-      setStep, showTab, refreshJobs, refreshRuns, replayRun, setPlatform: (p) => { setPlatform(p); syncButtons(); }, flash, log,
+      setStep, showTab, refreshJobs, refreshRuns, replayRun, showFleetGrid: (run, o) => fgrid.show(run, o), hideFleetGrid: () => fgrid.hide(), setPlatform: (p) => { setPlatform(p); syncButtons(); }, flash, log,
       setStatus, exportBundle: async (target) => { fillDeployRuns(); if (target) st.target = target; renderTargets(); await exportBundle(); return st.bundle; },
       dryRun: (n) => dryRunBundle(n), stop: (slot) => lab.studioStop(slot), hideSummary,
       state: () => st,

@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-USER_ROBOTS = ROOT / "user_robots"
-USER_RUNS = ROOT / "user_runs"
+# ECLIPSE_DATA_DIR (set by the packaged Eclipse app) relocates user data out of the read-only install dir.
+DATA_DIR = pathlib.Path(os.environ["ECLIPSE_DATA_DIR"]).resolve() if os.environ.get("ECLIPSE_DATA_DIR") else ROOT
+USER_ROBOTS = DATA_DIR / "user_robots"
+USER_RUNS = DATA_DIR / "user_runs"
 NAME_RE = re.compile(r"^[a-z0-9_]{1,40}$")
 
 # The real stdout. Studio commands redirect sys.stdout to stderr so that stray prints from

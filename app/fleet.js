@@ -155,16 +155,16 @@ export function initFleet(root, lab, opts = {}) {
     const X = (b) => L + (w - L - R) * (Bs.length > 1 ? (Math.log(b) - lb0) / (lb1 - lb0) : 0.5);
     g.textAlign = 'center'; g.textBaseline = 'alphabetic'; Bs.forEach((b) => g.fillText(String(b), X(b), h - 2));
     // individual seeds faint, mean bright
-    g.strokeStyle = 'rgba(118,185,0,0.22)';
+    g.strokeStyle = 'rgba(242,180,90,0.22)';
     for (const auc of s.curve.values()) { g.beginPath(); Bs.forEach((b, i) => { const v = auc[b]; if (v == null) return; i ? g.lineTo(X(b), Y(v)) : g.moveTo(X(b), Y(v)); }); g.stroke(); }
-    g.strokeStyle = '#76b900'; g.lineWidth = 2; g.beginPath();
+    g.strokeStyle = '#F2B45A'; g.lineWidth = 2; g.beginPath();
     Bs.forEach((b, i) => { const a = per[b], m = a.reduce((x, y) => x + y, 0) / a.length; i ? g.lineTo(X(b), Y(m)) : g.moveTo(X(b), Y(m)); }); g.stroke();
     g.fillStyle = '#d0d0d0'; g.textAlign = 'right'; g.textBaseline = 'top'; g.fillText(s.curve.size + ' seeds', w - R, T);
   }
   function drawSpark(s) {
     const c = prep(s.el.querySelector('.spark')); if (!c) return; const { g, w, h } = c;
     const n = (s.v && s.v.probe && s.v.probe.nproc) || 4, a = s.load; if (a.length < 2) return;
-    g.fillStyle = 'rgba(118,185,0,0.12)'; g.strokeStyle = '#76b900'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(0, h);
+    g.fillStyle = 'rgba(242,180,90,0.12)'; g.strokeStyle = '#F2B45A'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(0, h);
     a.forEach((v, i) => g.lineTo(w * i / (a.length - 1), h - 1 - (h - 2) * Math.min(1, v / (n * 1.25))));
     g.lineTo(w, h); g.closePath(); g.fill(); g.beginPath();
     a.forEach((v, i) => { const x = w * i / (a.length - 1), y = h - 1 - (h - 2) * Math.min(1, v / (n * 1.25)); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
@@ -182,12 +182,12 @@ export function initFleet(root, lab, opts = {}) {
       const fires = rate * dt; for (let k = 0; k < fires + (Math.random() < fires % 1 ? 1 : 0) - (fires % 1); k++) s.heat[(Math.random() * 64) | 0] = 1;
       const c = prep(s.el.querySelector('.mea')); if (!c) continue; const { g, w, h } = c;
       const sz = Math.min(w, h), pad = sz * 0.06, step = (sz - 2 * pad) / 8, ox = (w - sz) / 2 + pad, oy = (h - sz) / 2 + pad;
-      g.fillStyle = '#050505'; g.fillRect((w - sz) / 2, (h - sz) / 2, sz, sz); g.strokeStyle = '#262626'; g.strokeRect((w - sz) / 2 + 0.5, (h - sz) / 2 + 0.5, sz - 1, sz - 1);
+      g.fillStyle = '#08080C'; g.fillRect((w - sz) / 2, (h - sz) / 2, sz, sz); g.strokeStyle = '#262626'; g.strokeRect((w - sz) / 2 + 0.5, (h - sz) / 2 + 0.5, sz - 1, sz - 1);
       const dec = Math.exp(-dt / 0.18);
       for (let i = 0; i < 64; i++) {
         const e = s.heat[i], x = ox + (i % 8 + 0.5) * step, y = oy + ((i >> 3) + 0.5) * step;
-        g.fillStyle = '#1c1c1c'; g.beginPath(); g.arc(x, y, step * 0.2, 0, 7); g.fill();
-        if (e > 0.02) { g.fillStyle = `rgba(${(118 + 137 * e) | 0},${(185 + 70 * e) | 0},${(0 + 120 * e) | 0},${Math.min(1, e * 1.2)})`; g.beginPath(); g.arc(x, y, step * (0.2 + 0.18 * e), 0, 7); g.fill(); }
+        g.fillStyle = '#1a1a22'; g.beginPath(); g.arc(x, y, step * 0.2, 0, 7); g.fill();
+        if (e > 0.02) { g.fillStyle = `rgba(${(242 + 13 * e) | 0},${(180 + 63 * e) | 0},${(90 + 124 * e) | 0},${Math.min(1, e * 1.2)})`; g.beginPath(); g.arc(x, y, step * (0.2 + 0.18 * e), 0, 7); g.fill(); }
         s.heat[i] = e * dec;
       }
     }

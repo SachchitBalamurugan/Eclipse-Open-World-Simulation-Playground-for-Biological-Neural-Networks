@@ -22,7 +22,7 @@ contextBridge.exposeInMainWorld('lab', {
   onReplaysChanged: (fn) => ipcRenderer.on('replays-changed', () => fn()),
   onRunLog: (fn) => ipcRenderer.on('run-log', (_e, p) => fn(p)),
   onRunDone: (fn) => ipcRenderer.on('run-done', (_e, p) => fn(p)),
-  // BNN Robot Studio (docs/STUDIO_CONTRACT.md)
+  // Eclipse Studio (docs/STUDIO_CONTRACT.md)
   studioList: () => call('studio-list'),
   studioPickFile: () => call('studio-pick-file'),
   studioImport: (file, opts) => call('studio-import', file, opts),

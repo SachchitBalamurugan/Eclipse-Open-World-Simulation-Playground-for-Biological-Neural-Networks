@@ -1,18 +1,92 @@
 {
   "name": "dnaforge-culture-lab",
   "version": "0.1.0",
-  "description": "3D viewer for the simulated neuron culture frost-guard benchmark",
+  "description": "Eclipse - biological neural network robot studio",
   "main": "main.js",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "screenshot": "electron . --screenshot"
+    "screenshot": "electron . --screenshot",
+    "dist:win": "node tools/build-win.js"
   },
   "dependencies": {
     "gsap": "^3.13.0",
     "three": "^0.170.0"
   },
   "devDependencies": {
-    "electron": "^33.2.0"
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "productName": "Eclipse",
+  "author": "Eclipse",
+  "build": {
+    "appId": "com.eclipse.bnnstudio",
+    "productName": "Eclipse",
+    "copyright": "Eclipse",
+    "directories": {
+      "output": "../dist",
+      "buildResources": "build-resources"
+    },
+    "asar": false,
+    "files": [
+      "**/*",
+      "!*.png",
+      "!*.log",
+      "!selftest.json",
+      "!start.bat",
+      "!tools/**",
+      "!build-resources/**",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "..",
+        "to": "backend",
+        "filter": [
+          "requirements-eclipse.txt",
+          "bnn_platform/**",
+          "neurorover/**",
+          "surgical/**",
+          "sim/**",
+          "runs/**",
+          "fleet/server.py",
+          "fleet/index.html",
+          "assets/simready/mjcf/**",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/*.mp4",
+          "!**/*.log",
+          "!**/*.tgz",
+          "!**/*.tar.gz",
+          "!neurorover/recordings/**",
+          "!neurorover/submissions/**",
+          "!surgical/results/export/*/sessions/**",
+          "!sim/runs/**/*.zip",
+          "sim/runs/ppo_bc_s0/best_model.zip"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": true,
+      "artifactName": "Eclipse-${version}-win-x64.${ext}"
+    },
+    "portable": {
+      "artifactName": "Eclipse-${version}-win-x64-portable.${ext}"
+    },
+    "forceCodeSigning": false
   }
 }
