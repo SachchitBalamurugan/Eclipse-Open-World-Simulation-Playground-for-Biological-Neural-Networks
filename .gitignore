@@ -15,3 +15,13 @@ teach_local.log
 app/node_modules/
 fleet/state.json
 fleet/*.tar.gz
+assets/surgical/
+fleet/results_*.tgz
+fleet/server.log
+fleet/payload.tar.gz
+assets/simready/hf/
+assets/simready/raw/
+sim/runs/**/*.zip
+sim/runs/**/*.mp4
+surgical/**/*.mp4
+*.pt

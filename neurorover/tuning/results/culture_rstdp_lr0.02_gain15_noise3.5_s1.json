@@ -1,0 +1,20 @@
+{
+  "condition": "culture_rstdp",
+  "seed": 1,
+  "auc": {
+    "200": 0.5029333333333333
+  },
+  "train_acc": {
+    "200": 0.4
+  },
+  "culture_kw": {
+    "lr": 0.02,
+    "stim_gain": 15.0,
+    "noise": 3.5
+  },
+  "tag": "inner200",
+  "mean_rate_hz": 3.0771484375,
+  "wall_s": 90.1,
+  "eval_split": "stratified train-only rows excluding full 500-row stream",
+  "eval_per_class": 75
+}

@@ -1,0 +1,494 @@
+{
+ "barrier_fence_metal_a02": {
+  "file": "assets\\simready\\hf\\barrier_fence_metal_a02\\simready_usd\\sm_barrier_fence_metal_a02_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "variantSets": {
+   "MuJoCo": [
+    "Disabled",
+    "Enabled"
+   ],
+   "Newton": [
+    "Disabled",
+    "Enabled"
+   ],
+   "PhysX": [
+    "Disabled",
+    "Enabled"
+   ]
+  },
+  "selected": {
+   "MuJoCo": "Disabled",
+   "Newton": "Disabled",
+   "PhysX": "Enabled"
+  },
+  "bbox_min": [
+   -0.11493629217147827,
+   -0.11499999463558197,
+   6.763361384288369e-05
+  ],
+  "bbox_max": [
+   1.1148637533187866,
+   0.11499999463558197,
+   1.0718521656162932
+  ],
+  "n_meshes": 1,
+  "n_points": 1892,
+  "meshes": [
+   [
+    "/RootNode/Geometry/sm_barrier_fence_a02_obj_00/sm_barrier_fence_a02_mesh_00",
+    1892,
+    "default"
+   ]
+  ],
+  "rigid_bodies": [
+   "/RootNode/Geometry/sm_barrier_fence_a02_obj_00"
+  ],
+  "colliders": [
+   [
+    "/RootNode/Geometry/sm_barrier_fence_a02_obj_00/sm_barrier_fence_a02_mesh_00",
+    "Mesh",
+    "sdf"
+   ]
+  ],
+  "n_colliders": 1,
+  "mass": [
+   [
+    "/RootNode/Geometry/sm_barrier_fence_a02_obj_00/sm_barrier_fence_a02_mesh_00",
+    45.41035842895508,
+    0.0,
+    "(0.4999636, -1.5579027e-7, 0.23458333)"
+   ]
+  ],
+  "joints": [],
+  "mjc": {}
+ },
+ "construction_wheelbarrow_metal_a01": {
+  "file": "assets\\simready\\hf\\construction_wheelbarrow_metal_a01\\simready_usd\\sm_construction_wheelbarrow_metal_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "variantSets": {
+   "MuJoCo": [
+    "Disabled",
+    "Enabled"
+   ],
+   "Newton": [
+    "Disabled",
+    "Enabled"
+   ],
+   "PhysX": [
+    "Disabled",
+    "Enabled"
+   ]
+  },
+  "selected": {
+   "MuJoCo": "Disabled",
+   "Newton": "Disabled",
+   "PhysX": "Enabled"
+  },
+  "bbox_min": [
+   -0.32697877287864685,
+   -0.9724503755569458,
+   0.006139874416015628
+  ],
+  "bbox_max": [
+   0.32087957859039307,
+   0.743527352809906,
+   0.7284368872480316
+  ],
+  "n_meshes": 2,
+  "n_points": 34010,
+  "meshes": [
+   [
+    "/RootNode/Geometry/wheel_01_obj_00/wheel_01_mesh_00",
+    6208,
+    "default"
+   ],
+   [
+    "/RootNode/Geometry/body_01_obj_00/body_01_mesh_00",
+    27802,
+    "default"
+   ]
+  ],
+  "rigid_bodies": [
+   "/RootNode/Geometry/wheel_01_obj_00",
+   "/RootNode/Geometry/body_01_obj_00"
+  ],
+  "colliders": [
+   [
+    "/RootNode/Geometry/wheel_01_obj_00/wheel_01_mesh_00",
+    "Mesh",
+    "sdf"
+   ],
+   [
+    "/RootNode/Geometry/body_01_obj_00/body_01_mesh_00",
+    "Mesh",
+    "sdf"
+   ]
+  ],
+  "n_colliders": 2,
+  "mass": [
+   [
+    "/RootNode/Geometry/wheel_01_obj_00/wheel_01_mesh_00",
+    9.285725593566895,
+    0.0,
+    "(-0.000006989355, -0.000060596645, 0.00037996317)"
+   ],
+   [
+    "/RootNode/Geometry/body_01_obj_00/body_01_mesh_00",
+    15.0,
+    0.0,
+    "(0, -0.113038026, 0.004521519)"
+   ]
+  ],
+  "joints": [
+   [
+    "/RootNode/Joints/joint_wheel_01_joint_00",
+    "PhysicsRevoluteJoint"
+   ]
+  ],
+  "mjc": {}
+ },
+ "crate_plywood_b01": {
+  "file": "assets\\simready\\hf\\crate_plywood_b01\\simready_usd\\sm_crate_plywood_b01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "variantSets": {
+   "MuJoCo": [
+    "Disabled",
+    "Enabled"
+   ],
+   "Newton": [
+    "Disabled",
+    "Enabled"
+   ],
+   "PhysX": [
+    "Disabled",
+    "Enabled"
+   ]
+  },
+  "selected": {
+   "MuJoCo": "Disabled",
+   "Newton": "Disabled",
+   "PhysX": "Enabled"
+  },
+  "bbox_min": [
+   -0.5010848641395569,
+   -0.5043317675590515,
+   0.0
+  ],
+  "bbox_max": [
+   0.5011209845542908,
+   0.5043365359306335,
+   1.0165361166000366
+  ],
+  "n_meshes": 1,
+  "n_points": 12802,
+  "meshes": [
+   [
+    "/RootNode/Geometry/sm_crate_b01_obj_00/sm_crate_b01_mesh_00",
+    12802,
+    "default"
+   ]
+  ],
+  "rigid_bodies": [
+   "/RootNode/Geometry/sm_crate_b01_obj_00"
+  ],
+  "colliders": [
+   [
+    "/RootNode/Geometry/sm_crate_b01_obj_00/sm_crate_b01_mesh_00",
+    "Mesh",
+    "sdf"
+   ]
+  ],
+  "n_colliders": 1,
+  "mass": [
+   [
+    "/RootNode/Geometry/sm_crate_b01_obj_00/sm_crate_b01_mesh_00",
+    94.6291275024414,
+    0.0,
+    "(-0.0016554538, 0.002505246, 0.56302726)"
+   ]
+  ],
+  "joints": [],
+  "mjc": {}
+ },
+ "drum_plastic_blue_a01": {
+  "file": "assets\\simready\\hf\\drum_plastic_blue_a01\\simready_usd\\sm_drum_plastic_blue_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "variantSets": {
+   "MuJoCo": [
+    "Disabled",
+    "Enabled"
+   ],
+   "Newton": [
+    "Disabled",
+    "Enabled"
+   ],
+   "PhysX": [
+    "Disabled",
+    "Enabled"
+   ]
+  },
+  "selected": {
+   "MuJoCo": "Disabled",
+   "Newton": "Disabled",
+   "PhysX": "Enabled"
+  },
+  "bbox_min": [
+   -0.1413692981004715,
+   -0.14212387800216675,
+   0.00028018004380484993
+  ],
+  "bbox_max": [
+   0.1413692981004715,
+   0.14212465286254883,
+   0.38689533038999274
+  ],
+  "n_meshes": 1,
+  "n_points": 13976,
+  "meshes": [
+   [
+    "/RootNode/Geometry/sm_drum_a01_obj_00/sm_drum_a01_mesh_00",
+    13976,
+    "default"
+   ]
+  ],
+  "rigid_bodies": [
+   "/RootNode/Geometry/sm_drum_a01_obj_00"
+  ],
+  "colliders": [
+   [
+    "/RootNode/Geometry/sm_drum_a01_obj_00/sm_drum_a01_mesh_00",
+    "Mesh",
+    "sdf"
+   ]
+  ],
+  "n_colliders": 1,
+  "mass": [
+   [
+    "/RootNode/Geometry/sm_drum_a01_obj_00/sm_drum_a01_mesh_00",
+    0.17525853216648102,
+    0.0,
+    "(2.4678448e-8, -0.0117866555, 0.24030778)"
+   ]
+  ],
+  "joints": [],
+  "mjc": {}
+ },
+ "drum_steel_a01": {
+  "file": "assets\\simready\\hf\\drum_steel_a01\\simready_usd\\sm_drum_steel_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "variantSets": {
+   "MuJoCo": [
+    "Disabled",
+    "Enabled"
+   ],
+   "Newton": [
+    "Disabled",
+    "Enabled"
+   ],
+   "PhysX": [
+    "Disabled",
+    "Enabled"
+   ]
+  },
+  "selected": {
+   "MuJoCo": "Disabled",
+   "Newton": "Disabled",
+   "PhysX": "Enabled"
+  },
+  "bbox_min": [
+   -0.320921391248703,
+   -0.33614628016960063,
+   -1.4754477639655761e-08
+  ],
+  "bbox_max": [
+   0.3209248185157776,
+   0.32092228531837463,
+   0.8682770132584534
+  ],
+  "n_meshes": 2,
+  "n_points": 50238,
+  "meshes": [
+   [
+    "/RootNode/Geometry/sm_lid_a01_obj_00/sm_lid_a01_mesh_00",
+    38936,
+    "default"
+   ],
+   [
+    "/RootNode/Geometry/sm_drum_a01_obj_00/sm_drum_a01_mesh_00",
+    11302,
+    "default"
+   ]
+  ],
+  "rigid_bodies": [
+   "/RootNode/Geometry/sm_lid_a01_obj_00",
+   "/RootNode/Geometry/sm_drum_a01_obj_00"
+  ],
+  "colliders": [
+   [
+    "/RootNode/Geometry/sm_lid_a01_obj_00/sm_lid_a01_mesh_00",
+    "Mesh",
+    "sdf"
+   ],
+   [
+    "/RootNode/Geometry/sm_drum_a01_obj_00/sm_drum_a01_mesh_00",
+    "Mesh",
+    "sdf"
+   ]
+  ],
+  "n_colliders": 2,
+  "mass": [
+   [
+    "/RootNode/Geometry/sm_lid_a01_obj_00/sm_lid_a01_mesh_00",
+    16.26923942565918,
+    0.0,
+    "(-0.01392038, -0.0992853, -0.0005546468)"
+   ],
+   [
+    "/RootNode/Geometry/sm_drum_a01_obj_00/sm_drum_a01_mesh_00",
+    86.03114318847656,
+    0.0,
+    "(0.0000014352711, -6.3386796e-7, 0.47274753)"
+   ]
+  ],
+  "joints": [
+   [
+    "/RootNode/Joints/joint_sm_lid_a01_joint_00",
+    "PhysicsFixedJoint"
+   ]
+  ],
+  "mjc": {}
+ },
+ "food_produce_corn_b01": {
+  "file": "assets\\simready\\hf\\food_produce_corn_b01\\simready_usd\\sm_food_produce_corn_b01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "variantSets": {
+   "MuJoCo": [
+    "Disabled",
+    "Enabled"
+   ],
+   "Newton": [
+    "Disabled",
+    "Enabled"
+   ],
+   "PhysX": [
+    "Disabled",
+    "Enabled"
+   ]
+  },
+  "selected": {
+   "MuJoCo": "Disabled",
+   "Newton": "Disabled",
+   "PhysX": "Enabled"
+  },
+  "bbox_min": [
+   -0.01676927483640611,
+   -0.09029637277126312,
+   0.001233009621500969
+  ],
+  "bbox_max": [
+   0.01855869614519179,
+   0.08935674279928207,
+   0.03691365569829941
+  ],
+  "n_meshes": 1,
+  "n_points": 12675,
+  "meshes": [
+   [
+    "/RootNode/Geometry/sm_food_produce_corn_b01_obj_00/sm_food_produce_corn_b01_mesh_00/sm_food_produce_corn_b01_mesh_00",
+    12675,
+    "default"
+   ]
+  ],
+  "rigid_bodies": [
+   "/RootNode/Geometry/sm_food_produce_corn_b01_obj_00"
+  ],
+  "colliders": [
+   [
+    "/RootNode/Geometry/sm_food_produce_corn_b01_obj_00/sm_food_produce_corn_b01_mesh_00/sm_food_produce_corn_b01_mesh_00",
+    "Mesh",
+    "sdf"
+   ]
+  ],
+  "n_colliders": 1,
+  "mass": [
+   [
+    "/RootNode/Geometry/sm_food_produce_corn_b01_obj_00/sm_food_produce_corn_b01_mesh_00/sm_food_produce_corn_b01_mesh_00",
+    0.10000000149011612,
+    0.0,
+    "(0.0014635407, -0.06635768, 0.00044183942)"
+   ]
+  ],
+  "joints": [],
+  "mjc": {}
+ },
+ "pallet_a01": {
+  "file": "assets\\simready\\hf\\pallet_a01\\simready_usd\\sm_pallet_a01_01.usd",
+  "upAxis": "Z",
+  "metersPerUnit": 1.0,
+  "variantSets": {
+   "MuJoCo": [
+    "Disabled",
+    "Enabled"
+   ],
+   "Newton": [
+    "Disabled",
+    "Enabled"
+   ],
+   "PhysX": [
+    "Disabled",
+    "Enabled"
+   ]
+  },
+  "selected": {
+   "MuJoCo": "Disabled",
+   "Newton": "Disabled",
+   "PhysX": "Enabled"
+  },
+  "bbox_min": [
+   -0.6021009087562561,
+   -0.40019288659095764,
+   0.0
+  ],
+  "bbox_max": [
+   0.6021009087562561,
+   0.40019288659095764,
+   0.20864565670490265
+  ],
+  "n_meshes": 1,
+  "n_points": 1064,
+  "meshes": [
+   [
+    "/RootNode/Geometry/sm_pallet_a01_obj_00/sm_pallet_a01_mesh_00",
+    1064,
+    "default"
+   ]
+  ],
+  "rigid_bodies": [
+   "/RootNode/Geometry/sm_pallet_a01_obj_00"
+  ],
+  "colliders": [
+   [
+    "/RootNode/Geometry/sm_pallet_a01_obj_00/sm_pallet_a01_mesh_00",
+    "Mesh",
+    "sdf"
+   ]
+  ],
+  "n_colliders": 1,
+  "mass": [
+   [
+    "/RootNode/Geometry/sm_pallet_a01_obj_00/sm_pallet_a01_mesh_00",
+    50.73172378540039,
+    0.0,
+    "(0.0000841402, -0.000095135205, 0.10639904)"
+   ]
+  ],
+  "joints": [],
+  "mjc": {}
+ }
+}

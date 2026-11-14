@@ -1,0 +1,20 @@
+{
+  "condition": "culture_fep",
+  "seed": 1,
+  "auc": {
+    "200": 0.4736
+  },
+  "train_acc": {
+    "200": 0.44
+  },
+  "culture_kw": {
+    "lr": 0.02,
+    "stim_gain": 30.0,
+    "noise": 4.5
+  },
+  "tag": "inner200",
+  "mean_rate_hz": 8.04296875,
+  "wall_s": 47.6,
+  "eval_split": "stratified train-only rows excluding full 500-row stream",
+  "eval_per_class": 75
+}

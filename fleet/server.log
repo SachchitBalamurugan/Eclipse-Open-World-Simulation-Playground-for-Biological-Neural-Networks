@@ -60,3 +60,68 @@
 12:00:25 ok nr-fleet-5: collected 4 new result files
 12:00:27 ok nr-fleet-3 deleted
 12:00:29 ok nr-fleet-1 deleted
+12:00:31 ok nr-fleet-9 deleted
+12:00:32 ok nr-fleet-5 deleted
+12:00:34 ok nr-fleet-0 deleted
+12:00:34 error nr-fleet-6 collect tar failed: — not found: vm vm-adbabb8f943b479eb9c70a883dc19ecd
+If the id is right, check which team you are on with `freestyle whoami` — resources are per-team.
+
+12:00:34 ok nr-fleet-2 deleted
+12:00:34 ok teardown finished
+12:00:39 error nr-fleet-8 collect scp failed: — not found: vm vm-5d034a22d7dc40939407577842ea3678
+If the id is right, check which team you are on with `freestyle whoami` — resources are per-team.
+
+12:00:45 error nr-fleet-4 collect scp failed: — not found: vm vm-9eff8971fae94fe9bba0940841dda598
+If the id is right, check which team you are on with `freestyle whoami` — resources are per-team.
+
+12:00:45 error nr-fleet-7 collect scp failed: — not found: vm vm-8a955ca4258349eb9fa66b08f5297993
+If the id is right, check which team you are on with `freestyle whoami` — resources are per-team.
+
+12:00:45 ok collect finished: 24 new files in neurorover/results
+12:19:20 info launch: 10 VMs, condition=culture_teach, seeds=50
+12:19:22 info payload built from working tree: 93 files, 20.7 MB
+12:19:26 info nr-fleet-3 created (vm-42c7a8b128b0442d802a80f2bfe5ea68), uploading payload
+12:19:26 info nr-fleet-8 created (vm-a542e023af1746caa2dda8286837eb25), uploading payload
+12:19:26 info nr-fleet-5 created (vm-d8d7d73811234cbc9f08463619a096ff), uploading payload
+12:19:26 info nr-fleet-6 created (vm-bcc5554698994655b1c8552eaceded5f), uploading payload
+12:19:26 info nr-fleet-7 created (vm-7fb2e0167de94733bb773176f8569e38), uploading payload
+12:19:26 info nr-fleet-9 created (vm-cc42c709543d463e81a4759f6cd7d7ff), uploading payload
+12:19:27 info nr-fleet-4 created (vm-8e6e621391de4961832529396969963e), uploading payload
+12:19:27 info nr-fleet-0 created (vm-a233ff6a875344d3a421e4c714164c4d), uploading payload
+12:19:30 info nr-fleet-1 created (vm-fa7774feaa1c4e47afbcfa1d0044a3d3), uploading payload
+12:19:33 info nr-fleet-2 created (vm-d6193b1eba844824ac01619bcab10c00), uploading payload
+12:21:05 ok nr-fleet-8: started shard 8/10 on 4 cpus
+12:23:12 ok nr-fleet-9: started shard 9/10 on 4 cpus
+12:23:20 ok nr-fleet-4: started shard 4/10 on 4 cpus
+12:23:20 ok nr-fleet-5: started shard 5/10 on 4 cpus
+12:23:21 ok nr-fleet-3: started shard 3/10 on 4 cpus
+12:23:21 ok nr-fleet-2: started shard 2/10 on 4 cpus
+12:23:22 ok nr-fleet-6: started shard 6/10 on 4 cpus
+12:23:22 ok nr-fleet-0: started shard 0/10 on 4 cpus
+12:23:23 ok nr-fleet-1: started shard 1/10 on 4 cpus
+12:23:26 ok nr-fleet-7: started shard 7/10 on 4 cpus
+12:23:26 ok launch finished: 10/10 shards running
+12:28:34 info collect: 10 VMs
+12:28:42 ok nr-fleet-8: collected 4 new result files
+12:28:42 ok nr-fleet-5: collected 0 new result files
+12:28:43 ok nr-fleet-1: collected 0 new result files
+12:28:43 ok nr-fleet-2: collected 0 new result files
+12:28:45 ok nr-fleet-3: collected 0 new result files
+12:28:47 ok nr-fleet-6: collected 4 new result files
+12:28:47 ok nr-fleet-7: collected 4 new result files
+12:28:47 ok nr-fleet-4: collected 4 new result files
+12:28:47 ok nr-fleet-9: collected 0 new result files
+12:28:49 ok nr-fleet-0: collected 0 new result files
+12:28:49 ok collect finished: 16 new files in neurorover/results
+12:29:07 warn teardown: deleting 10 VMs
+12:29:10 ok nr-fleet-7 deleted
+12:29:11 ok nr-fleet-4 deleted
+12:29:11 ok nr-fleet-6 deleted
+12:29:11 ok nr-fleet-3 deleted
+12:29:11 ok nr-fleet-9 deleted
+12:29:11 ok nr-fleet-8 deleted
+12:29:11 ok nr-fleet-5 deleted
+12:29:11 ok nr-fleet-2 deleted
+12:29:11 ok nr-fleet-1 deleted
+12:29:12 ok nr-fleet-0 deleted
+12:29:12 ok teardown finished
