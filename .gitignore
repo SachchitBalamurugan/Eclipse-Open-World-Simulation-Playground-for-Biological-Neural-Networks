@@ -29,3 +29,4 @@ sweep/jobs_payload.tar.gz
 sweep/jobs_files.txt
 sweep/jobs_state.txt
 sweep/collected/
+sweep/jobscripts/

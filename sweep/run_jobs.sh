@@ -22,6 +22,20 @@ build_payload() {
   echo "payload $(du -h "$TARBALL" | cut -f1), $(wc -l < sweep/jobs_files.txt) files"
 }
 
+start() {
+  local jobs=${1:?jobs file}
+  mkdir -p sweep/jobscripts
+  while IFS="|" read -r slug cmd; do
+    [ -z "$slug" ] && continue
+    id=$(awk -v s="$slug" '$1==s{print $2}' "$STATE")
+    ( printf "%s
+" "set -e" "mkdir -p ~/nr && cd ~/nr && tar -xzf ~/payload.tar.gz" "$cmd" "touch ~/nr/JOB_DONE" > sweep/jobscripts/job_$slug.sh
+      $FS vm scp "sweep/jobscripts/job_$slug.sh" "$id:/home/ubuntu/job.sh" >/dev/null
+      $FS vm exec "$id" --timeout-ms 60000 -- bash -lc "nohup bash ~/job.sh > ~/job.log 2>&1 & echo started $slug" ) &
+  done < "$jobs"
+  wait
+}
+
 launch() {
   local jobs=${1:?jobs file}
   build_payload
@@ -34,8 +48,8 @@ launch() {
 d=json.load(sys.stdin); print(d.get("id") or d.get("vmId"))')
       echo "$slug $id" >> "$STATE"
       for t in 1 2 3; do $FS vm scp "$TARBALL" "$id:/home/ubuntu/payload.tar.gz" >/dev/null && break || sleep 5; done
-      printf '%s\n' "set -e" "mkdir -p ~/nr && cd ~/nr && tar -xzf ~/payload.tar.gz" "$cmd" "touch ~/nr/JOB_DONE" > /tmp/job_$slug.sh
-      $FS vm scp "/tmp/job_$slug.sh" "$id:/home/ubuntu/job.sh" >/dev/null
+      printf '%s\n' "set -e" "mkdir -p ~/nr && cd ~/nr && tar -xzf ~/payload.tar.gz" "$cmd" "touch ~/nr/JOB_DONE" > sweep/jobscripts/job_$slug.sh
+      $FS vm scp "sweep/jobscripts/job_$slug.sh" "$id:/home/ubuntu/job.sh" >/dev/null
       $FS vm exec "$id" --timeout-ms 60000 -- bash -lc "nohup bash ~/job.sh > ~/job.log 2>&1 & echo started $slug"
     ) &
   done < "$jobs"
