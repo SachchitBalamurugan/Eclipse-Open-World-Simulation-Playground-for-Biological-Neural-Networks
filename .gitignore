@@ -10,3 +10,4 @@ neurorover/recordings/
 sweep/payload.tar.gz
 sweep/results_*.tgz
 sweep/vms.txt
+sweep/vms_sens.txt

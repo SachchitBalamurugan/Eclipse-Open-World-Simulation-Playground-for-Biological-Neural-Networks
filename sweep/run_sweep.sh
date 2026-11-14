@@ -7,7 +7,7 @@
 #   bash sweep/run_sweep.sh collect        # pull results/*.json into neurorover/results/
 #   bash sweep/run_sweep.sh teardown       # delete every nr-sweep-* VM
 #
-# Cost: default VM = 4 vCPU / 8 GiB ~ $0.27/h. 20 VMs for 1 h ~ $5.
+# Cost: default VM = 4 vCPU / 8 GiB ~ $0.27/h. Free tier caps running VMs at 10 (LIMIT_EXCEEDED past that); stack shards per VM.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 FS="npx -y freestyle@latest"
@@ -29,7 +29,7 @@ launch() {
   [ -f "$DATA" ] || { echo "missing $DATA (clone the hackathon resources repo into resources/)"; exit 1; }
   git archive --format=tar HEAD -o sweep/payload.tar
   tar -rf sweep/payload.tar "$DATA"
-  gzip -f sweep/payload.tar && mv sweep/payload.tar.gz "$TARBALL"
+  gzip -f sweep/payload.tar
   : > "$STATE"
   for i in $(seq 0 $((nvm - 1))); do
     (
@@ -39,7 +39,6 @@ launch() {
       $FS vm scp "$TARBALL" "$id:/home/ubuntu/payload.tar.gz" >/dev/null
       $FS vm exec "$id" --timeout-ms 280000 -- bash -lc "
         set -e; mkdir -p /home/ubuntu/nr && cd /home/ubuntu/nr && tar -xzf /home/ubuntu/payload.tar.gz
-        (command -v python3 && python3 -m pip --version) >/dev/null 2>&1 || (apt-get update -qq && apt-get install -y -qq python3 python3-pip python3-venv >/dev/null)
         python3 -m venv .venv && .venv/bin/pip -q install numpy
         nohup .venv/bin/python -m neurorover.bench --all --seeds $seeds --procs \$(nproc) \
               --shard $i --nshards $nvm $extra > bench.log 2>&1 &
