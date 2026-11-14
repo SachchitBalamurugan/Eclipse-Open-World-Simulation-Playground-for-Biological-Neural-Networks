@@ -2,61 +2,65 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:">
-<title>DNAforge Culture Lab</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="./theme.css">
+<title>NeuroRover Sim</title>
 <style>
-:root{--bg:#070a10;--panel:#0d121b;--line:#1c2534;--ink:#d7e0ee;--dim:#7b8aa3;--acc:#5ad1ff;--dep:#ffb03a;--hold:#36d6c3;--ok:#5dff8a;--bad:#ff5f6e}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:12px/1.4 "Segoe UI",system-ui,sans-serif;overflow:hidden}
-#app{display:grid;grid-template-columns:286px minmax(0,1fr) 318px;grid-template-rows:minmax(0,1fr) 178px;height:100vh;gap:1px;background:var(--line)}
+#app{display:grid;grid-template-columns:286px minmax(0,1fr) 318px;grid-template-rows:minmax(0,1fr) 178px;height:100%;gap:1px;background:var(--line)}
 .panel{background:var(--panel);overflow:auto;padding:10px;min-height:0}
 #left{grid-row:1/3;grid-column:1}#right{grid-row:1/3;grid-column:3}#centre{grid-row:1;grid-column:2}#bottom{grid-row:2}
-#centre{position:relative;background:#04060a;overflow:hidden;min-height:0}
+#centre{position:relative;background:#000;overflow:hidden;min-height:0}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block}
-h2{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:12px 0 6px;font-weight:600}
-h2:first-child{margin-top:0}
-#badge{position:absolute;top:10px;left:10px;padding:5px 10px;border:1px solid #6a4a12;background:rgba(40,26,4,.85);color:#ffcf7a;border-radius:3px;font-size:11px;letter-spacing:.04em;z-index:5}
+#badge{position:absolute;top:10px;left:10px;padding:4px 9px;border:1px solid #6a4a12;background:rgba(26,18,4,.9);color:#ffcf7a;font-size:11px;z-index:5}
 #cams{position:absolute;top:10px;right:10px;display:flex;gap:4px;z-index:5}
-#hud{position:absolute;left:10px;top:42px;font:11px Consolas,monospace;color:var(--dim);z-index:5;text-shadow:0 0 4px #000}
-#legend{position:absolute;right:10px;bottom:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:70%;font-size:10px;color:var(--dim);z-index:5}
+#hud{position:absolute;left:10px;top:42px;font:11px var(--mono);color:var(--dim);z-index:5;text-shadow:0 0 4px #000}
+#legend{position:absolute;right:10px;bottom:62px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:70%;font-size:10px;color:var(--dim);z-index:5}
 #legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px}
-button,select,input{font:inherit;color:var(--ink);background:#141c29;border:1px solid #2a3649;border-radius:3px;padding:3px 7px}
-button{cursor:pointer}button:hover{border-color:var(--acc)}button.on{border-color:var(--acc);color:var(--acc)}
-button:disabled{opacity:.5;cursor:default}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:1px solid var(--acc)}
-.run{padding:6px 8px;border:1px solid var(--line);border-radius:3px;margin-bottom:4px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:0 6px}
-.run:hover{border-color:#34455e}.run.sel{border-color:var(--acc);background:#101a28}
-.run b{font-weight:600}.run span{color:var(--dim);font-size:11px}.run .auc{font:12px Consolas,monospace;color:var(--acc)}
+.run{padding:6px 8px;border:1px solid var(--line);margin-bottom:4px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:0 6px}
+.run:hover{border-color:#34455e}.run.sel{border-color:var(--acc);background:#0f1405}
+.run b{font-weight:600}.run span{color:var(--dim);font-size:11px}.run .auc{font:12px var(--mono);color:var(--acc)}
 form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
 form label{display:flex;flex-direction:column;font-size:10px;color:var(--dim);gap:2px;min-width:0}
 form input,form select{width:100%;min-width:0}
 form .wide{grid-column:1/4}
-table{border-collapse:collapse;width:100%;font:10.5px Consolas,monospace}
-td,th{padding:2px 3px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 td:first-child,th:first-child{text-align:left;max-width:92px;overflow:hidden;text-overflow:ellipsis}
-th{color:var(--dim);font-weight:400}tr.sel td{color:var(--acc)}
-canvas.chart{width:100%;display:block;background:#090d14;border:1px solid var(--line);border-radius:3px}
+canvas.chart{width:100%;display:block;background:#050505;border:1px solid var(--line)}
 #info{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px}
 #info span{color:var(--dim)}#info b{font-weight:600}
-.ok{color:var(--ok)}.bad{color:var(--bad)}
-.bar{height:14px;background:#0a0f17;border:1px solid var(--line);border-radius:2px;position:relative;margin:3px 0}
-.bar div{height:100%;border-radius:1px}.bar em{position:absolute;left:6px;top:-1px;font:11px Consolas,monospace;font-style:normal;text-shadow:0 0 3px #000}
+.bar{height:14px;background:#0a0f17;border:1px solid var(--line);border-radius:0;position:relative;margin:3px 0}
+.bar div{height:100%;border-radius:0}.bar em{position:absolute;left:6px;top:-1px;font:11px var(--mono);font-style:normal;text-shadow:0 0 3px #000}
 #bottom{display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--panel);min-height:0}
 #transport{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line)}
 #scrub{flex:1;min-width:60px;padding:0}
-#tl{width:150px;height:8px;background:#0a0f17;border:1px solid var(--line);position:relative;border-radius:2px;flex:none}
+#tl{width:150px;height:8px;background:#0a0f17;border:1px solid var(--line);position:relative;border-radius:0;flex:none}
 #tl div{position:absolute;top:0;bottom:0;left:0;background:var(--acc);opacity:.7}
 #consoles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);min-height:0}
-.con{background:#06090e;overflow:auto;font:11px/1.45 Consolas,monospace;padding:5px 8px;min-height:0;white-space:pre-wrap;word-break:break-all}
-.con .h{color:var(--dim);position:sticky;top:-5px;background:#06090e;padding:2px 0;display:flex;gap:8px;align-items:center}
+.con{background:#000;overflow:auto;font:11px/1.45 var(--mono);padding:5px 8px;min-height:0;white-space:pre-wrap;word-break:break-all}
+.con .h{color:var(--dim);position:sticky;top:-5px;background:#000;padding:2px 0;display:flex;gap:8px;align-items:center}
 .con .sys{color:#7b8aa3}.con .err{color:#ff9a8a}.con .out{color:#bfe9ff}.con .log{color:#9aa7ba}
 .chips{display:flex;flex-wrap:wrap;gap:3px 8px;font-size:10px;color:var(--dim);margin-top:3px}
 .chips i{display:inline-block;width:8px;height:3px;margin-right:3px;vertical-align:middle}
 #msg{color:var(--bad);font-size:11px;min-height:14px}
 #left{overflow-x:hidden}#left table{font-size:9.5px}#left td,#left th{padding:2px 1px}
+#telem{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:rgba(0,0,0,.86);border-top:1px solid var(--line);z-index:6}
+#telem div{padding:6px 10px;border-left:1px solid var(--line);min-width:0}#telem div:first-child{border-left:0}
+#telem span{display:block;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:600}
+#telem b{font:600 15px var(--mono);color:#fff}#telem small{font:500 10px var(--sans);color:var(--dim);margin-left:3px}
+#telem em{display:block;font:normal 9.5px var(--mono);color:#5f5f5f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tip{position:absolute;display:none;z-index:8;max-width:270px;background:#0d0d0d;border:1px solid var(--acc);padding:7px 9px;pointer-events:none}
+#tip b{display:block;font-size:12px;margin-bottom:2px}#tip span{display:block;color:var(--dim);font-size:11px}#tip .mono{color:var(--acc);margin-top:3px;font-size:10.5px}
+#cams{top:10px}
 </style>
 </head>
 <body>
+<nav id="topnav">
+  <div id="brand"><i></i>NeuroRover Sim <small>frost-guard benchmark</small></div>
+  <div id="tabs"><button data-tab="simulate" class="on">Simulate</button><button data-tab="runs">Runs</button><button data-tab="fleet">Fleet</button><button data-tab="hardware">Hardware</button></div>
+  <div id="navright"><span class="simbadge">Simulated culture model - no living neurons</span></div>
+</nav>
+<section class="view" id="view-simulate">
 <div id="app">
   <div id="left" class="panel">
     <h2>Recorded runs</h2>
@@ -81,6 +85,8 @@ canvas.chart{width:100%;display:block;background:#090d14;border:1px solid var(--
     <div id="badge">Simulated culture model - no living neurons</div>
     <div id="cams"><button data-cam="dish">Dish</button><button data-cam="robot">Robot</button><button data-cam="overview" class="on">Overview</button><button id="bloomBtn" class="on">Bloom</button></div>
     <div id="hud"></div>
+    <div id="tip"></div>
+    <div id="telem"></div>
     <div id="legend"><span><i style="background:#4da3ff"></i>sensory 0-15</span><span><i style="background:#ffb03a"></i>DEPLOY 40-47</span><span><i style="background:#36d6c3"></i>HOLD 48-55</span><span><i style="background:#ff5fa8"></i>feedback 56-59</span><span><i style="background:#a47bff"></i>reward 60-63</span><span><i style="background:#5dff8a"></i>motor teaching stim</span></div>
   </div>
   <div id="right" class="panel">
@@ -105,7 +111,7 @@ canvas.chart{width:100%;display:block;background:#090d14;border:1px solid var(--
       <button id="next" title="next trial">&#9654;&#9654;</button>
       <label>speed <select id="speed"><option value="0.02">0.02x</option><option value="0.05">0.05x</option><option value="0.1" selected>0.1x</option><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1">1x</option></select></label>
       <input id="scrub" type="range" min="0" max="0" value="0">
-      <span id="pos" style="font:11px Consolas,monospace;min-width:150px"></span>
+      <span id="pos" style="font:11px var(--mono);min-width:150px"></span>
       <div id="tl" title="trial timeline: stim 0-40, response 0-50, feedback 60-160, rest"><div id="tlFill"></div></div>
     </div>
     <div id="consoles">
@@ -114,6 +120,19 @@ canvas.chart{width:100%;display:block;background:#090d14;border:1px solid var(--
     </div>
   </div>
 </div>
+</section>
+<section class="view" id="view-runs" hidden><div class="page">
+  <h1>Runs</h1><p class="sub">Recorded culture runs in runs/ and benchmark AUC (mean ± s.e.m. over seeds) from neurorover/results.</p>
+  <div class="cards"><div class="card"><h2>Recorded runs</h2><table id="runsTable"></table></div>
+  <div class="card"><h2>Benchmark AUC by training budget</h2><table id="benchBig"></table><h2>Hyperparameter variants</h2><table id="variantsBig"></table></div></div>
+</div></section>
+<section class="view" id="view-fleet" hidden></section>
+<section class="view" id="view-hardware" hidden><div class="page">
+  <h1>Hardware</h1><p class="sub">Frost-guard rover built from currently sold parts (hardware/BOM.md). The 3D rover in Simulate is assembled from these parts at true scale; hover or click a part there for its spec. * = estimated price. The culture itself would run on a CL1 / Cortical Cloud MEA; the rover talks to it over the network.</p>
+  <div class="cards"><div class="card" style="grid-column:1/-1"><h2>Bill of materials</h2><table id="bomTable" class="wrap"></table></div>
+  <div class="card"><h2>Physics parameters derived from the BOM</h2><table id="physTable"></table></div>
+  <div class="card"><h2>Culture link</h2><table class="wrap"><tr><td>1</td><td>Pi 5 samples SHT45 air + DS18B20 leaf temperature, GNSS position</td></tr><tr><td>2</td><td>sensor vector sent over Wi-Fi / LTE to the culture service (HTTPS / WebSocket)</td></tr><tr><td>3</td><td>service stimulates the MEA sensory region, reads DEPLOY / HOLD spike counts</td></tr><tr><td>4</td><td>DEPLOY: drive to the row, extend L16 actuator, unroll AG-30 cover</td></tr><tr><td>5</td><td>link down: fall back to threshold rule (deploy if air &lt; +1 °C)</td></tr></table></div></div>
+</div></section>
 <script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
 <script type="module" src="./renderer.js"></script>
 </body>

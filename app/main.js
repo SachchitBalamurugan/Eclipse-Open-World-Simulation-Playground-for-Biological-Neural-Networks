@@ -1,4 +1,4 @@
-// DNAforge Culture Lab - Electron main process.
+// NeuroRover Sim - Electron main process.
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -10,6 +10,8 @@ const RUNS = path.join(REPO, 'runs');
 const RESULTS = path.join(REPO, 'neurorover', 'results');
 const SHOT = process.argv.includes('--screenshot');
 const SELFTEST = process.argv.includes('--selftest');
+const argVal = (k) => { const a = process.argv.find((x) => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : ''; };
+const SHOT_OUT = argVal('out');
 let win = null;
 const children = new Set();
 
@@ -220,7 +222,8 @@ async function tailLog(name, fromPos) {
 async function capture() {
   try {
     const img = await win.webContents.capturePage();
-    await fsp.writeFile(path.join(__dirname, 'screenshot.png'), img.toPNG());
+    const out = SHOT_OUT && /^[A-Za-z0-9_.-]+\.png$/.test(SHOT_OUT) ? SHOT_OUT : 'screenshot.png';
+    await fsp.writeFile(path.join(__dirname, out), img.toPNG());
   } catch (e) { console.error('capture failed', e); }
 }
 
@@ -240,12 +243,96 @@ handle('selftest-report', async (report) => {
   return true;
 });
 
+// ---------- fleet: proxy to fleet/server.py on :8770 (started as a child if not answering), or a mock feed ----------
+const http = require('http');
+const MOCK_FLEET = process.argv.includes('--mock-fleet');
+const FLEET = { host: '127.0.0.1', port: Number(process.env.NR_FLEET_PORT) || 8770 };
+let fleetChild = null;
+function fleetReq(method, p, body, timeout) {
+  return new Promise((resolve, reject) => {
+    const data = body ? Buffer.from(JSON.stringify(body)) : null;
+    const req = http.request({ host: FLEET.host, port: FLEET.port, path: p, method, timeout: timeout || 4000,
+      headers: data ? { 'Content-Type': 'application/json', 'Content-Length': data.length } : {} }, (res) => {
+      let buf = ''; res.setEncoding('utf8'); res.on('data', (d) => buf += d);
+      res.on('end', () => { try { resolve(Object.assign({ status: res.statusCode }, JSON.parse(buf || '{}'))); } catch (e) { reject(new Error('bad json from fleet server')); } });
+    });
+    req.on('timeout', () => req.destroy(new Error('fleet server timeout')));
+    req.on('error', reject);
+    if (data) req.write(data); req.end();
+  });
+}
+async function ensureFleetServer() {
+  if (MOCK_FLEET || FLEET.port !== 8770) return;
+  try { await fleetReq('GET', '/api/events', null, 1500); return; } catch (e) {}
+  const py = pythonExe();
+  fleetChild = spawn(py, ['-u', path.join('fleet', 'server.py')], { cwd: REPO, windowsHide: true, env: Object.assign({}, process.env, { PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' }) });
+  fleetChild.stdout.on('data', () => {}); fleetChild.stderr.on('data', () => {});
+  fleetChild.on('close', () => { fleetChild = null; });
+}
+function stopFleetServer() { if (fleetChild) { try { fleetChild.kill(); } catch (e) {} fleetChild = null; } }
+
+// mock: 10 VMs with synthetic bench logs, clearly flagged mock:true
+const mock = { t0: Date.now(), vms: [] };
+function mockFleet() {
+  const t = (Date.now() - mock.t0) / 1000;
+  if (!mock.vms.length) for (let i = 0; i < 10; i++) mock.vms.push({ id: 'mock-' + i, slug: 'nr-fleet-' + i, seeds: [], log: [], next: 2 + i * 0.7, load: [3.6, 3.4, 3.0], skill: 0.08 + 0.02 * (i % 4) });
+  const vms = mock.vms.map((m, i) => {
+    while (t > m.next && m.seeds.length < 5) {
+      const seed = i * 5 + m.seeds.length, auc = {};
+      [25, 50, 100, 200].forEach((b, k) => { auc[b] = Math.min(0.98, 0.52 + m.skill * (k + 1) + (Math.sin(seed * 7.1 + k) * 0.03)); });
+      m.seeds.push(seed);
+      m.log.push(`culture_teach s${seed}: ` + Object.entries(auc).map(([b, v]) => b + ':' + v.toFixed(3)).join(' ') + `  (${(40 + (seed % 7) * 3).toFixed(1)}s)`);
+      m.next += 3 + (i % 3);
+    }
+    if (Math.random() < 0.4) m.log.push(`[bench] shard ${i}/10 seed ${i * 5 + m.seeds.length} trial ${Math.floor(t * 7 % 400)} eval checkpoint`);
+    m.log = m.log.slice(-5);
+    const l = 3.2 + Math.sin(t / 5 + i) * 0.6 + Math.random() * 0.3;
+    return { id: m.id, slug: m.slug, state: 'running', resources: { vcpus: 4, memory_mb: 8192 },
+      probe: { ok: true, results: m.seeds.length * 4, procs: 4, nproc: 4, load: [l, l * 0.9, l * 0.8], mem_used_mb: 2100 + i * 90 + Math.round(Math.random() * 60), mem_total_mb: 7940, log: m.log.slice(), ts: Date.now() / 1000 },
+      shard: i, nshards: 10, expected: 20, phase: 'bench' };
+  });
+  return { mock: true, serverUp: false, vms, runningCount: 10, launch: { condition: 'culture_teach', seeds: 50, n_vms: 10 }, price_per_vm_hour: 0.27,
+    events: [{ t: Date.now() / 1000, level: 'info', msg: 'MOCK DATA: synthetic fleet, no VMs exist' }] };
+}
+async function fleetGet() {
+  if (MOCK_FLEET) return mockFleet();
+  let vmsRes, ev;
+  try { vmsRes = await fleetReq('GET', '/api/vms'); } catch (e) { return { serverUp: false, vms: [], error: String(e.message || e) }; }
+  try { ev = await fleetReq('GET', '/api/events'); } catch (e) { ev = { events: [] }; }
+  return Object.assign(vmsRes, { serverUp: true, events: ev.events || [] });
+}
+async function fleetPost(p, body) {
+  if (!['/api/launch', '/api/collect', '/api/teardown'].includes(p)) throw new Error('bad fleet endpoint');
+  if (MOCK_FLEET) return { ok: true, mock: true };
+  return fleetReq('POST', p, body || {}, 8000);
+}
+const popouts = new Map();
+function fleetPopout(ids) {
+  const { screen } = require('electron');
+  ids = (Array.isArray(ids) ? ids : [ids]).map(String).filter((s) => /^[A-Za-z0-9_.:-]+$/.test(s)).slice(0, 10);
+  const wa = screen.getPrimaryDisplay().workArea, n = ids.length;
+  const cols = n > 1 ? Math.ceil(Math.sqrt(n * wa.width / wa.height)) : 1, rows = Math.ceil(n / cols);
+  ids.forEach((id, k) => {
+    const old = popouts.get(id); if (old && !old.isDestroyed()) old.close();
+    const w = n > 1 ? Math.floor(wa.width / cols) : 720, h = n > 1 ? Math.floor(wa.height / rows) : 560;
+    const bw = new BrowserWindow({ x: n > 1 ? wa.x + (k % cols) * w : undefined, y: n > 1 ? wa.y + Math.floor(k / cols) * h : undefined, width: w, height: h,
+      backgroundColor: '#000000', title: 'NeuroRover Sim - ' + id, autoHideMenuBar: true,
+      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false } });
+    bw.loadFile(path.join(__dirname, 'popout.html'), { query: { vm: id } });
+    popouts.set(id, bw);
+  });
+  return ids.length;
+}
+handle('fleet-get', fleetGet);
+handle('fleet-post', fleetPost);
+handle('fleet-popout', fleetPopout);
+
 function createWindow() {
   const sizeArg = process.argv.find((a) => a.startsWith('--size='));
   const wh = sizeArg ? sizeArg.slice(7).split('x').map(Number) : [1500, 900];
   win = new BrowserWindow({
     width: wh[0] || 1500, height: wh[1] || 900, minWidth: 1100, minHeight: 640, useContentSize: true,
-    backgroundColor: '#070a10', title: 'DNAforge Culture Lab - simulated culture model', autoHideMenuBar: true,
+    backgroundColor: '#000000', title: 'NeuroRover Sim - simulated culture model', autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
   });
   const debug = SHOT || SELFTEST;
@@ -254,10 +341,12 @@ function createWindow() {
   win.webContents.on('console-message', (_e, level, message, line, source) => {
     if (debug) fs.appendFileSync(clog, '[' + level + '] ' + message + ' (' + path.basename(String(source)) + ':' + line + ')\n');
   });
-  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: SELFTEST ? '1' : '0' } });
+  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: SELFTEST ? '1' : '0', tab: argVal('tab') || 'simulate', camera: argVal('camera') || 'overview' } });
   if (SHOT) win.webContents.once('did-finish-load', () => setTimeout(async () => { await capture(); app.quit(); }, 9000));
   if (SELFTEST) setTimeout(() => app.quit(), 200000);
+  win.on('closed', () => app.quit());
 }
 
-app.whenReady().then(createWindow);
-app.on('window-all-closed', () => { for (const c of children) { try { c.kill(); } catch (e) {} } app.quit(); });
+app.whenReady().then(() => { ensureFleetServer().catch(() => {}); createWindow(); });
+app.on('before-quit', stopFleetServer);
+app.on('window-all-closed', () => { for (const c of children) { try { c.kill(); } catch (e) {} } stopFleetServer(); app.quit(); });

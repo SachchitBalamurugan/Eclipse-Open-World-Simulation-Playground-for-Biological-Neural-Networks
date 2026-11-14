@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('lab', {
   listLogs: () => call('list-logs'),
   tailLog: (name, pos) => call('tail-log', name, pos),
   selftestReport: (r) => call('selftest-report', r),
+  fleetGet: () => call('fleet-get'),
+  fleetPost: (p, body) => call('fleet-post', p, body),
+  fleetPopout: (ids) => call('fleet-popout', ids),
   onRunLog: (fn) => ipcRenderer.on('run-log', (_e, p) => fn(p)),
   onRunDone: (fn) => ipcRenderer.on('run-done', (_e, p) => fn(p)),
 });

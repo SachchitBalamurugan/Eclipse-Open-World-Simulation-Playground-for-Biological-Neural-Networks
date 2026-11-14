@@ -1,6 +1,6 @@
 # Benchmark summary
 
-Loaded 484 condition/seed result records from neurorover/results/ (484 files with valid AUC data).
+Loaded 500 condition/seed result records from neurorover/results/ (500 files with valid AUC data).
 This script scans the folder again each time it runs. Confidence intervals are percentile bootstrap intervals over seeds (20,000 resamples). Intervals are unavailable for a single seed.
 Skipped 60 unreadable, incomplete, or unsupported result file(s); they will be reconsidered on the next run.
 
@@ -11,7 +11,7 @@ Skipped 60 unreadable, incomplete, or unsupported result file(s); they will be r
 | culture_frozen | 0.489 [0.467, 0.511]; n=50 | 0.484 [0.461, 0.506]; n=50 | 0.490 [0.468, 0.512]; n=50 | 0.490 [0.467, 0.512]; n=50 |
 | culture_fep | 0.490 [0.466, 0.515]; n=50 | 0.492 [0.467, 0.516]; n=50 | 0.499 [0.473, 0.525]; n=50 | 0.528 [0.498, 0.558]; n=50 |
 | culture_rstdp | 0.485 [0.463, 0.507]; n=50 | 0.491 [0.471, 0.512]; n=50 | 0.488 [0.463, 0.513]; n=50 | 0.492 [0.472, 0.513]; n=50 |
-| culture_teach | 0.561 [0.536, 0.586]; n=34 | 0.595 [0.566, 0.622]; n=34 | 0.678 [0.654, 0.700]; n=34 | 0.726 [0.698, 0.752]; n=34 |
+| culture_teach | 0.545 [0.522, 0.569]; n=50 | 0.583 [0.557, 0.609]; n=50 | 0.667 [0.645, 0.690]; n=50 | 0.726 [0.704, 0.747]; n=50 |
 | culture_reservoir | 0.832 [0.819, 0.844]; n=50 | 0.855 [0.849, 0.861]; n=50 | 0.869 [0.865, 0.873]; n=50 | 0.872 [0.868, 0.876]; n=50 |
 | random | 0.501 [0.491, 0.512]; n=50 | 0.501 [0.493, 0.509]; n=50 | 0.500 [0.490, 0.510]; n=50 | 0.497 [0.488, 0.505]; n=50 |
 | heuristic_tmin | 0.863 [0.863, 0.863]; n=50 | 0.863 [0.863, 0.863]; n=50 | 0.863 [0.863, 0.863]; n=50 | 0.863 [0.863, 0.863]; n=50 |
@@ -33,10 +33,10 @@ Paired comparisons use the intersection of seeds at each budget. The reported in
 - **culture_rstdp − culture_frozen, 50 samples:** mean paired Δ=+0.0078 (95% bootstrap CI [-0.0023, +0.0174], n=50): **not significant** at the 5% level (CI includes zero).
 - **culture_rstdp − culture_frozen, 100 samples:** mean paired Δ=-0.0025 (95% bootstrap CI [-0.0142, +0.0085], n=50): **not significant** at the 5% level (CI includes zero).
 - **culture_rstdp − culture_frozen, 200 samples:** mean paired Δ=+0.0027 (95% bootstrap CI [-0.0087, +0.0141], n=50): **not significant** at the 5% level (CI includes zero).
-- **culture_teach − culture_frozen, 25 samples:** mean paired Δ=+0.0623 (95% bootstrap CI [+0.0485, +0.0763], n=34): **significant** at the 5% level (CI excludes zero).
-- **culture_teach − culture_frozen, 50 samples:** mean paired Δ=+0.0948 (95% bootstrap CI [+0.0785, +0.1104], n=34): **significant** at the 5% level (CI excludes zero).
-- **culture_teach − culture_frozen, 100 samples:** mean paired Δ=+0.1773 (95% bootstrap CI [+0.1610, +0.1933], n=34): **significant** at the 5% level (CI excludes zero).
-- **culture_teach − culture_frozen, 200 samples:** mean paired Δ=+0.2289 (95% bootstrap CI [+0.2080, +0.2503], n=34): **significant** at the 5% level (CI excludes zero).
+- **culture_teach − culture_frozen, 25 samples:** mean paired Δ=+0.0560 (95% bootstrap CI [+0.0445, +0.0679], n=50): **significant** at the 5% level (CI excludes zero).
+- **culture_teach − culture_frozen, 50 samples:** mean paired Δ=+0.0997 (95% bootstrap CI [+0.0838, +0.1150], n=50): **significant** at the 5% level (CI excludes zero).
+- **culture_teach − culture_frozen, 100 samples:** mean paired Δ=+0.1775 (95% bootstrap CI [+0.1632, +0.1919], n=50): **significant** at the 5% level (CI excludes zero).
+- **culture_teach − culture_frozen, 200 samples:** mean paired Δ=+0.2362 (95% bootstrap CI [+0.2153, +0.2576], n=50): **significant** at the 5% level (CI excludes zero).
 
 ## H2: reservoir culture vs logistic and MLP
 

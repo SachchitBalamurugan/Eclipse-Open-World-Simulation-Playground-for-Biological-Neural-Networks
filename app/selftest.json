@@ -9,16 +9,25 @@
     "code": 0,
     "lines": [
       "$ python -m neurorover.record_run --condition culture_reservoir --seed 7 --budget 10 --eval 10",
-      "... running 3s, 0 trial rows on disk",
-      "runs\\culture_reservoir_s7: AUC=0.760000, spikes=45412, stims=517, wall=3.1s"
+      "runs\\culture_reservoir_s7: AUC=0.760000, spikes=45412, stims=517, wall=2.3s",
+      "... running 3s, 20 trial rows on disk"
     ],
     "listed": true
   },
   "playback": {
     "seg": 1,
-    "tSim": 301.66999999999996,
-    "fps": 52.18399690761505,
-    "roverX": 0.09227880601402506,
-    "cloth": "free"
-  }
+    "tSim": 299.9999999999999,
+    "fps": 59.99999999999997,
+    "roverX": -0.05262950021021553,
+    "cloth": "spread"
+  },
+  "fleet": {
+    "polls": 7,
+    "vms": 10,
+    "mock": false,
+    "serverUp": true,
+    "tiles": 10,
+    "empty": false
+  },
+  "hardwareRows": 21
 }

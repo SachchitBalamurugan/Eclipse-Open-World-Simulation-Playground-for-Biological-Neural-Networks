@@ -4,11 +4,16 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { PARTS, PHYS } from './parts.js';
+import { initFleet } from './fleet.js';
 
 const $ = (id) => document.getElementById(id);
 const lab = window.lab;
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const SELFTEST = new URLSearchParams(location.search).get('selftest') === '1';
+const QS = new URLSearchParams(location.search);
+const SELFTEST = QS.get('selftest') === '1';
+const START_CAM = ['dish', 'robot', 'overview'].includes(QS.get('camera')) ? QS.get('camera') : 'overview';
+const START_TAB = QS.get('tab') || 'simulate';
 const DEFAULT_RUNS = ['culture_teach_s0', 'culture_reservoir_s0'];
 
 // ---------- seeded rng ----------
@@ -26,8 +31,8 @@ const canvas = $('gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x04060a);
-scene.fog = new THREE.Fog(0x04060a, 30, 70);
+scene.background = new THREE.Color(0x030303);
+scene.fog = new THREE.Fog(0x030303, 30, 70);
 const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 3; controls.maxDistance = 45;
@@ -35,15 +40,16 @@ scene.add(new THREE.HemisphereLight(0x9bb8ff, 0x101820, 0.9));
 const sun = new THREE.DirectionalLight(0xdfe8ff, 1.3); sun.position.set(6, 12, 8); scene.add(sun);
 
 const FX = 11.5; // field centre x
-const CAMS = { dish: [[0, 7.2, 9.2], [0, 0.3, 0]], robot: [[FX + 1, 5.5, 9.5], [FX, 0.8, 0.4]], overview: [[5.6, 12.5, 19], [5.6, 0, 0.5]] };
-let camTween = null;
+const CAMS = { dish: [[0, 7.2, 9.2], [0, 0.3, 0]], robot: [[FX - 3.4 + 1.05, 0.75, 2.5 + 1.25], [FX - 3.4, 0.28, 2.5]], overview: [[5.6, 12.5, 19], [5.6, 0, 0.5]] };
+let camTween = null, camMode = 'overview';
 function setCam(name, instant) {
-  const [p, t] = CAMS[name];
+  const p = CAMS[name][0].slice(), t = CAMS[name][1].slice();
+  camMode = name;
+  if (name === 'robot' && typeof rover !== 'undefined') { const dx = rover.x - HOME; p[0] += dx; t[0] += dx; }
   document.querySelectorAll('#cams [data-cam]').forEach((b) => b.classList.toggle('on', b.dataset.cam === name));
   if (instant || REDUCED) { camera.position.set(...p); controls.target.set(...t); return; }
   camTween = { p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...p), t1: new THREE.Vector3(...t), k: 0 };
 }
-setCam('overview', true);
 document.querySelectorAll('#cams [data-cam]').forEach((b) => b.onclick = () => setCam(b.dataset.cam));
 
 let composer = null, bloomOn = !REDUCED;
@@ -166,6 +172,90 @@ function fireSpike(ch) {
   }
 }
 
+// ---------- component-built rover (see app/parts.js, hardware/BOM.md) ----------
+const ROVER_Z = 2.5;
+const rollPos = new THREE.Vector3(-3.7, 0.3, ROVER_Z); // world-ish (field-local) position of the cover roll
+const partMeshes = []; let rv = null;
+function buildRover() {
+  const grp = new THREE.Group();
+  const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.2 }, o || {}));
+  const alu = M(0xb9c1cb, { metalness: 0.75, roughness: 0.35 }), black = M(0x16181b, { roughness: 0.9 }), dark = M(0x2a2e34);
+  const add = (geo, mat, part, x, y, z, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.userData.part = part; (parent || grp).add(m); partMeshes.push(m); return m; };
+  const B = (x, y, z) => new THREE.BoxGeometry(x, y, z);
+  const deckY = 0.107;
+  // chassis: 2x 600 mm rails, 3x 400 mm cross members (2020 extrusion), 3 mm deck
+  for (const z of [-0.19, 0.19]) add(B(0.6, 0.02, 0.02), alu, 'rail', 0, 0.095, z);
+  for (const x of [-0.28, 0, 0.28]) add(B(0.02, 0.02, 0.36), alu, 'rail', x, 0.095, 0);
+  add(B(0.6, 0.003, 0.4), M(0x8d949c, { metalness: 0.6, roughness: 0.4 }), 'deck', 0, deckY, 0);
+  // 4x Pololu 37D gearmotors with encoders + Wild Thumper 120 mm wheels
+  const wg = new THREE.CylinderGeometry(PHYS.wheelR, PHYS.wheelR, 0.06, 14); wg.rotateX(Math.PI / 2);
+  const mg = new THREE.CylinderGeometry(0.0185, 0.0185, 0.12, 12); mg.rotateX(Math.PI / 2);
+  const hg = new THREE.CylinderGeometry(0.022, 0.022, 0.065, 10); hg.rotateX(Math.PI / 2);
+  for (const [x, z] of [[-0.22, 0.25], [0.22, 0.25], [-0.22, -0.25], [0.22, -0.25]]) {
+    const w = add(wg, M(0x1b1d20, { roughness: 0.95, flatShading: true }), 'wheel', x, PHYS.wheelR, z); wheels.push(w);
+    add(hg, alu, 'hubs', x, PHYS.wheelR, z * 1.005);
+    add(mg, M(0x9aa3ad, { metalness: 0.8, roughness: 0.3 }), 'motor', x, PHYS.wheelR, Math.sign(z) * 0.16);
+    add(B(0.045, 0.04, 0.004), alu, 'hubs', x, PHYS.wheelR + 0.01, Math.sign(z) * 0.205);
+  }
+  // Bioenno BLF-1220A battery (181 x 167 x 77 mm, est.)
+  add(B(0.181, 0.167, 0.077), M(0x23272d), 'battery', -0.12, deckY + 0.0835, 0.07);
+  add(B(0.03, 0.012, 0.02), M(0xc23b3b), 'battery', -0.17, deckY + 0.172, 0.07);
+  // Hammond 1554 enclosure (translucent lid) with Pi 5, 2x MDD10A, buck, ADC inside
+  const box = add(B(0.2, 0.075, 0.12), M(0xb8c4cc, { transparent: true, opacity: 0.35, depthWrite: false, roughness: 0.2 }), 'box', 0.13, deckY + 0.0375, 0.06);
+  box.renderOrder = 2;
+  add(B(0.085, 0.004, 0.056), M(0x1f7a3a), 'pi', 0.09, deckY + 0.012, 0.06);
+  add(B(0.02, 0.012, 0.016), alu, 'pi', 0.09, deckY + 0.022, 0.06);
+  for (const dz of [0.03, 0.09]) add(B(0.06, 0.004, 0.025), M(0xa82828), 'driver', 0.185, deckY + 0.01, dz);
+  add(B(0.02, 0.004, 0.018), M(0x245ea8), 'buck', 0.2, deckY + 0.03, 0.06);
+  add(B(0.028, 0.003, 0.018), M(0x1c4fa0), 'ads1115', 0.15, deckY + 0.03, 0.105);
+  add(B(0.03, 0.01, 0.03), dark, 'wiring', -0.02, deckY + 0.006, 0.12);
+  // sensor mast (800 mm 2020), Davis 7714 shield with SHT45, GNSS puck on top
+  const mx = 0.22, mz = -0.13, top = deckY + 0.8;
+  add(B(0.02, 0.8, 0.02), alu, 'rail', mx, deckY + 0.4, mz);
+  add(B(0.08, 0.012, 0.012), alu, 'rail', mx - 0.04, top - 0.18, mz);
+  const sx = mx - 0.085;
+  for (let k = 0; k < 6; k++) add(new THREE.CylinderGeometry(0.065 - k * 0.003, 0.075 - k * 0.003, 0.012, 16), M(0xeceeee, { roughness: 0.7 }), 'shield', sx, top - 0.26 + k * 0.022, mz);
+  add(B(0.018, 0.004, 0.012), M(0x2b2b8f), 'sht45', sx, top - 0.275, mz);
+  add(new THREE.CylinderGeometry(0.004, 0.004, 0.05, 6), dark, 'sht45', sx, top - 0.3, mz);
+  add(new THREE.CylinderGeometry(0.04, 0.042, 0.022, 18), M(0x111214), 'gnss', mx, top + 0.011, mz);
+  add(new THREE.CylinderGeometry(0.006, 0.006, 0.004, 8), M(0x666a70), 'gnss', mx, top + 0.024, mz);
+  // DS18B20 waterproof probe dangling from the front to leaf height
+  const cab = add(new THREE.CylinderGeometry(0.004, 0.004, 0.16, 6), dark, 'ds18b20', 0.33, 0.06, -0.12); cab.rotation.z = 0.55;
+  add(new THREE.CylinderGeometry(0.0035, 0.0035, 0.05, 8), alu, 'ds18b20', 0.375, -0.005 + 0.02, -0.12);
+  // deploy arm: hinge at rear, two 2020 arms, cover roll, L16 actuator body + rod
+  const pivot = new THREE.Group(); pivot.position.set(-0.29, 0.12, 0); grp.add(pivot);
+  const armGrp = new THREE.Group(); pivot.add(armGrp);
+  for (const z of [-0.2, 0.2]) add(B(0.3, 0.02, 0.02), alu, 'roll', -0.15, 0, z, armGrp);
+  const rg = new THREE.CylinderGeometry(0.03, 0.03, 0.5, 14); rg.rotateX(Math.PI / 2);
+  add(rg, M(0xeeeeee), 'roll', -0.3, 0, 0, armGrp);
+  const wrapG = new THREE.CylinderGeometry(0.055, 0.055, 0.46, 16); wrapG.rotateX(Math.PI / 2);
+  const wrap = add(wrapG, M(0xcfe9ff, { transparent: true, opacity: 0.85, roughness: 0.9 }), 'cover', -0.3, 0, 0, armGrp);
+  const actBody = add(new THREE.CylinderGeometry(0.012, 0.012, 1, 10), M(0x2c3036), 'actuator', 0, 0, 0);
+  const actRod = add(new THREE.CylinderGeometry(0.004, 0.004, 1, 8), alu, 'actuator', 0, 0, 0);
+  const actBase = new THREE.Vector3(-0.08, deckY + 0.02, 0);
+  rv = { pivot, armGrp, wrap, actBody, actRod, actBase };
+  return grp;
+}
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+function orientSeg(mesh, a, b) {
+  _d.subVectors(b, a); const L = _d.length() || 1e-6;
+  mesh.position.copy(a).addScaledVector(_d, 0.5); mesh.scale.set(1, L, 1); mesh.quaternion.setFromUnitVectors(_up, _d.normalize());
+}
+function poseRover() {
+  if (!rv) return;
+  const e = rover.act / PHYS.actStroke; // 0 stowed .. 1 fully extended
+  const th = 0.35 + e * 1.0; // arm angle above horizontal (rad), backwards
+  rv.armGrp.rotation.z = -th;
+  // attach point 0.12 m along arm
+  _b.set(-0.12 * Math.cos(th), 0.12 * Math.sin(th), 0).add(rv.pivot.position);
+  const L0 = 0.118; // closed body length of L16 (est.)
+  _d.subVectors(_b, rv.actBase).normalize();
+  _a.copy(rv.actBase).addScaledVector(_d, L0);
+  orientSeg(rv.actBody, rv.actBase, _a); orientSeg(rv.actRod, _a, _b);
+  rollPos.set(rover.x + rv.pivot.position.x - 0.3 * Math.cos(th), rv.pivot.position.y + 0.3 * Math.sin(th), ROVER_Z);
+  rv.wrap.visible = cloth.state === 'stowed';
+}
+
 // ---------- field scene with small real-time physics ----------
 const field = new THREE.Group(); field.position.x = FX; scene.add(field);
 const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2418, roughness: 1 });
@@ -186,16 +276,9 @@ const NCROP = 28; let crops, fieldSign, signTex, signCtx, roverGrp, wheels = [],
   cupGrp = new THREE.Group(); cupGrp.position.set(3.6, 3.25, -2.8);
   for (let k = 0; k < 3; k++) { const cup = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), steel); cup.position.set(Math.cos(k * 2.094) * 0.28, 0, Math.sin(k * 2.094) * 0.28); cupGrp.add(cup); }
   field.add(cupGrp);
-  // rover
-  roverGrp = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.34, 0.7), new THREE.MeshStandardMaterial({ color: 0xd9dee6, metalness: 0.4, roughness: 0.4 })); body.position.y = 0.42; roverGrp.add(body);
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.1, 0.56), new THREE.MeshStandardMaterial({ color: 0x25303f })); deck.position.y = 0.64; roverGrp.add(deck);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 6), steel); neck.position.set(0.42, 0.85, 0); roverGrp.add(neck);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.3), new THREE.MeshStandardMaterial({ color: 0x25303f })); head.position.set(0.42, 1.12, 0); roverGrp.add(head);
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x5ad1ff, toneMapped: false })); eye.position.set(0.53, 1.12, 0); roverGrp.add(eye);
-  const wg = new THREE.CylinderGeometry(0.2, 0.2, 0.14, 12); wg.rotateX(Math.PI / 2);
-  for (const [x, z] of [[-0.38, 0.42], [0.38, 0.42], [-0.38, -0.42], [0.38, -0.42]]) { const w = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: 0x1a1f28, roughness: 0.9, flatShading: true })); w.position.set(x, 0.2, z); roverGrp.add(w); wheels.push(w); }
-  roverGrp.position.z = 2.5; field.add(roverGrp);
+  // rover, built from the BOM parts (app/parts.js mirrors hardware/BOM.md). Scene units are metres.
+  roverGrp = buildRover();
+  roverGrp.position.z = ROVER_Z; field.add(roverGrp);
   signTex = document.createElement('canvas'); signTex.width = 512; signTex.height = 96; signCtx = signTex.getContext('2d');
   fieldSign = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(signTex), transparent: true, depthWrite: false }));
   fieldSign.scale.set(6.4, 1.2, 1); fieldSign.position.set(0, 4.3, 0); field.add(fieldSign);
@@ -204,18 +287,29 @@ function setSign(text, color) {
   signCtx.clearRect(0, 0, 512, 96); signCtx.font = '600 34px Segoe UI, sans-serif'; signCtx.textAlign = 'center'; signCtx.textBaseline = 'middle';
   signCtx.fillStyle = color; signCtx.fillText(text, 256, 48); fieldSign.material.map.needsUpdate = true;
 }
-// Rover: 1-D rigid body. Wheel drive force (PD on target, torque-limited) + rolling and Coulomb friction, semi-implicit Euler.
-const rover = { x: -3.4, v: 0, m: 12, target: -3.4, spin: 0 };
+// Rover: 1-D rigid body. Mass, wheel radius, motor torque/speed curve and currents come from the BOM (PHYS).
+// PD drive command, limited by the 4-motor linear torque-speed curve and by tyre traction; rolling + Coulomb friction.
+const rover = { x: -3.4, v: 0, m: PHYS.mass, target: -3.4, spin: 0, F: 0, amps: PHYS.idleA, soc: 0.87, act: 0, actV: 0 };
 const HOME = -3.4, WORK = 0.0;
 function stepRover(dt) {
-  const mu = 0.9, g = 9.81, Fmax = mu * rover.m * g; // traction limit
-  let F = 60 * (rover.target - rover.x) - 34 * rover.v;
-  F = Math.max(-Fmax * 0.5, Math.min(Fmax * 0.5, F));
+  const g = 9.81, Ftrac = PHYS.mu * rover.m * g, Fstall = 4 * PHYS.stallTorque / PHYS.wheelR;
+  let F = 9 * rover.m * (rover.target - rover.x) - 7 * rover.m * rover.v;
+  const avail = Fstall * Math.max(0, Math.min(1, 1 - Math.sign(F) * rover.v / PHYS.vmax)); // back-EMF limit
+  F = Math.max(-Math.min(avail, Ftrac), Math.min(Math.min(avail, Ftrac), F));
   const roll = -0.04 * rover.m * g * Math.sign(rover.v) - 1.5 * rover.v;
   rover.v += (F + roll) / rover.m * dt;
   if (Math.abs(rover.v) < 0.01 && Math.abs(rover.target - rover.x) < 0.02) rover.v = 0;
-  rover.x += rover.v * dt; rover.spin -= rover.v * dt / 0.2;
+  rover.x += rover.v * dt; rover.spin -= rover.v * dt / PHYS.wheelR; rover.F = F;
+  // actuator: constant-speed L16, extends once the rover is within 1.5 m of the work spot
+  const actT = world.deploy && Math.abs(rover.x - WORK) < 1.5 ? PHYS.actStroke : 0;
+  const dA = Math.max(-PHYS.actSpeed * dt, Math.min(PHYS.actSpeed * dt, actT - rover.act));
+  rover.act += dA; rover.actV = dA / dt;
+  const tau = Math.abs(F) * PHYS.wheelR / 4;
+  const motorA = rover.v === 0 && F === 0 ? 0 : 4 * (PHYS.freeA + (PHYS.stallA - PHYS.freeA) * Math.min(1, tau / PHYS.stallTorque));
+  rover.amps = PHYS.idleA + motorA + (Math.abs(rover.actV) > 1e-4 ? 0.35 : 0); // actuator ~0.35 A moving (est.)
+  rover.soc = Math.max(0, rover.soc - rover.amps * dt / 3600 / PHYS.batteryAh);
 }
+const PHYS_RATE = 2; // physics runs at 2x wall clock so drive + deploy fits a 0.1x-speed trial
 // Frost cover: mass-spring cloth (Verlet + distance constraints), drapes over a hoop frame (sphere collider) under gravity.
 const CN = 11, CS = 0.5, cp = new Float32Array(CN * CN * 3), cprev = new Float32Array(CN * CN * 3);
 const cloth = { state: 'stowed', timer: 0 };
@@ -224,7 +318,7 @@ const SPH = { x: 0, y: -0.9, z: -0.28, r: 2.45 };
   const geo = new THREE.PlaneGeometry(1, 1, CN - 1, CN - 1);
   clothMesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.42, side: THREE.DoubleSide, roughness: 0.6, depthWrite: false }));
   clothMesh.frustumCulled = false; field.add(clothMesh);
-  for (let i = 0; i < CN * CN; i++) cp.set([rover.x, 0.75, 2.5], i * 3);
+  for (let i = 0; i < CN * CN; i++) cp.set([rover.x - 0.3, 0.3, ROVER_Z], i * 3);
   cprev.set(cp);
 }
 function stepCloth(dt) {
@@ -233,7 +327,7 @@ function stepCloth(dt) {
     const spread = cloth.state === 'spread', k = Math.min(1, (spread ? 5 : 7) * dt);
     for (let i = 0; i < n; i++) {
       const u = (i % CN) - (CN - 1) / 2, w = Math.floor(i / CN) - (CN - 1) / 2;
-      const tx = spread ? u * CS : rover.x + u * 0.05, ty = spread ? 2.6 : 0.74 + (i % 3) * 0.01, tz = spread ? SPH.z + w * CS : 2.5 + w * 0.04;
+      const tx = spread ? u * CS : rollPos.x + u * 0.006, ty = spread ? 2.6 : rollPos.y + (i % 3) * 0.004, tz = spread ? SPH.z + w * CS : ROVER_Z + w * 0.045;
       cp[i * 3] += (tx - cp[i * 3]) * k; cp[i * 3 + 1] += (ty - cp[i * 3 + 1]) * k; cp[i * 3 + 2] += (tz - cp[i * 3 + 2]) * k;
     }
     cprev.set(cp);
@@ -260,17 +354,18 @@ function link(a, b, rest) {
   const dx = cp[b] - cp[a], dy = cp[b + 1] - cp[a + 1], dz = cp[b + 2] - cp[a + 2], d = Math.hypot(dx, dy, dz) || 1e-6, f = (d - rest) / d * 0.5;
   cp[a] += dx * f; cp[a + 1] += dy * f; cp[a + 2] += dz * f; cp[b] -= dx * f; cp[b + 1] -= dy * f; cp[b + 2] -= dz * f;
 }
-const world = { deploy: false, freeze: false, frost: 0, cold: 0, frostTarget: 0 };
+const world = { deploy: false, freeze: false, frost: 0, cold: 0, frostTarget: 0, trueT: 3.0 };
+setCam(START_CAM, true);
 let physAcc = 0;
 const cA = new THREE.Color(), cGreen = new THREE.Color(0x3fae4c), cWhite = new THREE.Color(0xeaf6ff), cSoil = new THREE.Color(0x2a2418), cRime = new THREE.Color(0x8fa9c4);
 function stepWorld(dtWall) {
   rover.target = world.deploy ? WORK : HOME;
-  if (world.deploy && cloth.state === 'stowed' && Math.abs(rover.x - WORK) < 0.25) { cloth.state = 'spread'; cloth.timer = 0.7; }
+  if (world.deploy && cloth.state === 'stowed' && Math.abs(rover.x - WORK) < 0.25 && rover.act > PHYS.actStroke * 0.95) { cloth.state = 'spread'; cloth.timer = 0.7; }
   if (!world.deploy && cloth.state !== 'stowed') cloth.state = 'stowed';
-  physAcc = Math.min(0.1, physAcc + dtWall);
+  physAcc = Math.min(0.2, physAcc + dtWall * PHYS_RATE);
   const h = 1 / 120;
   while (physAcc >= h) { stepRover(h); stepCloth(h); physAcc -= h; }
-  roverGrp.position.x = rover.x; wheels.forEach((w) => w.rotation.z = rover.spin);
+  roverGrp.position.x = rover.x; wheels.forEach((w) => w.rotation.z = rover.spin); poseRover();
   clothMesh.geometry.attributes.position.array.set(cp); clothMesh.geometry.attributes.position.needsUpdate = true; clothMesh.geometry.computeVertexNormals();
   cupGrp.rotation.y += dtWall * 3;
   const k = Math.min(1, dtWall * 2.5);
@@ -290,6 +385,7 @@ function gotoSeg(i, keepPlaying) {
   spCur = run.spikes.offsets[seg]; stCur = run.stims.offsets[seg];
   const tr = run.trials[seg];
   world.deploy = false; world.frostTarget = 0; world.freeze = tr.label === 1;
+  world.trueT = tr.label === 1 ? -1.2 - ((seg * 37) % 17) / 10 : 2.4 + ((seg * 53) % 31) / 10;
   setSign((tr.label === 1 ? 'FREEZE NIGHT' : tr.label === 0 ? 'MILD NIGHT' : 'NIGHT') + ' · sensing...', tr.label === 1 ? '#bfe4ff' : '#ffd9a0');
   $('scrub').value = seg; if (!keepPlaying) setPlaying(false);
   updateInfo(); drawAcc(); drawW();
@@ -502,7 +598,10 @@ function frame(now) {
   }
   pulseGeo.attributes.position.needsUpdate = true;
   for (const r of rings) { if (r.life <= 0) continue; r.life -= dt / 0.45; if (r.life <= 0) { r.grp.visible = false; continue; } r.mat.opacity = r.life * 0.9; const s = 1 + (1 - r.life) * 1.6; r.ring.scale.set(s, s, 1); }
+  const rx0 = rover.x;
   stepWorld(dt);
+  if (camMode === 'robot' && !camTween) { const dx = rover.x - rx0; camera.position.x += dx; controls.target.x += dx; }
+  updateTelemetry(dt);
   if (camTween) { camTween.k = Math.min(1, camTween.k + dt / 0.9); const k = camTween.k * camTween.k * (3 - 2 * camTween.k); camera.position.lerpVectors(camTween.p0, camTween.p1, k); controls.target.lerpVectors(camTween.t0, camTween.t1, k); if (camTween.k >= 1) camTween = null; }
   controls.update();
   if (bloomOn && composer) composer.render(); else renderer.render(scene, camera);
@@ -510,6 +609,84 @@ function frame(now) {
   frames++; fpsT += dt; if (fpsT > 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; $('hud').textContent = `${fps.toFixed(0)} fps · 1,024 model neurons · 64 electrodes · drag to orbit, wheel to zoom`; }
 }
 requestAnimationFrame(frame);
+
+// ---------- telemetry + part picking ----------
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const tel = { t: 0, sampleT: 0, reading: null, leaf: null };
+function updateTelemetry(dt) {
+  tel.sampleT -= dt; tel.t -= dt;
+  if (tel.sampleT <= 0) { tel.sampleT = 1; tel.reading = world.trueT + gauss() * PHYS.shtSigma; tel.leaf = world.trueT - 0.8 + gauss() * 0.5; }
+  if (tel.t > 0) return; tel.t = 0.2;
+  const cells = [
+    ['Speed', Math.abs(rover.v).toFixed(2), 'm/s', 'max ' + PHYS.vmax.toFixed(2)],
+    ['Motor current', rover.amps.toFixed(2), 'A', '4x 37D + idle (est.)'],
+    ['Battery', (rover.soc * 100).toFixed(2), '%', '20 Ah LiFePO4'],
+    ['Actuator', (rover.act * 1000).toFixed(0), 'mm', 'of 100 · L16'],
+    ['SHT45 air', tel.reading == null ? '-' : tel.reading.toFixed(2), '°C', 'true ' + world.trueT.toFixed(2) + ' · σ 0.1'],
+    ['DS18B20 leaf', tel.leaf == null ? '-' : tel.leaf.toFixed(1), '°C', 'σ 0.5'],
+    ['Cover', cloth.state.toUpperCase(), '', 'physics ' + PHYS_RATE + 'x real time'],
+  ];
+  $('telem').innerHTML = cells.map(([k, v, u, s]) => `<div><span>${k}</span><b>${v}<small>${u}</small></b><em>${s}</em></div>`).join('');
+}
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+let pinned = null, hoverMesh = null;
+function pickPart(ev) {
+  const r = canvas.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  const hits = ray.intersectObjects(partMeshes, false).filter((h) => h.object.visible);
+  if (!hits.length) return null;
+  const inner = hits.find((h) => h.object.userData.part !== 'box');
+  return (hits[0].object.userData.part === 'box' && inner && inner.distance - hits[0].distance < 0.15 ? inner : hits[0]).object;
+}
+function showTip(mesh, ev) {
+  const tip = $('tip');
+  if (hoverMesh && hoverMesh !== mesh && hoverMesh.material.emissive) hoverMesh.material.emissive.setHex(0x000000);
+  hoverMesh = mesh;
+  if (!mesh) { tip.style.display = 'none'; return; }
+  if (mesh.material.emissive) mesh.material.emissive.setHex(0x2a4a00);
+  const p = PARTS[mesh.userData.part];
+  tip.innerHTML = `<b>${p.name}</b><span>${p.spec}</span><span class="mono">qty ${p.qty} · $${p.usd}${p.est ? ' (est.)' : ''} · ${p.kg} kg</span>`;
+  const r = $('centre').getBoundingClientRect();
+  tip.style.display = 'block'; tip.style.left = Math.max(0, Math.min(r.width - 280, ev.clientX - r.left + 14)) + 'px'; tip.style.top = (ev.clientY - r.top + 14) + 'px';
+}
+canvas.addEventListener('pointermove', (ev) => { if (!pinned) showTip(pickPart(ev), ev); });
+canvas.addEventListener('click', (ev) => { const m = pickPart(ev); pinned = m; showTip(m, ev); });
+// demo label for screenshots: pin the SHT45 shield label once in robot view
+function demoTip() {
+  const m = partMeshes.find((x) => x.userData.part === 'shield'); if (!m) return;
+  const v = m.getWorldPosition(new THREE.Vector3()).project(camera), r = canvas.getBoundingClientRect();
+  showTip(m, { clientX: r.left + (v.x + 1) / 2 * r.width, clientY: r.top + (1 - v.y) / 2 * r.height });
+}
+
+// ---------- tabs ----------
+let fleetUI = null;
+function setTab(name) {
+  document.querySelectorAll('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('.view').forEach((v) => v.hidden = v.id !== 'view-' + name);
+  if (name === 'fleet' && !fleetUI) fleetUI = initFleet($('view-fleet'), lab, { conditions: () => [...new Set(['culture_teach', ...runs.map((r) => r.condition)])] });
+  if (fleetUI) fleetUI.setActive(name === 'fleet');
+  if (name === 'runs') renderRunsTab();
+  if (name === 'hardware') renderHardware();
+  if (name === 'simulate') { resize(); drawAcc(); drawW(); drawLC(); }
+}
+document.querySelectorAll('#tabs [data-tab]').forEach((b) => b.onclick = () => setTab(b.dataset.tab));
+function renderRunsTab() {
+  $('runsTable').innerHTML = '<tr><th>run</th><th>condition</th><th>seed</th><th>trials</th><th>final AUC</th><th>status</th><th>modified</th></tr>' +
+    runs.map((r) => `<tr><td>${r.name}</td><td>${r.condition}</td><td>${r.seed ?? '-'}</td><td>${r.nTrials}</td><td>${r.final_auc == null ? '-' : r.final_auc.toFixed(3)}</td><td>${r.complete ? '<span class="ok">complete</span>' : 'running'}</td><td>${new Date(r.mtime).toLocaleString()}</td></tr>`).join('');
+  if (bench) { benchTable($('benchBig'), bench.headline, false); benchTable($('variantsBig'), bench.variants, true); }
+}
+function renderHardware() {
+  let usd = 0, n = 0, kg = 0;
+  $('bomTable').innerHTML = '<tr><th>part</th><th>key specs</th><th>qty</th><th>unit $</th><th>line $</th><th>kg each</th></tr>' + Object.values(PARTS).map((p) => {
+    usd += p.usd * p.qty; n += p.qty; kg += p.kg * p.qty;
+    return `<tr><td>${p.name}</td><td>${p.spec}</td><td>${p.qty}</td><td>${p.usd}${p.est ? '*' : ''}</td><td>${(p.usd * p.qty).toFixed(2)}</td><td>${p.kg}</td></tr>`;
+  }).join('') + `<tr class="sel"><td>Total</td><td>${Object.keys(PARTS).length} line items</td><td>${n}</td><td></td><td>${usd.toFixed(0)}</td><td>${kg.toFixed(1)} kg</td></tr>`;
+  $('physTable').innerHTML = [['mass', PHYS.mass + ' kg (est.)'], ['wheel radius', PHYS.wheelR + ' m'], ['stall torque / motor', PHYS.stallTorque + ' N·m'], ['no-load speed', PHYS.noLoadRpm + ' rpm → ' + PHYS.vmax.toFixed(2) + ' m/s'],
+    ['stall / free current', PHYS.stallA + ' / ' + PHYS.freeA + ' A'], ['max drive force', (4 * PHYS.stallTorque / PHYS.wheelR).toFixed(0) + ' N (traction ' + (PHYS.mu * PHYS.mass * 9.81).toFixed(0) + ' N)'],
+    ['battery', PHYS.batteryAh + ' Ah @ 12.8 V'], ['actuator', PHYS.actStroke * 1000 + ' mm @ ' + PHYS.actSpeed * 1000 + ' mm/s'], ['SHT45 noise', 'N(0, ' + PHYS.shtSigma + ' °C)']]
+    .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+}
 
 // ---------- boot ----------
 (async function boot() {
@@ -521,6 +698,8 @@ requestAnimationFrame(frame);
     await refreshRuns(); drawBench(); fillConditions();
     try { const logs = await lab.listLogs(); logs.forEach((l) => { const o = document.createElement('option'); o.value = o.textContent = l; $('logSel').appendChild(o); }); } catch (e) {}
     logP('ready. Start a run on the left, or pick a repo log to tail.', 'sys');
+    setTab(START_TAB);
+    if (START_CAM === 'robot') setTimeout(demoTip, 6500);
     const first = DEFAULT_RUNS.find((n) => runs.some((r) => r.name === n)) || (runs[0] && runs[0].name);
     if (!SELFTEST) { if (first) await selectRun(first, true); return; }
     for (const r of runs) report.loaded[r.name] = (await selectRun(r.name, false)) && run.trials.length + ' trials, ' + run.spikes.t.length + ' spikes';
@@ -530,9 +709,11 @@ requestAnimationFrame(frame);
     const p = await done; await refreshRuns();
     report.newRun = { code: p.code, lines, listed: runs.some((r) => r.name === 'culture_reservoir_s7') };
     if (first) await selectRun(first, true);
-    setCam('overview', true);
+    setCam(START_CAM, true);
     await new Promise((r) => setTimeout(r, 7000));
     report.playback = { seg, tSim, fps, roverX: rover.x, cloth: cloth.state };
+    setTab('fleet'); await new Promise((r) => setTimeout(r, 4000));
+    report.fleet = fleetUI ? fleetUI.status() : null; setTab('hardware'); report.hardwareRows = $('bomTable').rows.length; setTab('simulate');
   } catch (e) { report.errors.push(String(e && e.stack || e)); }
   if (SELFTEST) lab.selftestReport(report);
 })();
