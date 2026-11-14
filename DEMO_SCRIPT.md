@@ -1,44 +1,51 @@
-# NeuroRover demo script (2 minutes)
+# NeuroRover demo script (about 3 minutes)
+
+Before judges arrive:
+- Open the desktop app: `app\start.bat`.
+- Serve the web pages: `.venv/Scripts/python -m http.server 8765 -d demo`.
+- Check no VMs are running: `npx -y freestyle@latest vm list`. Only launch a fleet if you want the live wall; 10 VMs cost about $2.70/h. Tear down afterwards.
 
 ## Hook (20 seconds)
 
-Companies like Cortical Labs rent living neurons and say they learn from far fewer examples than silicon. Testing that costs about $300 a week. Most of the work isn't the neurons, it's the plumbing. So we built the whole closed-loop pipeline with no living cells, behind the real CL API, so the claim can be tested cheaply.
+Companies like Cortical Labs rent out living neurons and say they learn from far fewer examples than silicon. Testing that costs about $300 a week per dish, and most of the work isn't the neurons, it's the plumbing. So we built the whole closed loop with no living cells. A simulated culture sits behind the real Cortical Labs API, it drives a frost-protection robot on the hackathon's NOAA freeze data, and we benchmark it against normal models.
 
-## Demo (40 seconds)
+## The app (60 seconds)
 
-Open http://localhost:8765.
+1. **Simulate tab.** The dish in the middle is the culture: 1,024 model neurons on a 64-electrode array.
+   - Blue electrodes are sensory: tonight's weather features become stimulation pulses.
+   - Amber votes DEPLOY, teal votes HOLD.
+   - Green beams are the teaching stimulation.
+2. **The field.** Click Robot. The rover is built from real parts (Raspberry Pi 5, SHT45 sensor, Pololu motors, Actuonix actuator); hover any part to see its spec. On a freeze night it drives out and the cover deploys. The fence, crates and drums are NVIDIA SimReady assets.
+3. **Right panel.** Rolling accuracy and weight drift: the sensory-to-motor weights change as it's taught. The learning curve at the bottom compares it with every baseline.
+4. **Fleet tab** (only if VMs are up). Each tile is a cloud VM training a different seed. Pop one out into its own window.
 
-1. Point at the left panel, "64-electrode culture." That's a simulated 8x8 electrode array with 1,024 neurons.
-2. Read the colours. Blue is sensory input: the weather features become pulses. Green votes DEPLOY, amber votes HOLD. Pink is feedback and purple is reward. Grey is the rest of the culture.
-3. Pick `culture_reservoir` in the dropdown and press Play.
-4. Point at the middle panel. The robot decides whether to cover crops tonight, from weather 3 to 7 days back.
-5. Point at the scoreboard on the right. It checks each night against whether it really froze.
+## The result (40 seconds)
 
-## The figure (30 seconds)
+Show `neurorover/analysis/fig_learning_curves.png` or the app's learning-curve panel. AUC on 300 held-out nights, 50 seeds.
 
-Show `neurorover/analysis/fig_learning_curves.png`. Validation AUC at 25 to 200 training samples, 10 seeds.
-
-- The plastic cultures stay near chance, the same wall two public DishBrain replications hit.
-- The reservoir culture ties logistic regression at 25 samples but falls behind at 100 and up.
+- **Reward-only learning doesn't work.** DishBrain-style feedback and reward-modulated STDP stay near chance, the same wall two public DishBrain replications hit.
+- **Paired-stimulation teaching works.** Replay the input, then stimulate the correct motor region a few milliseconds later. The culture goes from 0.55 to 0.73 AUC, +0.24 over the untrained culture at 200 nights. It's stimulation only, so a real dish could be taught the same way.
+- **Imagined nights help.** Training first on 150 nights imagined by our weather world model adds about +0.11 at 25 real nights.
+- **Silicon still wins.** Logistic regression gets 0.89 at 200. The culture learns, but it's slower.
 
 ## Honest limitation (15 seconds)
 
-A simulation can't tell you if real neurons are more sample-efficient. What we have is a harness that can.
+A simulation can't tell you whether real neurons are more sample-efficient. What we built is the harness that can, with the experiment already written.
 
 ## Next step (15 seconds)
 
-A week on Cortical Cloud with `run_cl.py --hardware`. Same encoding, same 300 validation nights, same budgets. If it fails, we learn that for $300.
+A week on Cortical Cloud with `run_cl.py --hardware`: same encoding, same teaching protocol, same 300 nights, same sample budgets. If living neurons beat this curve, that's real evidence. If they don't, we learn it for $300.
 
 ## Likely questions
 
-**Why freeze data, not soil?** We tried soil moisture first. Calibration error barely correlated with any feature (|r| < 0.16), so every condition would have sat at chance.
+**Why freeze data, not soil?** We tried the soil data first. Calibration error barely correlated with any feature (|r| < 0.16), so every method sat at chance.
 
-**Why trust the simulator?** Its activity looks like a culture: about 5 Hz per neuron and a burst every 2.5 s. Stimulation raises firing 3 to 7x over sham. It isn't fit to real recordings, so we don't claim it predicts real neurons.
+**Why trust the simulator?** Its activity looks like a culture: about 5 Hz per neuron, a network burst every 2.5 s, and stimulation raises local firing about 9x over sham. It isn't fit to real recordings, so we don't claim it predicts real neurons.
 
-**Isn't this just logistic regression?** For the reservoir, mostly yes. The culture acts as a random feature map and the silicon readout does the learning. That's a finding, not something we hid.
+**Isn't teaching just supervised learning?** Yes: the label decides which motor region gets stimulated. The point is that the label goes in as stimulation, which a real dish can receive. Reward-only signals didn't work in our model.
 
-**What's the CL API path?** The culture is a `cl.sim.SimulatorDataSource`, so the loop uses the same calls as a CL1. Through the API, reservoir AUC was 0.89 against 0.87 in the fast harness on the same 100 rows.
+**What's the CL API path?** The culture is a `cl.sim.SimulatorDataSource`, so the loop uses the same calls as a CL1. Through the API, reservoir AUC matched the fast harness (0.89 vs 0.87 on the same rows).
 
-**How many seeds?** Ten per condition, with bootstrap confidence intervals. The cloud sweep for more seeds is written but didn't run because of billing setup.
+**How many seeds?** 50 per condition (10 local, 40 on Freestyle cloud VMs), with paired bootstrap confidence intervals.
 
-**What would change your mind?** A living culture with DishBrain-style feedback beating the frozen control and getting near logistic at 25 samples. That would be the first real evidence for the claim.
+**What would change your mind?** A living culture taught this way that beats our simulated curve at 25 to 50 samples. That would be the first real evidence for the sample-efficiency claim.
