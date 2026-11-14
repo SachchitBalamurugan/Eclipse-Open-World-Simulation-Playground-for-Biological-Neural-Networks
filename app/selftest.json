@@ -9,25 +9,68 @@
     "code": 0,
     "lines": [
       "$ python -m neurorover.record_run --condition culture_reservoir --seed 7 --budget 10 --eval 10",
-      "runs\\culture_reservoir_s7: AUC=0.760000, spikes=45412, stims=517, wall=2.3s",
-      "... running 3s, 20 trial rows on disk"
+      "runs\\culture_reservoir_s7: AUC=0.760000, spikes=45412, stims=517, wall=1.5s"
     ],
     "listed": true
   },
   "playback": {
     "seg": 1,
-    "tSim": 299.9999999999999,
-    "fps": 59.99999999999997,
+    "tSim": 301.64000000000004,
+    "fps": 59.988002399520255,
     "roverX": -0.05262950021021553,
     "cloth": "spread"
   },
   "fleet": {
-    "polls": 7,
+    "polls": 3,
     "vms": 10,
     "mock": false,
     "serverUp": true,
     "tiles": 10,
     "empty": false
   },
-  "hardwareRows": 21
+  "hardwareRows": 21,
+  "simready": {
+    "barrier_fence_metal_a02": 121,
+    "food_produce_corn_b01": 3,
+    "pallet_a01": 1,
+    "drum_plastic_blue_a01": 2,
+    "crate_plywood_b01": 3,
+    "construction_wheelbarrow_metal_a01": 1,
+    "drum_steel_a01": 3
+  },
+  "roverReplay": {
+    "src": "ppo_bc_s0/trajectory_early.json",
+    "demo": false,
+    "steps": 600,
+    "k": 49.668,
+    "x": -2.3629
+  },
+  "surgical": {
+    "bodies": 47,
+    "loaded": 47,
+    "err": null,
+    "tip": [
+      1.2303,
+      0.1377,
+      0.9609
+    ],
+    "replay": null,
+    "step": 0,
+    "playing": false,
+    "tipErrMm": null
+  },
+  "surgicalReplay": {
+    "bodies": 47,
+    "loaded": 47,
+    "err": null,
+    "tip": [
+      1.1809,
+      0.0634,
+      1.0312
+    ],
+    "replay": "surgical/results/trajectory.json",
+    "step": 50,
+    "playing": true,
+    "tipErrMm": 2.7723557870432174
+  }
 }

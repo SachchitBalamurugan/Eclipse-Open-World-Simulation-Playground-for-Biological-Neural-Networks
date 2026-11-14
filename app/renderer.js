@@ -6,6 +6,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { PARTS, PHYS } from './parts.js';
 import { initFleet } from './fleet.js';
+import { addSimReady, mjPos, mjQuat } from './simready.js';
+import { initSurgical } from './surgical.js';
 
 const $ = (id) => document.getElementById(id);
 const lab = window.lab;
@@ -32,15 +34,15 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDraw
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x030303);
-scene.fog = new THREE.Fog(0x030303, 30, 70);
-const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+scene.fog = new THREE.Fog(0x030303, 55, 120);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 300);
 const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 3; controls.maxDistance = 45;
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 3; controls.maxDistance = 80;
 scene.add(new THREE.HemisphereLight(0x9bb8ff, 0x101820, 0.9));
 const sun = new THREE.DirectionalLight(0xdfe8ff, 1.3); sun.position.set(6, 12, 8); scene.add(sun);
 
-const FX = 11.5; // field centre x
-const CAMS = { dish: [[0, 7.2, 9.2], [0, 0.3, 0]], robot: [[FX - 3.4 + 1.05, 0.75, 2.5 + 1.25], [FX - 3.4, 0.28, 2.5]], overview: [[5.6, 12.5, 19], [5.6, 0, 0.5]] };
+const FX = 22.5; // field centre x: the 30 x 30 m SimReady fence (|x| = 15) clears the dish (r = 6.2)
+const CAMS = { dish: [[0, 7.2, 9.2], [0, 0.3, 0]], robot: [[FX - 3.4 + 1.05, 0.75, 2.5 + 1.25], [FX - 3.4, 0.28, 2.5]], overview: [[FX - 13, 15, 27], [FX - 5, 0, 1]] };
 let camTween = null, camMode = 'overview';
 function setCam(name, instant) {
   const p = CAMS[name][0].slice(), t = CAMS[name][1].slice();
@@ -260,14 +262,18 @@ function poseRover() {
 const field = new THREE.Group(); field.position.x = FX; scene.add(field);
 const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2418, roughness: 1 });
 const cropMat = new THREE.MeshStandardMaterial({ color: 0x3fae4c, roughness: 0.8 });
+const cropBed = new THREE.Group();
 const NCROP = 28; let crops, fieldSign, signTex, signCtx, roverGrp, wheels = [], cupGrp, clothMesh;
 {
-  const g = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 8), groundMat); g.position.y = -0.17; field.add(g);
+  const g = new THREE.Mesh(new THREE.BoxGeometry(32, 0.3, 32), groundMat); g.position.y = -0.17; field.add(g);
+  // tilled bed under the crop rows, so the working area still reads at true scale inside the 30 m fence
+  const bed = new THREE.Mesh(new THREE.BoxGeometry(9, 0.02, 8), new THREE.MeshStandardMaterial({ color: 0x33291b, roughness: 1 })); bed.position.y = -0.01; field.add(bed);
+  field.add(cropBed); cropBed.add(bed);
   crops = new THREE.InstancedMesh(new THREE.ConeGeometry(0.2, 0.55, 6), cropMat, NCROP);
   const m4 = new THREE.Matrix4();
   for (let i = 0; i < NCROP; i++) { m4.setPosition(-1.8 + (i % 7) * 0.6, 0.27, -1.4 + Math.floor(i / 7) * 0.75); crops.setMatrixAt(i, m4); }
-  field.add(crops);
-  for (let r = 0; r < 4; r++) { const ridge = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.08, 0.34), new THREE.MeshStandardMaterial({ color: 0x3a2f1e, roughness: 1 })); ridge.position.set(0, 0.02, -1.4 + r * 0.75); field.add(ridge); }
+  cropBed.add(crops);
+  for (let r = 0; r < 4; r++) { const ridge = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.08, 0.34), new THREE.MeshStandardMaterial({ color: 0x3a2f1e, roughness: 1 })); ridge.position.set(0, 0.02, -1.4 + r * 0.75); cropBed.add(ridge); }
   // weather mast
   const steel = new THREE.MeshStandardMaterial({ color: 0x9aa7ba, metalness: 0.7, roughness: 0.35 });
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 3.2, 8), steel); pole.position.set(3.6, 1.6, -2.8); field.add(pole);
@@ -372,6 +378,84 @@ function stepWorld(dtWall) {
   world.frost += (world.frostTarget - world.frost) * k; world.cold += ((world.freeze ? 1 : 0) - world.cold) * k;
   cropMat.color.copy(cA.copy(cGreen).lerp(cWhite, world.frost));
   groundMat.color.copy(cA.copy(cSoil).lerp(cRime, world.cold * 0.55));
+}
+
+// ---------- MuJoCo replay: drive the rover meshes from sim/runs/<run>/trajectory*.json ----------
+// pose_format: per body [x, y, z, qw, qx, qy, qz], MuJoCo world (Z-up, metres). Field origin = MuJoCo world origin.
+const rreplay = { on: false, data: null, demo: false, src: '', k: 0, playing: true, list: [] };
+const simRows = new THREE.Group(); simRows.visible = false; field.add(simRows);
+{
+  const rowMat = new THREE.MeshStandardMaterial({ color: 0x2e6b28, roughness: 0.9 });
+  for (const y of [-3.0, -1.5, 0.0, 1.5, 3.0]) { // sim/build_model.py ROW_YS, x 1..7, 0.3 m wide, 0.25 m tall
+    const r = new THREE.Mesh(new THREE.BoxGeometry(6, 0.25, 0.3), rowMat); r.position.set(4, 0.125, -y); simRows.add(r);
+  }
+}
+const goalMark = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.3, 32), new THREE.MeshBasicMaterial({ color: 0x76b900, side: THREE.DoubleSide, toneMapped: false }));
+goalMark.rotation.x = -Math.PI / 2; goalMark.position.y = 0.02; simRows.add(goalMark);
+const panelGeo = new THREE.BoxGeometry(0.012, 0.2, 0.6); panelGeo.translate(0, -0.1, 0); // MuJoCo panel: 0.6 m along y, hangs 0.2 m along -z
+const panels = [];
+for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(panelGeo, new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.45, side: THREE.DoubleSide, roughness: 0.6, depthWrite: false })); m.visible = false; field.add(m); panels.push(m); }
+const trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x76b900, transparent: true, opacity: 0.8 }));
+trail.visible = false; field.add(trail);
+function demoRoverTraj() { // clearly labelled fallback: a synthetic drive-to-row + deploy, same schema as sim/render.py
+  const steps = [], dt = 0.05;
+  for (let i = 0; i < 400; i++) {
+    const t = i * dt, u = Math.min(1, t / 12), x = -2 + 6 * (u * u * (3 - 2 * u)), y = 1.5 + 0.75 * Math.sin(u * Math.PI);
+    const yaw = Math.atan2(0.75 * Math.PI * Math.cos(u * Math.PI), 6 * 6 * u * (1 - u) + 1e-3) * (u < 1 ? 1 : 0);
+    const q = [Math.cos(yaw / 2), 0, 0, Math.sin(yaw / 2)], boom = Math.max(0, Math.min(Math.PI / 2, (t - 13) * 0.5));
+    const b = { chassis: [x, y, 0.062, ...q] };
+    ['fl', 'fr', 'rl', 'rr'].forEach((n) => { const a = -x / 0.06; b['wheel_' + n] = [x, y, 0.062, Math.cos(yaw / 2) * Math.cos(a / 2), -Math.sin(yaw / 2) * Math.sin(a / 2), Math.cos(yaw / 2) * Math.sin(a / 2), Math.sin(yaw / 2) * Math.cos(a / 2)]; });
+    steps.push({ t, reward: 0, boom_rad: boom, bodies: b });
+  }
+  return { run: 'demo', policy: 'none', decision: 'DEPLOY', dt, goal: [4, 1.5], steps };
+}
+const _q = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _p = new THREE.Vector3();
+async function loadRoverReplay() {
+  let list = [];
+  try { list = (await lab.listReplays()).rover; } catch (e) {}
+  rreplay.list = list;
+  const sel = $('rpFile');
+  if (sel) sel.innerHTML = list.length ? list.map((r, i) => `<option value="${i}">${r.run}/${r.file}</option>`).join('') : '<option>no sim/runs/*/trajectory.json</option>';
+  if (list.length) {
+    try { rreplay.data = await lab.loadReplay('rover', list[0].run, list[0].file); rreplay.demo = false; rreplay.src = list[0].run + '/' + list[0].file; }
+    catch (e) { rreplay.data = null; logEv('rover replay load failed: ' + e.message, 'err'); }
+  }
+  if (!rreplay.data || !Array.isArray(rreplay.data.steps) || !rreplay.data.steps.length) { rreplay.data = demoRoverTraj(); rreplay.demo = true; rreplay.src = 'DEMO'; }
+  setupRoverReplay();
+}
+async function pickRoverReplay(i) {
+  const r = rreplay.list[i]; if (!r) return;
+  try { rreplay.data = await lab.loadReplay('rover', r.run, r.file); rreplay.demo = false; rreplay.src = r.run + '/' + r.file; setupRoverReplay(); } catch (e) { logEv('rover replay: ' + e.message, 'err'); }
+}
+function setupRoverReplay() {
+  const d = rreplay.data; rreplay.k = 0;
+  $('rpScrub').max = d.steps.length - 1; $('rpScrub').value = 0;
+  if (d.goal) goalMark.position.set(d.goal[0], 0.02, -d.goal[1]);
+  const pts = d.steps.map((s) => s.bodies && s.bodies.chassis ? mjPos(s.bodies.chassis, new THREE.Vector3()).setY(0.03) : null).filter(Boolean);
+  trail.geometry.dispose(); trail.geometry = new THREE.BufferGeometry().setFromPoints(pts);
+  $('rpTag').innerHTML = rreplay.demo ? '<span class="mock">DEMO ANIMATION</span> no sim/runs/*/trajectory.json found: synthetic path' :
+    `<b>MuJoCo replay</b> ${rreplay.src} · policy ${d.policy || '?'} · ${d.decision || ''}${d.episode_metrics ? ' · success ' + d.episode_metrics.success : ''}`;
+}
+function setRoverReplay(on) {
+  rreplay.on = on; $('mjBtn').classList.toggle('on', on); $('rpBar').hidden = !on;
+  simRows.visible = trail.visible = on; cropBed.visible = !on; clothMesh.visible = !on; panels.forEach((m) => m.visible = on);
+  if (on && !rreplay.data) loadRoverReplay();
+  if (!on) { roverGrp.position.set(rover.x, 0, ROVER_Z); roverGrp.quaternion.identity(); wheels.forEach((w) => w.quaternion.identity()); }
+}
+function stepReplay(dt) {
+  const d = rreplay.data; if (!d) return;
+  const n = d.steps.length;
+  if (rreplay.playing) { rreplay.k += dt / (d.dt || 0.05); if (rreplay.k > n - 1 + 20) rreplay.k = 0; $('rpScrub').value = Math.min(n - 1, Math.floor(rreplay.k)); }
+  const i = Math.min(n - 1, Math.floor(rreplay.k)), st = d.steps[i], b = st.bodies || {};
+  if (b.chassis) {
+    mjPos(b.chassis, roverGrp.position); roverGrp.position.y -= PHYS.wheelR; mjQuat(b.chassis.slice(3), _qc).normalize(); roverGrp.quaternion.copy(_qc);
+    rover.x = roverGrp.position.x; rover.v = 0;
+    ['rr', 'fr', 'rl', 'fl'].forEach((nm, k) => { const w = b['wheel_' + nm]; if (w && wheels[k]) wheels[k].quaternion.copy(_qc).invert().multiply(mjQuat(w.slice(3), _q).normalize()); });
+  }
+  rover.act = PHYS.actStroke * Math.max(0, Math.min(1, (st.boom_rad || 0) / (Math.PI / 2))); poseRover();
+  panels.forEach((m, k) => { const c = b['cover_' + k]; if (!c) { m.visible = false; return; } m.visible = true; mjPos(c, m.position); mjQuat(c.slice(3), m.quaternion).normalize(); });
+  cupGrp.rotation.y += dt * 3;
+  $('rpPos').textContent = `step ${i + 1}/${n} · t=${(st.t ?? i * (d.dt || 0.05)).toFixed(2)} s · reward ${st.reward != null ? Number(st.reward).toFixed(3) : '-'} · boom ${((st.boom_rad || 0) * 57.3).toFixed(0)}°`;
 }
 
 // ---------- playback ----------
@@ -599,8 +683,11 @@ function frame(now) {
   pulseGeo.attributes.position.needsUpdate = true;
   for (const r of rings) { if (r.life <= 0) continue; r.life -= dt / 0.45; if (r.life <= 0) { r.grp.visible = false; continue; } r.mat.opacity = r.life * 0.9; const s = 1 + (1 - r.life) * 1.6; r.ring.scale.set(s, s, 1); }
   const rx0 = rover.x;
-  stepWorld(dt);
-  if (camMode === 'robot' && !camTween) { const dx = rover.x - rx0; camera.position.x += dx; controls.target.x += dx; }
+  if (rreplay.on) stepReplay(dt); else stepWorld(dt);
+  if (camMode === 'robot' && !camTween) {
+    if (rreplay.on) { roverGrp.getWorldPosition(_p); _p.y += 0.28; camera.position.add(_p.sub(controls.target)); controls.target.add(_p); }
+    else { const dx = rover.x - rx0; camera.position.x += dx; controls.target.x += dx; }
+  }
   updateTelemetry(dt);
   if (camTween) { camTween.k = Math.min(1, camTween.k + dt / 0.9); const k = camTween.k * camTween.k * (3 - 2 * camTween.k); camera.position.lerpVectors(camTween.p0, camTween.p1, k); controls.target.lerpVectors(camTween.t0, camTween.t1, k); if (camTween.k >= 1) camTween = null; }
   controls.update();
@@ -659,13 +746,24 @@ function demoTip() {
   showTip(m, { clientX: r.left + (v.x + 1) / 2 * r.width, clientY: r.top + (1 - v.y) / 2 * r.height });
 }
 
+// replay UI
+$('mjBtn').onclick = () => setRoverReplay(!rreplay.on);
+$('rpPlay').onclick = () => { rreplay.playing = !rreplay.playing; $('rpPlay').textContent = rreplay.playing ? 'Pause' : 'Play'; };
+$('rpScrub').oninput = () => { rreplay.k = Number($('rpScrub').value); };
+$('rpFile').onchange = () => pickRoverReplay(Number($('rpFile').value));
+lab.onReplaysChanged(() => { if (rreplay.on) loadRoverReplay(); else rreplay.data = null; if (surgUI) surgUI.refresh(); });
+const simreadyReady = addSimReady(field, lab).then((r) => { logP('SimReady props: ' + Object.entries(r.counts).map(([k, v]) => k + ' x' + v).join(', '), 'sys'); return r.counts; })
+  .catch((e) => { console.warn('SimReady props failed: ' + e.message); return null; });
+
 // ---------- tabs ----------
-let fleetUI = null;
+let fleetUI = null, surgUI = null;
 function setTab(name) {
   document.querySelectorAll('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
   document.querySelectorAll('.view').forEach((v) => v.hidden = v.id !== 'view-' + name);
   if (name === 'fleet' && !fleetUI) fleetUI = initFleet($('view-fleet'), lab, { conditions: () => [...new Set(['culture_teach', ...runs.map((r) => r.condition)])] });
   if (fleetUI) fleetUI.setActive(name === 'fleet');
+  if (name === 'surgical' && !surgUI) surgUI = initSurgical($('view-surgical'), lab, { selftest: SELFTEST });
+  if (surgUI) surgUI.setActive(name === 'surgical');
   if (name === 'runs') renderRunsTab();
   if (name === 'hardware') renderHardware();
   if (name === 'simulate') { resize(); drawAcc(); drawW(); drawLC(); }
@@ -699,6 +797,7 @@ function renderHardware() {
     try { const logs = await lab.listLogs(); logs.forEach((l) => { const o = document.createElement('option'); o.value = o.textContent = l; $('logSel').appendChild(o); }); } catch (e) {}
     logP('ready. Start a run on the left, or pick a repo log to tail.', 'sys');
     setTab(START_TAB);
+    if (QS.get('replay') === '1') { setRoverReplay(true); if (START_TAB === 'surgical' && surgUI) surgUI.startReplay(); }
     if (START_CAM === 'robot') setTimeout(demoTip, 6500);
     const first = DEFAULT_RUNS.find((n) => runs.some((r) => r.name === n)) || (runs[0] && runs[0].name);
     if (!SELFTEST) { if (first) await selectRun(first, true); return; }
@@ -714,6 +813,14 @@ function renderHardware() {
     report.playback = { seg, tSim, fps, roverX: rover.x, cloth: cloth.state };
     setTab('fleet'); await new Promise((r) => setTimeout(r, 4000));
     report.fleet = fleetUI ? fleetUI.status() : null; setTab('hardware'); report.hardwareRows = $('bomTable').rows.length; setTab('simulate');
+    report.simready = await simreadyReady;
+    setRoverReplay(true); await new Promise((r) => setTimeout(r, 2500));
+    report.roverReplay = { src: rreplay.src, demo: rreplay.demo, steps: rreplay.data ? rreplay.data.steps.length : 0, k: rreplay.k, x: roverGrp.position.x };
+    setRoverReplay(false);
+    setTab('surgical'); await new Promise((r) => setTimeout(r, 6000));
+    report.surgical = surgUI ? surgUI.status() : null;
+    if (surgUI) { surgUI.startReplay(); await new Promise((r) => setTimeout(r, 2500)); report.surgicalReplay = surgUI.status(); }
+    setTab('simulate');
   } catch (e) { report.errors.push(String(e && e.stack || e)); }
   if (SELFTEST) lab.selftestReport(report);
 })();

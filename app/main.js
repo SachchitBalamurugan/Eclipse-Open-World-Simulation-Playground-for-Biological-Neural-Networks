@@ -237,6 +237,57 @@ handle('conditions', runnableConditions);
 handle('start-run', startRun);
 handle('list-logs', listLogs);
 handle('tail-log', tailLog);
+// ---------- assets + replay files (sim/runs/*/trajectory*.json, surgical/results/trajectory.json) ----------
+const ASSETS = path.join(__dirname, 'assets');
+const SIM_RUNS = path.join(REPO, 'sim', 'runs');
+const SURG_RESULTS = path.join(REPO, 'surgical', 'results');
+const PROPS_XML = path.join(REPO, 'assets', 'simready', 'mjcf', 'props.xml');
+async function readAsset(rel) {
+  if (rel === 'simready/props.xml') { // canonical layout lives in assets/simready/mjcf; app copy is the fallback
+    try { return await fsp.readFile(PROPS_XML); } catch (e) {}
+  }
+  if (typeof rel !== 'string' || rel.includes('..') || !/^[A-Za-z0-9_./-]+$/.test(rel)) throw new Error('bad asset path');
+  return fsp.readFile(path.join(ASSETS, rel));
+}
+async function listReplays() {
+  const rover = [];
+  let dirs = [];
+  try { dirs = (await fsp.readdir(SIM_RUNS, { withFileTypes: true })).filter((d) => d.isDirectory()); } catch (e) {}
+  for (const d of dirs) {
+    let files = [];
+    try { files = (await fsp.readdir(path.join(SIM_RUNS, d.name))).filter((f) => /^trajectory.*\.json$/.test(f)); } catch (e) {}
+    for (const f of files) {
+      try { const st = await fsp.stat(path.join(SIM_RUNS, d.name, f)); rover.push({ run: d.name, file: f, mtime: st.mtimeMs, size: st.size }); } catch (e) {}
+    }
+  }
+  // newest first, but prefer the canonical trajectory.json of a run over smoke tests
+  rover.sort((a, b) => (b.file === 'trajectory.json') - (a.file === 'trajectory.json') || b.mtime - a.mtime);
+  let surgical = null;
+  try { const st = await fsp.stat(path.join(SURG_RESULTS, 'trajectory.json')); surgical = { file: 'surgical/results/trajectory.json', mtime: st.mtimeMs, size: st.size }; } catch (e) {}
+  return { rover, surgical };
+}
+async function loadReplay(kind, run, file) {
+  let p;
+  if (kind === 'surgical') p = path.join(SURG_RESULTS, 'trajectory.json');
+  else if (kind === 'rover' && safeName(run) && safeName(file) && /^trajectory.*\.json$/.test(file)) p = path.join(SIM_RUNS, run, file);
+  else throw new Error('bad replay request');
+  // Python's json writes NaN / Infinity, which JSON.parse rejects: map them to null
+  return JSON.parse((await fsp.readFile(p, 'utf8')).replace(/(?<!["\w])-?(NaN|Infinity)(?!["\w])/g, 'null'));
+}
+const watchers = [];
+let replayTimer = null;
+function watchReplays() {
+  const ping = (fn) => { if (!/trajectory.*\.json$/.test(String(fn || 'trajectory.json'))) return; clearTimeout(replayTimer); replayTimer = setTimeout(() => send('replays-changed', {}), 1500); };
+  for (const dir of [SIM_RUNS, SURG_RESULTS]) {
+    try { watchers.push(fs.watch(dir, { recursive: true }, (_ev, fn) => ping(fn))); } catch (e) {
+      // directory may not exist yet: poll for it
+      const t = setInterval(() => { if (fs.existsSync(dir)) { clearInterval(t); try { watchers.push(fs.watch(dir, { recursive: true }, (_ev, fn) => ping(fn))); ping(); } catch (e2) {} } }, 5000);
+    }
+  }
+}
+handle('read-asset', readAsset);
+handle('list-replays', listReplays);
+handle('load-replay', loadReplay);
 handle('selftest-report', async (report) => {
   await fsp.writeFile(path.join(__dirname, 'selftest.json'), JSON.stringify(report, null, 2));
   if (SELFTEST) { await capture(); setTimeout(() => app.quit(), 200); }
@@ -341,12 +392,12 @@ function createWindow() {
   win.webContents.on('console-message', (_e, level, message, line, source) => {
     if (debug) fs.appendFileSync(clog, '[' + level + '] ' + message + ' (' + path.basename(String(source)) + ':' + line + ')\n');
   });
-  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: SELFTEST ? '1' : '0', tab: argVal('tab') || 'simulate', camera: argVal('camera') || 'overview' } });
+  win.loadFile(path.join(__dirname, 'index.html'), { query: { selftest: SELFTEST ? '1' : '0', tab: argVal('tab') || 'simulate', camera: argVal('camera') || 'overview', replay: process.argv.includes('--replay') ? '1' : '0' } });
   if (SHOT) win.webContents.once('did-finish-load', () => setTimeout(async () => { await capture(); app.quit(); }, 9000));
   if (SELFTEST) setTimeout(() => app.quit(), 200000);
   win.on('closed', () => app.quit());
 }
 
-app.whenReady().then(() => { ensureFleetServer().catch(() => {}); createWindow(); });
-app.on('before-quit', stopFleetServer);
+app.whenReady().then(() => { ensureFleetServer().catch(() => {}); createWindow(); watchReplays(); });
+app.on('before-quit', () => { stopFleetServer(); watchers.forEach((w) => { try { w.close(); } catch (e) {} }); });
 app.on('window-all-closed', () => { for (const c of children) { try { c.kill(); } catch (e) {} } stopFleetServer(); app.quit(); });

@@ -16,6 +16,10 @@ contextBridge.exposeInMainWorld('lab', {
   fleetGet: () => call('fleet-get'),
   fleetPost: (p, body) => call('fleet-post', p, body),
   fleetPopout: (ids) => call('fleet-popout', ids),
+  readAsset: (rel) => call('read-asset', rel),
+  listReplays: () => call('list-replays'),
+  loadReplay: (kind, run, file) => call('load-replay', kind, run, file),
+  onReplaysChanged: (fn) => ipcRenderer.on('replays-changed', () => fn()),
   onRunLog: (fn) => ipcRenderer.on('run-log', (_e, p) => fn(p)),
   onRunDone: (fn) => ipcRenderer.on('run-done', (_e, p) => fn(p)),
 });

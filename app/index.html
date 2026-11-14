@@ -52,12 +52,24 @@ canvas.chart{width:100%;display:block;background:#050505;border:1px solid var(--
 #tip{position:absolute;display:none;z-index:8;max-width:270px;background:#0d0d0d;border:1px solid var(--acc);padding:7px 9px;pointer-events:none}
 #tip b{display:block;font-size:12px;margin-bottom:2px}#tip span{display:block;color:var(--dim);font-size:11px}#tip .mono{color:var(--acc);margin-top:3px;font-size:10.5px}
 #cams{top:10px}
+#rpBar{position:absolute;left:10px;right:10px;bottom:62px;display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.85);border:1px solid var(--line);padding:5px 8px;z-index:7;font-size:11px}
+#rpBar[hidden]{display:none}#rpBar #rpScrub{flex:1;min-width:80px;padding:0}#rpBar #rpPos{font:11px var(--mono);color:var(--dim);min-width:270px}#rpBar select{max-width:220px}
+#rpTag .mock{margin-right:6px}
+.surg{display:grid;grid-template-columns:minmax(0,1fr) 320px;height:100%;gap:1px;background:var(--line)}
+.sviz{position:relative;background:#000;min-height:0;overflow:hidden}.sviz canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sbadge{position:absolute;top:10px;left:10px;padding:4px 9px;border:1px solid #6a4a12;background:rgba(26,18,4,.9);color:#ffcf7a;font-size:11px;z-index:5}
+.shud{position:absolute;left:10px;top:42px;font:11px var(--mono);color:var(--dim);z-index:5}
+.stag{position:absolute;left:10px;bottom:26px;font-size:11px;z-index:5;background:rgba(0,0,0,.8);padding:4px 8px;border:1px solid var(--line)}.stag:empty{display:none}.stag .mock{margin-right:6px}
+.spanel{min-height:0}.sj{display:grid;grid-template-columns:96px minmax(0,1fr) 62px;gap:6px;align-items:center;font-size:10.5px;color:var(--dim);margin:2px 0}.sj input{padding:0}.sj em{font-style:normal;text-align:right;color:var(--ink);font-size:10.5px}
+.sread{font-size:11px;line-height:1.6;white-space:pre}.srow{display:flex;gap:6px;margin-bottom:6px}.srow select{flex:1;min-width:0}.spos{font-size:10.5px;margin-top:4px;min-height:14px}
+.sheat{width:200px;height:200px;display:block;border:1px solid var(--line);image-rendering:pixelated}
+.credits{position:absolute;left:10px;bottom:56px;font-size:9.5px;color:#6a6a6a;z-index:5;pointer-events:none}
 </style>
 </head>
 <body>
 <nav id="topnav">
   <div id="brand"><i></i>NeuroRover Sim <small>frost-guard benchmark</small></div>
-  <div id="tabs"><button data-tab="simulate" class="on">Simulate</button><button data-tab="runs">Runs</button><button data-tab="fleet">Fleet</button><button data-tab="hardware">Hardware</button></div>
+  <div id="tabs"><button data-tab="simulate" class="on">Simulate</button><button data-tab="runs">Runs</button><button data-tab="fleet">Fleet</button><button data-tab="hardware">Hardware</button><button data-tab="surgical">Surgical</button></div>
   <div id="navright"><span class="simbadge">Simulated culture model - no living neurons</span></div>
 </nav>
 <section class="view" id="view-simulate">
@@ -83,7 +95,9 @@ canvas.chart{width:100%;display:block;background:#050505;border:1px solid var(--
   <div id="centre">
     <canvas id="gl"></canvas>
     <div id="badge">Simulated culture model - no living neurons</div>
-    <div id="cams"><button data-cam="dish">Dish</button><button data-cam="robot">Robot</button><button data-cam="overview" class="on">Overview</button><button id="bloomBtn" class="on">Bloom</button></div>
+    <div id="cams"><button data-cam="dish">Dish</button><button data-cam="robot">Robot</button><button data-cam="overview" class="on">Overview</button><button id="mjBtn" title="drive the rover from a recorded MuJoCo trajectory (sim/runs)">MuJoCo replay</button><button id="bloomBtn" class="on">Bloom</button></div>
+    <div id="rpBar" hidden><span id="rpTag"></span><select id="rpFile"></select><button id="rpPlay">Pause</button><input id="rpScrub" type="range" min="0" max="0" value="0"><span id="rpPos"></span></div>
+    <div class="credits">Field props: NVIDIA SimReady assets (CC-BY-4.0)</div>
     <div id="hud"></div>
     <div id="tip"></div>
     <div id="telem"></div>
@@ -127,6 +141,7 @@ canvas.chart{width:100%;display:block;background:#050505;border:1px solid var(--
   <div class="card"><h2>Benchmark AUC by training budget</h2><table id="benchBig"></table><h2>Hyperparameter variants</h2><table id="variantsBig"></table></div></div>
 </div></section>
 <section class="view" id="view-fleet" hidden></section>
+<section class="view" id="view-surgical" hidden></section>
 <section class="view" id="view-hardware" hidden><div class="page">
   <h1>Hardware</h1><p class="sub">Frost-guard rover built from currently sold parts (hardware/BOM.md). The 3D rover in Simulate is assembled from these parts at true scale; hover or click a part there for its spec. * = estimated price. The culture itself would run on a CL1 / Cortical Cloud MEA; the rover talks to it over the network.</p>
   <div class="cards"><div class="card" style="grid-column:1/-1"><h2>Bill of materials</h2><table id="bomTable" class="wrap"></table></div>
