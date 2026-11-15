@@ -1,61 +1,145 @@
-# NeuroRover: a frost-guard robot driven by a simulated neuron culture
+# Eclipse: A New ERA of training Biological Neural Networks
 
 - **Team ID:** TEAM_ID_HERE
-- **Sponsor prizes entered:** none
+- **Sponsor prizes entered (if any):** none
 
-![Learning curves](neurorover/analysis/fig_learning_curves.png)
+![Eclipse fleet grid: 4 Freestyle VMs training 4 simulated cultures in parallel](landing/assets/shot-eclipse-fleet.png)
 
 ## Problem
 
-Companies like Cortical Labs and FinalSpark rent out living neuron cultures on electrode arrays, and the pitch is that biological neurons learn from far fewer examples than silicon. Testing that is expensive (Cortical Cloud is about $300 a week per unit) and most of the work isn't the neurons anyway. It's the plumbing: encoding a task into stimulation, reading spikes back out, closing the loop fast enough, and having a fair benchmark to compare against.
+Biological neural networks (BNNs) are living neuron cultures grown on electrode arrays. Companies like Cortical Labs and FinalSpark now rent them out, and the claim is that they learn from far fewer examples than silicon. Two groups have this problem:
 
-So we built the whole pipeline with no living cells. A simulated culture sits behind the real Cortical Labs CL API, it controls a "frost-guard robot" on a task built from the hackathon's freeze data, and we benchmark it against ordinary models at matched sample counts. When someone does pay for wetware time, the same code and the same benchmark run on real neurons.
+- **Wetware researchers.** Testing the claim is expensive: Cortical Cloud costs about $300 a week per unit. Most of the work isn't the neurons anyway. It's the plumbing: encoding a task into stimulation, decoding spikes into actions, closing the loop fast enough, and having a fair benchmark.
+- **Robotics teams who want to try BNN controllers.** There is no tool that lets you take *your* robot, train a BNN controller for it in simulation at scale, and then hand a lab a protocol it can run on a living culture.
 
-A good result here is not "the simulation learns." It's a working harness that can tell you whether a culture learns, and how it compares to logistic regression given the same 25 to 200 examples.
+**A successful result** is not "the simulation learns." It is a platform that does three things:
+1. Trains any robot with a BNN controller in simulation, across many VMs in parallel.
+2. Tells you honestly whether the culture learns, against a fair baseline.
+3. Exports the closed-loop protocol (electrode map, encoder/decoder, teaching schedule, calibration and safety limits) so the same experiment can run on real neurons.
 
 ## What we built
 
-The robot's job: every station-night, decide whether to deploy frost protection (cover or heater) or hold. It sees lagged weather from 3 to 7 days earlier, plus season and location, from the `freeze-preparation` challenge data (NOAA stations, 96k training rows). The answer is whether that night's low actually went below 0 C.
+**Eclipse** is a desktop studio, Python backend and website for training robots with BNN controllers. Every controller in this repo is a **simulated** Izhikevich neuron culture. No living neurons were used.
 
-1. **Simulated culture** (`neurorover/culture/core.py`). 1,024 Izhikevich neurons (80% excitatory, 20% inhibitory) on an 8x8 grid of electrodes, 16 neurons per electrode, with distance-dependent local wiring plus a sparse projection from the sensory rows to the motor rows. We tuned it so the spontaneous activity looks culture-like: about 5 Hz per neuron and a network burst every 2.5 s or so. Stimulating an electrode raises its own firing about 9x over sham (14.3 vs 1.6 spikes per 20 ms), much less on its neighbours, then there's a short post-stimulus suppression.
-2. **Electrode map and codec** (`neurorover/interface/codec.py`). Electrodes 0 to 13 are sensory: each feature becomes 0 to 4 pulses at 100 Hz on its own electrode. Electrodes 40 to 47 vote DEPLOY and 48 to 55 vote HOLD (spike counts in a 50 ms window). 56 to 59 carry feedback and 60 to 63 carry the reward signal for R-STDP.
-3. **Five ways for the culture to learn:**
-   - `culture_frozen`: no plasticity, fixed motor readout. This is the control.
-   - `culture_fep`: DishBrain-style feedback. A correct decision gets a predictable synchronous burst; a wrong one gets random pulses. The culture never sees a reward number, and STDP runs underneath.
-   - `culture_rstdp`: reward-modulated STDP with eligibility traces on the sensory-to-motor synapses. The "dopamine electrode" is a modelling assumption; a real dish doesn't have one.
-   - `culture_teach`: paired-stimulation teaching. After every trial we replay the sensory pattern and stimulate the correct motor region 3 ms after each sensory pulse (and the other region 3 ms before), so spike-timing plasticity strengthens the sensory-to-correct-motor pathway. It needs the label but only uses stimulation, so the same protocol could run on a real MEA.
-   - `culture_reservoir`: the culture stays frozen and a logistic readout is trained on its 64-electrode spike counts (the Brainoware approach). Here the learning happens in silicon.
-4. **Real CL API path** (`neurorover/culture/izh_source.py`, `neurorover/run_cl.py`). The culture is a `cl.sim.SimulatorDataSource`, so the loop uses `cl.open()`, `neurons.loop()`, stim plans and `tick.analysis.spikes`, the same calls you'd make on a CL1. Pass `--hardware` and it registers no simulated source.
-5. **Benchmark** (`neurorover/bench.py`). There are 10 conditions, 50 seeds, and training budgets of 25, 50, 100 and 200 class-balanced samples. Every condition is scored by AUC on the same fixed validation subset (150 freeze nights, 150 non-freeze).
-6. **Held-out submission** (`neurorover/submit_heldout.py`). The reservoir culture and a matched logistic model each produce a full freeze-challenge submission (37,842 rows). Both pass the challenge's `check_submission.py` (outputs in `neurorover/submissions/`).
-7. **Demo pages** (`demo/index.html`, `demo/lab.html`). `lab.html` is a lab-console view: the electrode well, scrolling voltage traces (waveform shapes are synthesized from the logged spike times), a 64-channel raster and a per-run trial explorer with CSV downloads.
-   `demo/index.html`: Evaluation mode plays back recorded trials: the electrode grid lights up with spikes, the robot deploys or holds, and a scoreboard keeps count. Training mode shows the first 40 training trials with the feedback phase, a rolling accuracy line, weight drift, and a heatmap of which electrodes fire.
-8. **Per-run signal logs** (`neurorover/record_run.py`). One command saves every spike and stim of a run as CSV under `runs/<condition>_s<seed>/`, plus per-trial results, per-electrode counts for each trial window, and weight drift for the plastic conditions. Two example runs are committed (about 5 MB each, roughly 350k spikes).
+### Works today
 
-9. **3D desktop app** (`app/`, Electron + three.js). The rover is built at true scale from the real parts in `hardware/BOM.md` (21 line items, about $1,190 and 10.8 kg, with estimates marked); hover any part for its spec, and drive physics use the BOM's motor torque, wheel size and mass. A Fleet tab shows every cloud VM training at once as live tiles, each of which can pop out into its own window. A 3D dish with all 1,024 model neurons lighting up as they spike, stim beams by kind, and a field scene where a rover (simple rigid-body physics) drives out and drops a mass-spring frost cover on DEPLOY nights. It plays any recorded run, shows accuracy, weight drift and learning curves, and can start a new recorded run with a live log. Launch with `app\start.bat` or `cd app && npm install && npm start`.
-10. **Cloud fleet dashboard** (`fleet/`). `python fleet/server.py` serves http://localhost:8770, a live view of the Freestyle VMs running benchmark shards (CPU, memory, progress, log tail) with launch / collect / teardown.
-11. **Weather world model** (`neurorover/world/`). Fitted on the training split only: per-station seasonal means plus a VAR(1) on daily min/max temperature anomalies, reconstructed from the lagged features. One-day-ahead error on validation is 2.27 C for the daily low, against 2.51 C for persistence and 3.35 C for climatology. It can imagine new station-nights in the same 15-feature format (imagined freeze rate 5.6% vs 5.9% real), and `env.py` wraps a station's season as a gym-style environment (reward -1 per deployment, -10 for an unprotected freeze night).
+1. **Eclipse desktop app** (`app/`, Electron + three.js + GSAP). It walks through six steps: Import → Configure BNN → Choose platform → Train → Evaluate → Deploy.
+   - **Import any robot:** MJCF, URDF or a zip with meshes. The app auto-detects the end-effector and adds actuators if the model has none.
+   - **Live training:** a 3D viewport, an 8×8 electrode spike heatmap and an error chart.
+   - **Fleet grid:** one card per VM with live episode progress and an error sparkline.
+   - **Run history:** every past run can be replayed in 3D or downloaded as a zip.
+   - **Deploy:** exports a sim-to-real bundle and dry-runs it against a mock electrode array.
+   - The original tabs are still there: the culture dish, the rover field, the hardware BOM and the surgical robot.
+2. **Studio backend** (`bnn_platform/studio/`): `python -m bnn_platform studio list|import|scene|train|fleet-status|runs|replay|pack`.
+   - **Generic BNN reach task:** works for any MuJoCo-loadable robot. It generalizes the paired-stimulation "teach" rule used for the surgical robot.
+   - **Where it trains:** locally, or on N Freestyle VMs with one seed per VM; results are pulled back automatically.
+   - **Protocol:** the UI talks to the backend through a JSON-lines interface, documented in [`docs/STUDIO_CONTRACT.md`](docs/STUDIO_CONTRACT.md).
+3. **Sim-to-real export** (`bnn_platform/transfer/`, [`docs/SIM_TO_REAL.md`](docs/SIM_TO_REAL.md)).
+   - **What it packages:** a trained run, as a hardware bundle containing:
+     - electrode map and encoder/decoder;
+     - teaching protocol and stimulation schedule;
+     - calibration protocol;
+     - safety limits;
+     - a simulated reference recording.
+   - **Targets:**
+     - generic MEA (tested against a mock array);
+     - Cortical Labs CL1 (backend written against the `cl` SDK but never executed);
+     - MCS and MaxWell (layout stubs).
+   - **Runtime bridge:** a mock array runs the loop end to end (calibrate, remap electrodes, closed-loop control). Its validator runs 48 checks per bundle.
+4. **Simulated culture** (`neurorover/culture/core.py`): 1,024 Izhikevich neurons (80% excitatory, 20% inhibitory) on an 8×8 electrode grid. It is tuned to culture-like activity (about 5 Hz per neuron, network bursts every ~2.5 s, 9× evoked response to stimulation). Five learning rules are implemented:
+   - frozen (no plasticity, the control);
+   - DishBrain-style feedback;
+   - reward-modulated STDP;
+   - paired-stimulation teaching;
+   - a reservoir with a trained logistic readout.
+   The culture also runs behind the real Cortical Labs CL API (`neurorover/run_cl.py`), so the same loop code targets a CL1.
+5. **Robots and tasks.**
+   - **Frost-guard decision task:** the original benchmark. Every station-night, decide whether to deploy frost protection or hold, using NOAA freeze data. 10 conditions, 50 seeds, 25 to 200 training samples (`neurorover/bench.py`).
+   - **MuJoCo rover** (`sim/`): PPO drives to a field station and deploys a frost cover, then runs a 30-night culture-driven season.
+   - **NVIDIA SimReady surgical cart** (`surgical/`): a 47-body, 46-joint MuJoCo model of a four-arm surgical cart. A culture controls arm 1. Procedural stress scenarios and a learned world model are adapted from ORBIT-Surgical, SuFIA and SuFIA-BC (mapping in [`docs/RESEARCH_PAPERS.md`](docs/RESEARCH_PAPERS.md)).
+   - **Example 4-joint arm** (`bnn_platform/examples/arm3.xml`), used to test the import-anything path.
+6. **Parallel training on Freestyle VMs** (`sweep/`, `bnn_platform/studio/fleet.py`): benchmark shards, the surgical learning-rate sweep and the scenario suite all ran on Freestyle VMs.
+7. **Weather world model and environment data** (`neurorover/world/`, `neurorover/envdata/`):
+   - the world model is a VAR(1) on temperature anomalies, used to imagine training nights;
+   - Open-Meteo conditions are joined to the NOAA stations.
+8. **Website** (`landing/`): a three.js scroll journey (eclipse → neuron culture → robot → VM fleet), the demo video, results and the Windows download.
 
-What's incomplete: we never ran on real neurons. The rover physics policy is a single training seed, the environment-data archive is partial, and none of these simulations establish performance on hardware.
+### Still incomplete
 
-## Platform: train any robot with a BNN
+- **Real neurons:** nothing has been run on living tissue.
+- **Surgical reaching:** the BNN controller does not yet reach surgical targets reliably (see Evidence).
+- **Vendor hardware:** the CL1 backend is untested, and MCS and MaxWell are stubs. All stimulation defaults must be validated against vendor and lab limits.
+- **Untested import paths:** URDF and zip import are written but have not been tried with real third-party files.
+- **Packaged app:** the self-test and the "Python missing" dialog have not been verified in the packaged build, and it has not been tested on a clean machine.
+- **Single-seed results:** the rover physics policy and the arm3 result each come from one training seed.
+- **Partial data:** the environment-data archive is only partially fetched.
 
-`bnn_platform/` puts the pieces above behind one CLI. You can train a simulated-culture controller for any registered robot on your own machine, or fan the runs out in parallel across Freestyle VMs (one job per VM). The BNN is the simulated Izhikevich culture in `neurorover/culture/`; no living tissue is involved.
+## Run or view the demo
 
-```bash
-python -m bnn_platform robots                                   # rover, surgical_reach: env + culture controller
-python -m bnn_platform train --robot surgical_reach --lr 0.05 --episodes 60
-python -m bnn_platform eval  --robot surgical_reach             # procedural stress scenarios + IK world model
-python -m bnn_platform train --robot rover --episodes 30        # culture DEPLOY/HOLD + MuJoCo rover season
-python -m bnn_platform fleet sweep --robot surgical_reach --lrs 0.02 0.05 0.1 0.2 --dry-run
-python -m bnn_platform fleet status | collect | teardown        # wraps sweep/run_jobs.sh
+**View without installing anything:**
+- **Website:** https://eclipse-blush-phi.vercel.app (public).
+- **Demo video (30 s):** [`demo/video/eclipse_demo.mp4`](demo/video/eclipse_demo.mp4). It shows a simulated culture training a 4-joint arm live, then 4 real Freestyle VMs training 4 cultures in parallel. A longer 2:15 walkthrough covering import, training, fleet, run history and export is at [`demo/video/bnn_robot_studio_demo.mp4`](demo/video/bnn_robot_studio_demo.mp4); it was recorded before the rename to Eclipse.
+- **Windows download** (v0.1.0, 172 MB, unsigned): https://sr6t0xysfmhdyfpp.public.blob.vercel-storage.com/downloads/Eclipse-0.1.0-win-x64.zip
+  - SHA-256 is listed in [`landing/downloads/manifest.json`](landing/downloads/manifest.json).
+  - Needs Windows 10/11 x64 and Python 3.10–3.12 installed (`py` or `python`).
+  - On first launch it creates its own environment in `%LOCALAPPDATA%\Eclipse`.
+
+**Run from source** (Python 3.12 and Node 20+; bash for the `VAR=1 cmd` lines, which means Git Bash on Windows):
+
+```sh
+python -m venv .venv
+.venv/Scripts/pip install -r requirements-eclipse.txt matplotlib   # bin/ instead of Scripts/ on mac/linux
+
+# Eclipse desktop app
+cd app && npm install && npm start            # opens the Studio tab
+#   scripted 30 s tour: node_modules/electron/dist/electron.exe . --demo-short --demo-fake-fleet
+cd ..
+
+# Studio from the command line
+.venv/Scripts/python -m bnn_platform studio import --file bnn_platform/examples/arm3.xml
+.venv/Scripts/python -m bnn_platform studio train --robot arm3 --episodes 20          # local, streams JSON lines
+.venv/Scripts/python -m bnn_platform studio train --robot arm3 --platform fleet --vms 4 --dry-run
+.venv/Scripts/python -m bnn_platform.transfer export --run surgical/results/culture_teach.pkl --target generic
+.venv/Scripts/python -m bnn_platform.transfer run --bundle surgical/results/export/generic --backend mock --episodes 2
+
+# Frost-guard benchmark (results are committed; a job skips if its result JSON exists)
+.venv/Scripts/python -m neurorover.bench --condition culture_reservoir --seed 0
+.venv/Scripts/python -m neurorover.analysis.summarize      # writes neurorover/analysis/summary.md
+CL_SDK_ACCELERATED_TIME=1 CL_SDK_VISUALISATION=0 \
+  .venv/Scripts/python -m neurorover.run_cl --condition culture_reservoir --seed 0 --budget 25 --eval 40
 ```
 
-Every command runs an existing entry point (`surgical/train_culture.py`, `surgical.research_eval`, `sim.night_loop`, `sim.eval`, `sweep/run_jobs.sh`). Add `--dry-run` to any command to print it without running it. To add a robot, copy [`bnn_platform/robots/template.py`](bnn_platform/robots/template.py) and fill in three adapter functions: observation to stimulation (`encode`), spikes to action (`decode`), and a teaching or reward signal (`teach`). Then call `register_robot(...)`. The template's toy closed loop runs on its own: `python -m bnn_platform.robots.template 5`.
+**Before you start:**
+- **Freeze-benchmark data:** clone the hackathon resources repo into `resources/`. The code reads `resources/challenges/freeze-preparation/09-freeze/data.json.gz`.
+- **Real fleet runs:** need a Freestyle account (`npx freestyle@latest login`). Without one, use `--dry-run`, or `--demo-fake-fleet` in the app.
+- **This repository is private:** judges need to be added as collaborators to open it.
+- **If a service is down at the table:** the committed video, screenshots (`app/shot-eclipse-*.png`, `landing/assets/`) and result files below are the evidence.
 
-The surgical scenarios borrow ideas from ORBIT-Surgical, SuFIA and SuFIA-BC. [docs/RESEARCH_PAPERS.md](docs/RESEARCH_PAPERS.md) maps what we took from each paper and what we did not build (no Isaac Sim rendering, tissue, suturing or LLM planning).
+## Evidence and limitations
 
-**Paper-inspired surgical scenarios on 4 Freestyle VMs** (seeds 100-103, 12 episodes per cell; see [surgical/RESEARCH_RESULTS.md](surgical/RESEARCH_RESULTS.md)). Success / median final error:
+All controllers below are simulated cultures. Each result names its baseline.
+
+**1. Frost-guard decision benchmark.** Validation AUC, mean over 50 seeds (10 local, 40 on Freestyle VMs), with 95% bootstrap CIs. Full table: [`neurorover/analysis/summary.md`](neurorover/analysis/summary.md).
+
+| Condition | 25 | 50 | 100 | 200 |
+|---|---:|---:|---:|---:|
+| culture_frozen (control) | 0.49 | 0.48 | 0.49 | 0.49 |
+| culture_fep (DishBrain-style) | 0.49 | 0.49 | 0.50 | 0.53 |
+| culture_rstdp | 0.49 | 0.49 | 0.49 | 0.49 |
+| culture_teach (paired stimulation) | 0.55 | 0.58 | 0.67 | 0.73 |
+| culture_reservoir | 0.83 | 0.86 | 0.87 | 0.87 |
+| logistic (same quantized input) | 0.84 | 0.86 | 0.88 | 0.89 |
+| MLP (same quantized input) | 0.81 | 0.84 | 0.85 | 0.86 |
+| logistic (raw features) | 0.87 | 0.89 | 0.90 | 0.91 |
+| rule: low 3 days ago | 0.86 | 0.86 | 0.86 | 0.86 |
+
+- **Paired-stimulation teaching** is the only rule where the culture learns by itself. It beats the frozen control at every budget (+0.24 at 200; paired CIs exclude zero) but stays below logistic regression. So it learns more slowly, not faster.
+- **Reward-only rules don't learn.** DishBrain-style feedback and R-STDP stay near chance. Two public DishBrain replications hit the same wall.
+- **The reservoir culture** matches logistic regression at 25 samples and falls behind at 50 and up. Here the learning comes from the silicon readout.
+- **Imagined training nights** from the world model raised teach AUC from 0.56 to 0.67 at 25 real nights (+0.11, CI [+0.07, +0.15]; [`neurorover/world/REPORT.md`](neurorover/world/REPORT.md)). This doesn't separate "imagined data" from "more teaching trials".
+- **The CL API path** matches the fast harness: 0.89 vs 0.87 AUC on the same 100 rows, one seed.
+
+**2. Surgical cart, paper-inspired stress scenarios on 4 Freestyle VMs** (12 episodes per cell). Success rate / median final error; success means within 1 cm. Source: [`surgical/RESEARCH_RESULTS.md`](surgical/RESEARCH_RESULTS.md).
 
 | Scenario | culture_teach | culture_frozen | IK (DLS) |
 |---|---|---|---|
@@ -66,92 +150,54 @@ The surgical scenarios borrow ideas from ORBIT-Surgical, SuFIA and SuFIA-BC. [do
 | actuator mismatch | 0%, 244 mm | 0%, 470 mm | 100%, 2.7 mm |
 | combined stress | 0%, 373 mm | 0%, 580 mm | 50%, 9.8 mm |
 
-The taught culture gets about 2x closer than the frozen one but reaches no target. The learned world model beats a no-motion baseline by 23% one step ahead (14.1 vs 18.3 mm) and at 5 steps, but not at 10.
+- **Learning but no hits:** the taught culture ends about 2× closer than the frozen one, but reaches no target. IK and PPO (98% on 50 held-out targets; [`surgical/REPORT.md`](surgical/REPORT.md)) are engineering references.
+- **Learning-rate sweep:** 4 rates on 4 VMs. None reached a target.
+- **World model:** beats a no-motion baseline by 23% one step ahead (14.1 vs 18.3 mm), but not at 10 steps.
 
-## Run or view the demo
+**3. Example 4-joint arm (Studio generic path).** One seed, 20 episodes, 10 held-out targets with learning off.
+- **Taught culture:** median error went from **394 mm to 91 mm**, and it reached 1 of 10 targets.
+- **Frozen control:** got worse on the same targets (394 → 419 mm).
 
-You need Python 3.12 (the CL SDK requires it) and the hackathon resources repo cloned into `resources/` (the code reads `resources/challenges/freeze-preparation/09-freeze/data.json.gz`). The `VAR=1 cmd` lines need bash (Git Bash on Windows).
+**4. MuJoCo rover.**
+- **Driving:** PPO warm-started from 120 demonstration drives reached **72%** success on 100 randomized episodes, against **59%** for the hand-written controller. Plain PPO without demonstrations reached 0%.
+- **Season:** a 30-night culture-driven season protected 3 of 11 freeze nights. Source: [`sim/README.md`](sim/README.md).
 
-```sh
-python -m venv .venv
-.venv/Scripts/pip install cl-sdk==1.0.0 numpy matplotlib      # bin/ instead of Scripts/ on mac/linux
+**5. Sim-to-real bundle.**
+- **Fidelity:** replaying the bundle reproduces the simulated controller's actions exactly (maximum difference 0.0).
+- **Mock run:** calibration found 9 of 64 electrodes responsive. Refitting the decoder didn't pass acceptance (held-out R² below the floor), so the bundle kept the simulation's decoder.
+- **Remapping hurts:** on hardware with unusable electrodes, moving their roles elsewhere degrades the trained culture (final error 522 vs 181 mm). This confirms that trained weights are tied to electrode layout.
 
-# one benchmark job (30 s to 2 min). Results are committed, so it skips silently
-# if neurorover/results/<condition>_s<seed>.json exists; delete that file to rerun
-.venv/Scripts/python -m neurorover.bench --condition culture_reservoir --seed 0
-# full grid
-.venv/Scripts/python -m neurorover.bench --all --seeds 10 --procs 7   # takes a while; results already in neurorover/results/
-.venv/Scripts/python -m neurorover.analysis.summarize   # writes neurorover/analysis/summary.md
-.venv/Scripts/python -m neurorover.analysis.plots
-
-# the same task through the real Cortical Labs API (simulator)
-CL_SDK_ACCELERATED_TIME=1 CL_SDK_VISUALISATION=0 \
-  .venv/Scripts/python -m neurorover.run_cl --condition culture_reservoir --seed 0 --budget 25 --eval 100   # about 10 s with --eval 40
-.venv/Scripts/python -m neurorover.scripts.verify_cl_source   # reactivity + latency check
-
-# log every spike and stim of one run to runs/culture_fep_s0/
-.venv/Scripts/python -m neurorover.record_run --condition culture_fep --seed 0
-
-# demo page (opening index.html as a file won't work; it fetches demo_data.json)
-.venv/Scripts/python -m http.server 8765 -d demo   # open http://localhost:8765
-```
-
-## Evidence and limitations
-
-Validation AUC, mean over 50 seeds (10 local, 40 on Freestyle cloud VMs), 95% bootstrap CIs (full table in `neurorover/analysis/summary.md`):
-
-| Condition | 25 | 50 | 100 | 200 |
-|---|---:|---:|---:|---:|
-| culture_frozen | 0.49 | 0.48 | 0.49 | 0.49 |
-| culture_fep | 0.49 | 0.49 | 0.50 | 0.53 |
-| culture_rstdp | 0.49 | 0.49 | 0.49 | 0.49 |
-| culture_teach | 0.55 | 0.58 | 0.67 | 0.73 |
-| culture_reservoir | 0.83 | 0.86 | 0.87 | 0.87 |
-| logistic (same quantized input) | 0.84 | 0.86 | 0.88 | 0.89 |
-| MLP (same quantized input) | 0.81 | 0.84 | 0.85 | 0.86 |
-| logistic (raw features) | 0.87 | 0.89 | 0.90 | 0.91 |
-| rule: low 3 days ago | 0.86 | 0.86 | 0.86 | 0.86 |
-| random | 0.50 | 0.50 | 0.50 | 0.50 |
-
-What we found:
-
-- **Paired-stimulation teaching is the one rule where the simulated neurons learn by themselves.** `culture_teach` goes from 0.55 AUC at 25 samples to 0.73 at 200 (50 seeds), and beats the frozen control at every budget (+0.06 at 25, +0.24 at 200, paired bootstrap CIs exclude zero). It varies a lot by seed and it's still below logistic regression, so it is slower to learn, not faster.
-- **Training in imagination helps the taught culture.** Before its real nights, the culture got 150 nights imagined by the weather world model (8 seeds, full report in `neurorover/world/REPORT.md`). With 25 real nights, AUC went from 0.56 to 0.67 (+0.11, 95% CI [+0.07, +0.15]); with 50 real nights, from 0.61 to 0.69 (+0.08). Logistic regression barely moved (+0.02 and +0.01), since it was already near its ceiling. The catch: the imagination arm also gets 150 extra teaching trials, so this doesn't separate "imagined data" from "more trials". What it shows is that imagined nights can stand in for scarce labelled ones. In whole-season tests (60 real nights at the three coldest stations), the culture lost about -95 reward per season vs -60 for always deploying and -72 for a simple temperature rule, because its deploy threshold isn't calibrated to the costs.
-- **The reward-only cultures didn't learn.** Neither DishBrain-style feedback nor R-STDP got far from chance at any budget. Over 50 seeds, FEP beat the frozen control only at 200 samples (+0.04), and that isn't corrected for multiple comparisons. Two public DishBrain replications on GitHub (dishbrain-playground and dishbrain-snn-rstdp) hit the same wall (plain STDP, and reward-modulated STDP that changed weights without playing better).
-- **Turning up the R-STDP learning rate is the one place we saw a learning trend.** At the default rate (0.02) the weight changes per trial are tiny. At lr=5 (10 seeds), AUC climbs from 0.52 at 25 samples to 0.59 at 200, against 0.52 for the frozen culture on the same seeds. That's still far below the reservoir or logistic regression, and we only tried three rates. The FEP condition doesn't use the lr setting at all (its STDP step size is fixed), so the FEP rows in `neurorover/analysis/sensitivity.md` are identical on purpose. Every setting we ran is in that file; none was picked by looking at the evaluation set.
-- **The reservoir culture works, but it's no better than logistic regression.** It's level with logistic at 25 samples, significantly behind at 50 and up, and significantly ahead of a small MLP at 25 to 100 samples. A one-feature rule (the low 3 days earlier) gets 0.86 with no training at all, so this task is easy and the interesting part is the low-sample end. In this model the culture is a decent random feature map, and the learning comes from the silicon readout.
-- **The CL API path matches the fast harness.** On the same 100 validation rows, reservoir AUC was 0.89 through the CL API and 0.87 through the direct harness (one seed; a 40-row run gave 0.84, so the gap is noise). Stimulating electrode 5 through the API gave 14.3 spikes per 20 ms window against 1.6 for sham, with the first evoked spike about 1.9 ms (simulated) after the pulse. Accelerated mode ran 2 to 12x faster than real time.
-
-What this doesn't answer:
-
-- **Whether real neurons are more sample-efficient.** A simulation learning (or failing to) says nothing about that. If a simulated culture had learned well, it would actually weaken the case for wetware.
-- **Whether a better plasticity model would learn.** Our culture is a reasonable but uncalibrated model. We matched firing and burst rates by eye to typical culture numbers; we didn't fit it to real MEA recordings.
-- **The 37,842-row held-out submission can't be scored by us.** The held-out labels are withheld.
-- **Two choices are on us, not the data.** The task is a contextual bandit (one decision, one outcome), and we balanced the training stream 50/50 because freezes are only about 5% of nights.
-
-## Rover physics simulation
-
-The separate MuJoCo rover task in `sim/` trains PPO to drive to a field station and deploy a frost cover. Behavior cloning from 120 hand-controller drives was needed: plain PPO stayed at 0% success, while the warm-started policy reached 72% on 100 fixed, randomised episodes (the hand controller reached 59%). Nominal success was 80%. The rendered deployment and replay are under `sim/runs/ppo_bc_s0/`.
-
-We also ran a 30-night culture-driven season at station `USW00023110`. The culture made the frost decision on each night, and the EnvGenerator supplied weather-derived wind and ground-friction variation to the rover. It got 63.3% decision accuracy; 3 of 11 freeze nights were protected and 8 were missed, with a season reward of -78. This is a negative single-season result. See [`sim/README.md`](sim/README.md) and [`sim/runs/ppo_bc_s0/season_summary.md`](sim/runs/ppo_bc_s0/season_summary.md).
-
-The field scene uses seven NVIDIA SimReady props converted to MuJoCo and GLB assets. Their source files are CC-BY-4.0; see [`assets/simready/ATTRIBUTION.md`](assets/simready/ATTRIBUTION.md). The conversion drops textures, internal joints, and per-asset friction.
-
-## Surgical robot simulation
-
-`surgical/` converts the four-arm SimReady `robotic_system_a01` cart to a 47-body, 46-joint MuJoCo model and trains a simulated culture to reach targets with arm 1. A two-second gravity hold stayed stable (no NaNs, 0.00 mm tip drift). On 50 held-out targets, PPO reached 98% success, inverse kinematics 94%, and culture teaching 0%; the taught culture's median final error was 223.5 mm. PPO and IK are engineering references, while the culture result shows the current learning method is not adequate for this task. The arm replay is available in the desktop app's Surgical tab. Full metrics and limits are in [`surgical/REPORT.md`](surgical/REPORT.md), and the adapted asset is credited in [`surgical/ATTRIBUTION.md`](surgical/ATTRIBUTION.md) under CC BY 4.0.
-
-## Environment data
-
-`neurorover/envdata/` joins Open-Meteo archive conditions to the challenge's NOAA stations and adds a calibrated soil-probe noise model. The local archive contains 94,721 station-nights for 31 stations, but the fetch is partial. On the fixed validation rows, lagged weather covariates improved logistic AUC from 0.898 to 0.908; target-night weather is shown only as a leakage upper bound. The generator and physics are documented in [`neurorover/envdata/README.md`](neurorover/envdata/README.md), including the partial coverage and assumptions.
+**What these tests leave unanswered:**
+- **Real neurons:** whether living neurons are more sample-efficient, or work with this protocol at all. A simulation learning or failing says nothing about wetware.
+- **Better models:** whether a better-calibrated plasticity model, or a decoder fitted to the culture's spikes, would reach surgical targets. Our culture was matched to typical activity by eye, not fitted to MEA recordings.
+- **Seed variance:** the rover policy and the arm3 result are single-seed.
+- **Held-out scoring:** the 37,842-row freeze submission can't be scored by us, because the labels are withheld.
 
 ## Data and permissions
 
-- **Freeze-preparation data:** from the DNAForge hackathon resources repo (`challenges/freeze-preparation/09-freeze`), derived from NOAA station records. See that folder's `NOTICE.md` for source and terms. Not redistributed here; clone the resources repo to run.
-- **Cortical Labs CL SDK** (`cl-sdk` 1.0.0 on PyPI): used through its public API and simulator.
-- **Earlier task:** we first tried the soil-moisture data (KU Leuven DRIP, CC BY 4.0) and dropped it. Calibration error barely correlated with any feature (|r| < 0.16): the starter's own ranking got 0.24 precision@17 against 0.20 for random, and a linear probe got AUC 0.50 to 0.58. Every condition would have sat at chance.
-- No credentials are in this repo.
+- **Freeze-preparation data:** from the hackathon resources repo (`challenges/freeze-preparation/09-freeze`), derived from NOAA station records. Terms are in that folder's `NOTICE.md`. Not redistributed here; clone the resources repo to run.
+- **Environment data:** from the Open-Meteo historical archive (CC BY 4.0), joined to the challenge stations. The archive is only partly fetched.
+- **Surgical cart:** adapted from "Robotic System A01" by NVIDIA (SimReady assets), CC BY 4.0. It was converted from USD to MuJoCo, losing textures, some internal joints and per-asset friction. See [`surgical/ATTRIBUTION.md`](surgical/ATTRIBUTION.md).
+- **Field props:** seven NVIDIA SimReady props, CC BY 4.0. See [`assets/simready/ATTRIBUTION.md`](assets/simready/ATTRIBUTION.md).
+- **Papers referenced:** ORBIT-Surgical (arXiv:2404.16027), SuFIA (arXiv:2405.05226) and SuFIA-BC (arXiv:2504.14857). We used their ideas only, not their code or assets.
+- **Software:**
+  - Cortical Labs CL SDK 1.0.0 (PyPI), used through its public API and simulator;
+  - MuJoCo (Apache-2.0);
+  - three.js (MIT);
+  - GSAP 3.13;
+  - Electron (MIT).
+- **Earlier task we dropped:** the KU Leuven DRIP soil-moisture data (CC BY 4.0). Every model sat at chance on it (|r| < 0.16 with any feature).
+- **Credentials:**
+  - None are committed.
+  - Freestyle uses the CLI's own stored login.
+  - The Vercel Blob token lives only in the git-ignored `landing/.env.local`.
+  - Local runs and imported robots (`user_runs/`, `user_robots/`) are git-ignored.
 
 ## Next step
 
-Run the exact same benchmark on real neurons: a week on Cortical Cloud with `run_cl.py --hardware`, same encoding, same 300 validation nights, same 25 to 200 sample budgets, frozen-readout and feedback conditions side by side. If a living culture with DishBrain-style feedback beats the frozen control and gets near logistic regression at 25 samples, that's the first real evidence for the sample-efficiency claim. If it doesn't, the harness says so for $300 instead of a lab build-out.
+**Run the exact same protocol on real neurons.** Spend one week on Cortical Cloud with `run_cl.py --hardware` and an exported Eclipse bundle:
+- the same encoding and the same 300 validation nights;
+- the same 25 to 200 sample budgets;
+- the frozen-readout, feedback and paired-stimulation conditions side by side.
+
+If a living culture beats the frozen control and gets near logistic regression at 25 samples, that is the first real evidence for the sample-efficiency claim. If it doesn't, the harness says so for about $300 instead of a lab build-out.
