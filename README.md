@@ -1,7 +1,7 @@
 # Eclipse: A New ERA of training Biological Neural Networks
 
 - **Team ID:** TEAM_ID_HERE
-- **Sponsor prizes entered (if any):** DNAforge Open Source Award
+- **Sponsor prizes entered (if any):** none
 
 ![Eclipse fleet grid: 4 Freestyle VMs training 4 simulated cultures in parallel](landing/assets/shot-eclipse-fleet.png)
 
@@ -112,7 +112,7 @@ CL_SDK_ACCELERATED_TIME=1 CL_SDK_VISUALISATION=0 \
 **Before you start:**
 - **Freeze-benchmark data:** clone the hackathon resources repo into `resources/`. The code reads `resources/challenges/freeze-preparation/09-freeze/data.json.gz`.
 - **Real fleet runs:** need a Freestyle account (`npx freestyle@latest login`). Without one, use `--dry-run`, or `--demo-fake-fleet` in the app.
-- **Repository:** public at https://github.com/SachchitBalamurugan/neurorover under the MIT license.
+- **This repository is private:** judges need to be added as collaborators to open it.
 - **If a service is down at the table:** the committed video, screenshots (`app/shot-eclipse-*.png`, `landing/assets/`) and result files below are the evidence.
 
 ## Evidence and limitations
