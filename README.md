@@ -58,7 +58,16 @@ Biological neural networks (BNNs) are living neuron cultures grown on electrode 
    - **MuJoCo rover** (`sim/`): PPO drives to a field station and deploys a frost cover, then runs a 30-night culture-driven season.
    - **NVIDIA SimReady surgical cart** (`surgical/`): a 47-body, 46-joint MuJoCo model of a four-arm surgical cart. A culture controls arm 1. Procedural stress scenarios and a learned world model are adapted from ORBIT-Surgical, SuFIA and SuFIA-BC (mapping in [`docs/RESEARCH_PAPERS.md`](docs/RESEARCH_PAPERS.md)).
    - **Example 4-joint arm** (`bnn_platform/examples/arm3.xml`), used to test the import-anything path.
-6. **Parallel training on Freestyle VMs** (`sweep/`, `bnn_platform/studio/fleet.py`): benchmark shards, the surgical learning-rate sweep and the scenario suite all ran on Freestyle VMs.
+6. **Simultaneous training on multiple virtual machines** (`bnn_platform/studio/fleet.py`, `sweep/`). One click (or `studio train --platform fleet --vms N`) trains N cultures at the same time, each on its own Freestyle VM:
+   - **Launch:** Eclipse packages the robot, the simulator and the culture code, creates N Linux VMs and starts one training job per VM. Each job uses its own seed, or its own learning rate in a sweep.
+   - **Isolation:** every VM runs a full, independent simulation of the robot plus its own 1,024-neuron culture, so N experiments finish in the time of one.
+   - **Monitoring:** the app polls every VM every few seconds and shows a live card per VM (state, episode N/M, error curve), then pulls each run's results back into the local run history.
+   - **Clean-up:** demo runs delete their own VMs when they finish.
+   - **What ran this way:**
+     - 40 of the 50 frost-guard benchmark seeds;
+     - the 4-rate surgical learning-rate sweep;
+     - the surgical stress-scenario suite (4 VMs);
+     - live arm trainings: 4 VMs × 150 episodes, recorded in the demo video.
 7. **Weather world model and environment data** (`neurorover/world/`, `neurorover/envdata/`):
    - the world model is a VAR(1) on temperature anomalies, used to imagine training nights;
    - Open-Meteo conditions are joined to the NOAA stations.
