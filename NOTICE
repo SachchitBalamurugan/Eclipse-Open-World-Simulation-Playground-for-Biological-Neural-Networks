@@ -1,0 +1,8 @@
+Eclipse
+Copyright (c) 2026 Sachchit Balamurugan and the Eclipse contributors
+Code is licensed under the MIT License (see LICENSE).
+
+Third-party material in this repository keeps its own license and is not
+covered by the MIT license above, including the NVIDIA SimReady assets
+(CC BY 4.0; see surgical/ATTRIBUTION.md and assets/simready/ATTRIBUTION.md)
+and the NOAA GHCN-Daily derived data (CC0).
