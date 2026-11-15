@@ -112,7 +112,7 @@ CL_SDK_ACCELERATED_TIME=1 CL_SDK_VISUALISATION=0 \
 **Before you start:**
 - **Freeze-benchmark data:** clone the hackathon resources repo into `resources/`. The code reads `resources/challenges/freeze-preparation/09-freeze/data.json.gz`.
 - **Real fleet runs:** need a Freestyle account (`npx freestyle@latest login`). Without one, use `--dry-run`, or `--demo-fake-fleet` in the app.
-- **This repository is private:** judges need to be added as collaborators to open it.
+- **Repository:** public at https://github.com/SachchitBalamurugan/neurorover under the MIT license.
 - **If a service is down at the table:** the committed video, screenshots (`app/shot-eclipse-*.png`, `landing/assets/`) and result files below are the evidence.
 
 ## Evidence and limitations
@@ -175,6 +175,7 @@ All controllers below are simulated cultures. Each result names its baseline.
 
 ## Data and permissions
 
+- **Code license:** MIT (see [`LICENSE`](LICENSE)). Third-party assets and data below keep their own licenses.
 - **Freeze-preparation data:** from the hackathon resources repo (`challenges/freeze-preparation/09-freeze`), derived from NOAA station records. Terms are in that folder's `NOTICE.md`. Not redistributed here; clone the resources repo to run.
 - **Environment data:** from the Open-Meteo historical archive (CC BY 4.0), joined to the challenge stations. The archive is only partly fetched.
 - **Surgical cart:** adapted from "Robotic System A01" by NVIDIA (SimReady assets), CC BY 4.0. It was converted from USD to MuJoCo, losing textures, some internal joints and per-asset friction. See [`surgical/ATTRIBUTION.md`](surgical/ATTRIBUTION.md).
