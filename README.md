@@ -1,7 +1,7 @@
 # Eclipse: A New ERA of training Biological Neural Networks
 
 - **Team ID:** TEAM_ID_HERE
-- **Sponsor prizes entered (if any):** none
+- **Sponsor prizes entered (if any):** DNAforge Open Source Award
 
 ![Eclipse fleet grid: 4 Freestyle VMs training 4 simulated cultures in parallel](landing/assets/shot-eclipse-fleet.png)
 
